@@ -2,15 +2,19 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import * as endpointsApi from "@/lib/api/endpoints";
+import type { HttpMethod, EndpointResponse } from "@/types/api";
+import { toast } from "sonner";
+import axios from "axios";
 
 interface EndpointFormPageProps {
   isEdit?: boolean;
@@ -21,13 +25,58 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
   const params = useParams();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [headers, setHeaders] = useState([{ key: 'Content-Type', value: 'application/json' }]);
+
+  // Form state
+  const [url, setUrl] = useState("");
+  const [httpMethod, setHttpMethod] = useState<HttpMethod>("GET");
+  const [expectedStatusCode, setExpectedStatusCode] = useState("200");
+  const [checkInterval, setCheckInterval] = useState("60");
+  const [headers, setHeaders] = useState([{ key: '', value: '' }]);
+  const [body, setBody] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingEndpoint, setIsLoadingEndpoint] = useState(false);
+
+  const projectId = Number(params.id);
+  const endpointId = params.endpointId ? Number(params.endpointId) : undefined;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
+
+  // 수정 모드에서 기존 데이터 로드
+  const loadEndpoint = useCallback(async () => {
+    if (!isEdit || !endpointId) return;
+    setIsLoadingEndpoint(true);
+    try {
+      const ep: EndpointResponse = await endpointsApi.getEndpoint(endpointId);
+      setUrl(ep.url);
+      setHttpMethod(ep.httpMethod);
+      setExpectedStatusCode(String(ep.expectedStatusCode));
+      setCheckInterval(String(ep.checkInterval));
+      setBody(ep.body || "");
+
+      // headers JSON 파싱
+      if (ep.headers) {
+        try {
+          const parsed = JSON.parse(ep.headers);
+          const headerEntries = Object.entries(parsed).map(([k, v]) => ({ key: k, value: String(v) }));
+          setHeaders(headerEntries.length > 0 ? headerEntries : [{ key: '', value: '' }]);
+        } catch {
+          setHeaders([{ key: '', value: '' }]);
+        }
+      }
+    } catch {
+      toast.error('엔드포인트 정보를 불러오는데 실패했습니다.');
+    } finally {
+      setIsLoadingEndpoint(false);
+    }
+  }, [isEdit, endpointId]);
+
+  useEffect(() => {
+    loadEndpoint();
+  }, [loadEndpoint]);
 
   const addHeader = () => {
     setHeaders([...headers, { key: '', value: '' }]);
@@ -37,13 +86,70 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
     setHeaders(headers.filter((_, i) => i !== index));
   };
 
+  const updateHeader = (index: number, field: 'key' | 'value', val: string) => {
+    const updated = [...headers];
+    updated[index][field] = val;
+    setHeaders(updated);
+  };
+
   const handleBack = () => {
-    if (isEdit) {
-      router.push(`/projects/${params.id}/endpoints/${params.endpointId}`);
+    if (isEdit && endpointId) {
+      router.push(`/projects/${projectId}/endpoints/${endpointId}`);
     } else {
-      router.push(`/projects/${params.id}`);
+      router.push(`/projects/${projectId}`);
     }
   };
+
+  const handleSubmit = async () => {
+    if (!url.trim()) {
+      toast.error('URL을 입력해 주세요.');
+      return;
+    }
+
+    // headers를 JSON string으로 변환
+    const validHeaders = headers.filter((h) => h.key.trim());
+    const headersJson = validHeaders.length > 0
+      ? JSON.stringify(Object.fromEntries(validHeaders.map((h) => [h.key, h.value])))
+      : null;
+
+    const payload = {
+      url,
+      httpMethod,
+      headers: headersJson,
+      body: body.trim() || null,
+      expectedStatusCode: Number(expectedStatusCode) || 200,
+      checkInterval: Number(checkInterval) || 60,
+    };
+
+    setIsSubmitting(true);
+    try {
+      if (isEdit && endpointId) {
+        await endpointsApi.updateEndpoint(endpointId, payload);
+        toast.success('엔드포인트가 수정되었습니다.');
+        router.push(`/projects/${projectId}/endpoints/${endpointId}`);
+      } else {
+        const created = await endpointsApi.createEndpoint(projectId, payload);
+        toast.success('엔드포인트가 생성되었습니다.');
+        router.push(`/projects/${projectId}/endpoints/${created.id}`);
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.message || (isEdit ? '수정에 실패했습니다.' : '생성에 실패했습니다.'));
+      } else {
+        toast.error(isEdit ? '수정에 실패했습니다.' : '생성에 실패했습니다.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoadingEndpoint) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   const inputStyles = isDarkMode ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : '';
   const labelStyles = isDarkMode ? 'text-gray-300' : '';
@@ -78,16 +184,12 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className={labelStyles}>Endpoint Name</Label>
-              <Input id="name" placeholder="e.g., Get Products" defaultValue={isEdit ? "Get Products" : ""} className={inputStyles} />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="url" className={labelStyles}>URL</Label>
-              <Input 
-                id="url" 
-                placeholder="https://api.example.com/v1/endpoint" 
-                defaultValue={isEdit ? "https://api.example.com/v1/products" : ""}
+              <Input
+                id="url"
+                placeholder="https://api.example.com/v1/endpoint"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
                 className={inputStyles}
               />
             </div>
@@ -95,23 +197,27 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="method" className={labelStyles}>HTTP Method</Label>
-                <Select defaultValue={isEdit ? "GET" : undefined}>
+                <Select value={httpMethod} onValueChange={(v) => setHttpMethod(v as HttpMethod)}>
                   <SelectTrigger id="method" className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
                     <SelectValue placeholder="Select method" />
                   </SelectTrigger>
                   <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
-                    <SelectItem value="GET" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>GET</SelectItem>
-                    <SelectItem value="POST" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>POST</SelectItem>
-                    <SelectItem value="PUT" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>PUT</SelectItem>
-                    <SelectItem value="PATCH" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>PATCH</SelectItem>
-                    <SelectItem value="DELETE" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>DELETE</SelectItem>
+                    {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as HttpMethod[]).map((m) => (
+                      <SelectItem key={m} value={m} className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>{m}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="expected-status" className={labelStyles}>Expected Status Code</Label>
-                <Input id="expected-status" placeholder="200" defaultValue={isEdit ? "200" : ""} className={inputStyles} />
+                <Input
+                  id="expected-status"
+                  placeholder="200"
+                  value={expectedStatusCode}
+                  onChange={(e) => setExpectedStatusCode(e.target.value)}
+                  className={inputStyles}
+                />
               </div>
             </div>
           </CardContent>
@@ -136,8 +242,18 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
           <CardContent className="space-y-3">
             {headers.map((header, index) => (
               <div key={index} className="flex gap-3">
-                <Input placeholder="Header name" defaultValue={header.key} className={`flex-1 ${inputStyles}`} />
-                <Input placeholder="Header value" defaultValue={header.value} className={`flex-1 ${inputStyles}`} />
+                <Input
+                  placeholder="Header name"
+                  value={header.key}
+                  onChange={(e) => updateHeader(index, 'key', e.target.value)}
+                  className={`flex-1 ${inputStyles}`}
+                />
+                <Input
+                  placeholder="Header value"
+                  value={header.value}
+                  onChange={(e) => updateHeader(index, 'value', e.target.value)}
+                  className={`flex-1 ${inputStyles}`}
+                />
                 <Button 
                   variant="ghost" 
                   size="sm"
@@ -166,6 +282,8 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
             <Textarea 
               placeholder='{"key": "value"}' 
               rows={6}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
               className={`font-mono text-sm ${inputStyles}`}
             />
           </CardContent>
@@ -182,29 +300,24 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
             <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Monitoring Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="interval" className={labelStyles}>Check Interval (seconds)</Label>
-                <Input id="interval" type="number" placeholder="60" defaultValue={isEdit ? "60" : ""} className={inputStyles} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="timeout" className={labelStyles}>Timeout (seconds)</Label>
-                <Input id="timeout" type="number" placeholder="30" defaultValue={isEdit ? "30" : ""} className={inputStyles} />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="max-response-time" className={labelStyles}>Max Response Time (ms)</Label>
-              <Input id="max-response-time" type="number" placeholder="1000" defaultValue={isEdit ? "2000" : ""} className={inputStyles} />
-              <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Alert if response time exceeds this value</p>
+              <Label htmlFor="interval" className={labelStyles}>Check Interval (seconds)</Label>
+              <Input
+                id="interval"
+                type="number"
+                placeholder="60"
+                value={checkInterval}
+                onChange={(e) => setCheckInterval(e.target.value)}
+                className={inputStyles}
+              />
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
       <div className="flex gap-3">
-        <Button className="flex-1">
+        <Button className="flex-1" onClick={handleSubmit} disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEdit ? 'Update Endpoint' : 'Create Endpoint'}
         </Button>
         <Button 
@@ -218,4 +331,3 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
     </div>
   );
 }
-

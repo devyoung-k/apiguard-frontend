@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, FolderKanban, Bell, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Bell, Settings, LogOut, Loader2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
 
 interface AppSidebarProps {
   onMobileClose?: () => void;
@@ -12,7 +13,9 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme } = useTheme();
+  const { logout } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -27,10 +30,18 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
     { id: '/settings', label: 'Settings', icon: Settings },
   ];
 
-  const handleLogout = () => {
-    // Implement logout logic here
-    router.push('/login');
-    if (onMobileClose) onMobileClose();
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.push('/login');
+    } catch {
+      // 에러가 나도 로그아웃 처리됨 (AuthContext에서 토큰 삭제)
+      router.push('/login');
+    } finally {
+      setIsLoggingOut(false);
+      if (onMobileClose) onMobileClose();
+    }
   };
 
   const handleNavigate = () => {
@@ -80,17 +91,21 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
       <div className={`p-3 border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
         <button
           onClick={handleLogout}
+          disabled={isLoggingOut}
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
             isDarkMode 
               ? 'text-gray-400 hover:bg-gray-800 hover:text-white'
               : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
           }`}
         >
-          <LogOut className="h-5 w-5" />
-          <span className="text-sm">Logout</span>
+          {isLoggingOut ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <LogOut className="h-5 w-5" />
+          )}
+          <span className="text-sm">{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
         </button>
       </div>
     </div>
   );
 }
-
