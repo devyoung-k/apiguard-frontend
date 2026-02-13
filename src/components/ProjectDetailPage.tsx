@@ -1,37 +1,31 @@
 "use client"
 
 import { useRouter, useParams } from "next/navigation";
-import { useTheme } from "next-themes";
 import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
-import { Plus, ArrowLeft, Play, Edit, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Plus, ArrowLeft, Play, Edit, Trash2 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Switch } from "./ui/switch";
 import { motion } from "framer-motion";
+import { PageLoadingState, PageErrorState } from "./ui/page-states";
 import * as projectsApi from "@/lib/api/projects";
 import * as endpointsApi from "@/lib/api/endpoints";
 import * as healthChecksApi from "@/lib/api/health-checks";
 import type { ProjectResponse, EndpointResponse } from "@/types/api";
 import { toast } from "sonner";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 export function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const isDarkMode = useDarkMode();
   const [project, setProject] = useState<ProjectResponse | null>(null);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const projectId = Number(params.id);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   const fetchData = useCallback(async () => {
     try {
@@ -104,22 +98,16 @@ export function ProjectDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoadingState />;
   }
 
   if (error || !project) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center space-y-2">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{error || '프로젝트를 찾을 수 없습니다.'}</p>
-          <Button onClick={handleBack} variant="outline">프로젝트 목록으로</Button>
-        </div>
-      </div>
+      <PageErrorState
+        message={error || '프로젝트를 찾을 수 없습니다.'}
+        onAction={handleBack}
+        actionLabel="프로젝트 목록으로"
+      />
     );
   }
 

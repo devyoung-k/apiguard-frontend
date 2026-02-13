@@ -155,9 +155,16 @@ export interface EndpointStats {
 
 export interface HourlyStats {
   hour: string;
-  checkCount: number;
+  totalChecks: number;
   successCount: number;
+  failCount: number;
   avgResponseTimeMs: number;
+}
+
+// --- Composite types ---
+
+export interface ProjectWithStats extends ProjectResponse {
+  stats?: ProjectStats;
 }
 
 export interface ProjectStats {

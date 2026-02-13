@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -12,24 +11,18 @@ import { Shield, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import axios from "axios";
+import { getApiErrorMessage } from "@/lib/utils";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 export function RegisterPage() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const isDarkMode = useDarkMode();
   const { signup } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   const handleRegister = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -47,12 +40,7 @@ export function RegisterPage() {
       toast.success('회원가입이 완료되었습니다. 로그인해 주세요.');
       router.push('/login');
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.message || error.response?.data?.detail || '회원가입에 실패했습니다.';
-        toast.error(message);
-      } else {
-        toast.error('회원가입에 실패했습니다.');
-      }
+      toast.error(getApiErrorMessage(error, '회원가입에 실패했습니다.'));
     } finally {
       setIsLoading(false);
     }

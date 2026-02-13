@@ -1,7 +1,6 @@
 "use client"
 
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -14,18 +13,14 @@ import { Textarea } from "./ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import * as projectsApi from "@/lib/api/projects";
 import * as healthChecksApi from "@/lib/api/health-checks";
-import type { ProjectResponse, ProjectStats } from "@/types/api";
+import type { ProjectWithStats } from "@/types/api";
 import { toast } from "sonner";
-import axios from "axios";
-
-interface ProjectWithStats extends ProjectResponse {
-  stats?: ProjectStats;
-}
+import { getApiErrorMessage } from "@/lib/utils";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 export function ProjectsPage() {
   const router = useRouter();
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const isDarkMode = useDarkMode();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +28,6 @@ export function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -86,11 +75,7 @@ export function ProjectsPage() {
       setNewProjectDesc("");
       router.push(`/projects/${created.id}`);
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || '프로젝트 생성에 실패했습니다.');
-      } else {
-        toast.error('프로젝트 생성에 실패했습니다.');
-      }
+      toast.error(getApiErrorMessage(err, '프로젝트 생성에 실패했습니다.'));
     } finally {
       setIsCreating(false);
     }

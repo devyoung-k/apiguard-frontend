@@ -1,7 +1,6 @@
 "use client"
 
 import { useRouter, useParams } from "next/navigation";
-import { useTheme } from "next-themes";
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -14,7 +13,8 @@ import { motion } from "framer-motion";
 import * as endpointsApi from "@/lib/api/endpoints";
 import type { HttpMethod, EndpointResponse } from "@/types/api";
 import { toast } from "sonner";
-import axios from "axios";
+import { getApiErrorMessage } from "@/lib/utils";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 interface EndpointFormPageProps {
   isEdit?: boolean;
@@ -23,8 +23,7 @@ interface EndpointFormPageProps {
 export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
   const router = useRouter();
   const params = useParams();
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const isDarkMode = useDarkMode();
 
   // Form state
   const [url, setUrl] = useState("");
@@ -38,12 +37,6 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
 
   const projectId = Number(params.id);
   const endpointId = params.endpointId ? Number(params.endpointId) : undefined;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   // 수정 모드에서 기존 데이터 로드
   const loadEndpoint = useCallback(async () => {
@@ -133,11 +126,7 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
         router.push(`/projects/${projectId}/endpoints/${created.id}`);
       }
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || (isEdit ? '수정에 실패했습니다.' : '생성에 실패했습니다.'));
-      } else {
-        toast.error(isEdit ? '수정에 실패했습니다.' : '생성에 실패했습니다.');
-      }
+      toast.error(getApiErrorMessage(err, isEdit ? '수정에 실패했습니다.' : '생성에 실패했습니다.'));
     } finally {
       setIsSubmitting(false);
     }

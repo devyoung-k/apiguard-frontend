@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Menu } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 export default function DashboardLayout({
   children,
@@ -11,14 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === "dark" || theme === "system");
+  const isDarkMode = useDarkMode();
 
   return (
     <div className={`flex min-h-screen ${isDarkMode ? "bg-gray-950" : "bg-gray-100"}`}>
