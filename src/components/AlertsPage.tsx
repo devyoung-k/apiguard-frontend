@@ -1,6 +1,5 @@
 "use client"
 
-import { useTheme } from "next-themes";
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -10,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Plus, Mail, MessageSquare, Trash2, X, Loader2, AlertCircle } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Switch } from "./ui/switch";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import * as alertsApi from "@/lib/api/alerts";
 import * as projectsApi from "@/lib/api/projects";
 import * as endpointsApi from "@/lib/api/endpoints";
 import type { AlertResponse, AlertType, EndpointResponse, ProjectResponse } from "@/types/api";
 import { toast } from "sonner";
-import axios from "axios";
+import { getApiErrorMessage } from "@/lib/utils";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 interface AlertWithEndpoint extends AlertResponse {
   endpointUrl?: string;
@@ -24,8 +24,7 @@ interface AlertWithEndpoint extends AlertResponse {
 
 export function AlertsPage() {
   const [showNewAlertForm, setShowNewAlertForm] = useState(false);
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const isDarkMode = useDarkMode();
   const [alerts, setAlerts] = useState<AlertWithEndpoint[]>([]);
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
@@ -39,12 +38,6 @@ export function AlertsPage() {
   const [newTarget, setNewTarget] = useState("");
   const [newThreshold, setNewThreshold] = useState("3");
   const [isCreating, setIsCreating] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   const fetchData = useCallback(async () => {
     try {
@@ -109,11 +102,7 @@ export function AlertsPage() {
       setSelectedEndpointId("");
       await fetchData();
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || '알림 생성에 실패했습니다.');
-      } else {
-        toast.error('알림 생성에 실패했습니다.');
-      }
+      toast.error(getApiErrorMessage(err, '알림 생성에 실패했습니다.'));
     } finally {
       setIsCreating(false);
     }

@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -12,28 +11,22 @@ import { Shield, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import axios from "axios";
+import { getApiErrorMessage } from "@/lib/utils";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 export function LoginPage() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const isDarkMode = useDarkMode();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       router.push('/dashboard');
     }
   }, [authLoading, isAuthenticated, router]);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -46,12 +39,7 @@ export function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.message || error.response?.data?.detail || '로그인에 실패했습니다.';
-        toast.error(message);
-      } else {
-        toast.error('로그인에 실패했습니다.');
-      }
+      toast.error(getApiErrorMessage(error, '로그인에 실패했습니다.'));
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 "use client"
 
-import { Activity, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, AlertCircle, Sun, Moon } from "lucide-react";
+import { Activity, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, AlertCircle, Sun, Moon, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { StatCard } from "./StatCard";
@@ -10,24 +10,16 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import * as projectsApi from "@/lib/api/projects";
 import * as healthChecksApi from "@/lib/api/health-checks";
-import type { ProjectResponse, ProjectStats } from "@/types/api";
-import { Loader2 } from "lucide-react";
-
-interface ProjectWithStats extends ProjectResponse {
-  stats?: ProjectStats;
-}
+import type { ProjectWithStats } from "@/types/api";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 export function DashboardPage() {
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { setTheme } = useTheme();
+  const isDarkMode = useDarkMode();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,10 +51,8 @@ export function DashboardPage() {
     fetchData();
   }, []);
 
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
-
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    setTheme(isDarkMode ? 'light' : 'dark');
   };
 
   // 통계 계산

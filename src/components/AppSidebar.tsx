@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, FolderKanban, Bell, Settings, LogOut, Loader2 } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 interface AppSidebarProps {
   onMobileClose?: () => void;
@@ -12,16 +12,9 @@ interface AppSidebarProps {
 export function AppSidebar({ onMobileClose }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme } = useTheme();
+  const isDarkMode = useDarkMode();
   const { logout } = useAuth();
-  const [mounted, setMounted] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   const menuItems = [
     { id: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

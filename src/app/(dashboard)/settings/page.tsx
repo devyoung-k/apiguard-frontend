@@ -1,17 +1,9 @@
 "use client"
 
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 export default function Page() {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
+  const isDarkMode = useDarkMode();
 
   return (
     <div

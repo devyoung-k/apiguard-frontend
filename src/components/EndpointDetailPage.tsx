@@ -1,26 +1,26 @@
 "use client"
 
 import { useRouter, useParams } from "next/navigation";
-import { useTheme } from "next-themes";
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { ArrowLeft, Play, Edit, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Play, Edit, Loader2 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion } from "framer-motion";
+import { PageLoadingState, PageErrorState } from "./ui/page-states";
 import * as endpointsApi from "@/lib/api/endpoints";
 import * as healthChecksApi from "@/lib/api/health-checks";
 import type { EndpointResponse, HealthCheckResult, EndpointStats, HourlyStats } from "@/types/api";
 import { toast } from "sonner";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 const COLORS = ['#10b981', '#ef4444'];
 
 export function EndpointDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const isDarkMode = useDarkMode();
   const [endpoint, setEndpoint] = useState<EndpointResponse | null>(null);
   const [checks, setChecks] = useState<HealthCheckResult[]>([]);
   const [stats, setStats] = useState<EndpointStats | null>(null);
@@ -31,12 +31,6 @@ export function EndpointDetailPage() {
 
   const endpointId = Number(params.endpointId);
   const projectId = params.id;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDarkMode = mounted && (theme === 'dark' || theme === 'system');
 
   const fetchData = useCallback(async () => {
     try {
@@ -82,22 +76,16 @@ export function EndpointDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoadingState />;
   }
 
   if (error || !endpoint) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-center space-y-2">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
-          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{error || '엔드포인트를 찾을 수 없습니다.'}</p>
-          <Button onClick={() => router.push(`/projects/${projectId}`)} variant="outline">돌아가기</Button>
-        </div>
-      </div>
+      <PageErrorState
+        message={error || '엔드포인트를 찾을 수 없습니다.'}
+        onAction={() => router.push(`/projects/${projectId}`)}
+        actionLabel="돌아가기"
+      />
     );
   }
 
