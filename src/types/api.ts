@@ -21,7 +21,14 @@ export interface ProblemDetail {
 // Enums
 // ============================================================
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+export type HttpMethod =
+  | 'GET'
+  | 'POST'
+  | 'PUT'
+  | 'PATCH'
+  | 'DELETE'
+  | 'HEAD'
+  | 'OPTIONS';
 export type CheckStatus = 'SUCCESS' | 'FAILURE' | 'TIMEOUT' | 'ERROR';
 export type AlertType = 'EMAIL' | 'SLACK';
 
@@ -155,9 +162,8 @@ export interface EndpointStats {
 
 export interface HourlyStats {
   hour: string;
-  totalChecks: number;
+  checkCount: number;
   successCount: number;
-  failCount: number;
   avgResponseTimeMs: number;
 }
 
@@ -198,4 +204,72 @@ export interface UpdateAlertRequest {
   alertType?: AlertType;
   target?: string;
   threshold?: number;
+}
+
+// ============================================================
+// 워크스페이스 / RBAC
+// ============================================================
+
+export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+
+export interface WorkspaceResponse {
+  id: number;
+  name: string;
+  slug: string;
+  createdAt: string;
+}
+
+export interface WorkspaceMember {
+  id: number;
+  userId: number;
+  email: string;
+  nickname: string;
+  role: WorkspaceRole;
+  joinedAt: string;
+}
+
+export interface CreateWorkspaceRequest {
+  name: string;
+}
+
+export interface InviteMemberRequest {
+  email: string;
+  role: WorkspaceRole;
+}
+
+export interface UpdateMemberRoleRequest {
+  role: WorkspaceRole;
+}
+
+// ============================================================
+// 결제 / 플랜
+// ============================================================
+
+export type PlanType = 'free' | 'pro';
+export type SubscriptionStatus =
+  | 'active'
+  | 'canceled'
+  | 'past_due'
+  | 'trialing'
+  | 'none';
+
+export interface PlanLimits {
+  maxProjects: number;
+  maxEndpointsPerProject: number;
+  minCheckInterval: number;
+}
+
+export interface PlanInfo {
+  type: PlanType;
+  name: string;
+  price: number;
+  limits: PlanLimits;
+  features: string[];
+}
+
+export interface SubscriptionResponse {
+  planType: PlanType;
+  status: SubscriptionStatus;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
 }

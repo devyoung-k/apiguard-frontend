@@ -1,7 +1,12 @@
-import axios from 'axios';
+import axios, {
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from 'axios';
 import type { ApiResponse, LoginResponse } from '@/types/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const SUPPORTED_LOCALES = ['en', 'ko'] as const;
+const DEFAULT_LOCALE = 'en';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -39,10 +44,33 @@ const processQueue = (error: unknown, token: string | null) => {
   failedQueue = [];
 };
 
+type RetriableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
+
+function getCurrentLocale(): string {
+  if (typeof window === 'undefined') {
+    return DEFAULT_LOCALE;
+  }
+
+  const [, firstSegment] = window.location.pathname.split('/');
+  return SUPPORTED_LOCALES.includes(firstSegment as (typeof SUPPORTED_LOCALES)[number])
+    ? firstSegment
+    : DEFAULT_LOCALE;
+}
+
+function redirectToLogin() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const locale = getCurrentLocale();
+  window.location.assign(`/${locale}/login`);
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as RetriableRequestConfig;
 
     // 리프레시/로그인 요청 자체가 실패한 경우 무한 루프 방지
     if (
@@ -55,7 +83,9 @@ apiClient.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
           return apiClient(originalRequest);
         });
       }
@@ -79,7 +109,9 @@ apiClient.interceptors.response.use(
           localStorage.setItem('refreshToken', data.data.refreshToken);
           processQueue(null, data.data.accessToken);
 
-          originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+          }
           return apiClient(originalRequest);
         }
         throw new Error('Refresh failed');
@@ -88,9 +120,7 @@ apiClient.interceptors.response.use(
         // 토큰 삭제 후 로그인 페이지로 이동
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+        redirectToLogin();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -100,5 +130,48 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export function unwrap<T>(res: { data: ApiResponse<T> }): T {
+  if (!res.data.success) {
+    throw new Error(res.data.message ?? 'API request failed.');
+  }
+  return res.data.data as T;
+}
+
+export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  const res = await apiClient.get<ApiResponse<T>>(url, config);
+  return unwrap(res);
+}
+
+export async function apiPost<TResponse, TRequest = unknown>(
+  url: string,
+  data?: TRequest,
+  config?: AxiosRequestConfig,
+): Promise<TResponse> {
+  const res = await apiClient.post<ApiResponse<TResponse>>(url, data, config);
+  return unwrap(res);
+}
+
+export async function apiPut<TResponse, TRequest = unknown>(
+  url: string,
+  data?: TRequest,
+  config?: AxiosRequestConfig,
+): Promise<TResponse> {
+  const res = await apiClient.put<ApiResponse<TResponse>>(url, data, config);
+  return unwrap(res);
+}
+
+export async function apiPatch<TResponse, TRequest = unknown>(
+  url: string,
+  data?: TRequest,
+  config?: AxiosRequestConfig,
+): Promise<TResponse> {
+  const res = await apiClient.patch<ApiResponse<TResponse>>(url, data, config);
+  return unwrap(res);
+}
+
+export async function apiDelete(url: string, config?: AxiosRequestConfig): Promise<void> {
+  await apiClient.delete<ApiResponse>(url, config);
+}
 
 export default apiClient;

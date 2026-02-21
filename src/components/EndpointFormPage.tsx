@@ -1,6 +1,7 @@
 "use client"
 
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -38,7 +39,7 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
   const projectId = Number(params.id);
   const endpointId = params.endpointId ? Number(params.endpointId) : undefined;
 
-  // 수정 모드에서 기존 데이터 로드
+  // Load existing endpoint data in edit mode
   const loadEndpoint = useCallback(async () => {
     if (!isEdit || !endpointId) return;
     setIsLoadingEndpoint(true);
@@ -50,7 +51,7 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       setCheckInterval(String(ep.checkInterval));
       setBody(ep.body || "");
 
-      // headers JSON 파싱
+      // Parse headers JSON
       if (ep.headers) {
         try {
           const parsed = JSON.parse(ep.headers);
@@ -61,7 +62,7 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
         }
       }
     } catch {
-      toast.error('엔드포인트 정보를 불러오는데 실패했습니다.');
+      toast.error('Failed to load endpoint details.');
     } finally {
       setIsLoadingEndpoint(false);
     }
@@ -95,11 +96,11 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
 
   const handleSubmit = async () => {
     if (!url.trim()) {
-      toast.error('URL을 입력해 주세요.');
+      toast.error('Please enter a URL.');
       return;
     }
 
-    // headers를 JSON string으로 변환
+    // Convert headers to JSON string
     const validHeaders = headers.filter((h) => h.key.trim());
     const headersJson = validHeaders.length > 0
       ? JSON.stringify(Object.fromEntries(validHeaders.map((h) => [h.key, h.value])))
@@ -118,15 +119,15 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
     try {
       if (isEdit && endpointId) {
         await endpointsApi.updateEndpoint(endpointId, payload);
-        toast.success('엔드포인트가 수정되었습니다.');
+        toast.success('Endpoint updated.');
         router.push(`/projects/${projectId}/endpoints/${endpointId}`);
       } else {
         const created = await endpointsApi.createEndpoint(projectId, payload);
-        toast.success('엔드포인트가 생성되었습니다.');
+        toast.success('Endpoint created.');
         router.push(`/projects/${projectId}/endpoints/${created.id}`);
       }
     } catch (err) {
-      toast.error(getApiErrorMessage(err, isEdit ? '수정에 실패했습니다.' : '생성에 실패했습니다.'));
+      toast.error(getApiErrorMessage(err, isEdit ? 'Failed to update endpoint.' : 'Failed to create endpoint.'));
     } finally {
       setIsSubmitting(false);
     }

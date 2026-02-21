@@ -1,28 +1,18 @@
-import apiClient from '@/lib/api-client';
-import type {
-  ApiResponse,
-  LoginRequest,
-  LoginResponse,
-  SignupRequest,
-  RefreshRequest,
-  LogoutRequest,
-} from '@/types/api';
+import { apiPost } from '@/lib/api-client';
+import type { LoginRequest, LoginResponse, SignupRequest, RefreshRequest, LogoutRequest } from '@/types/api';
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
-  const res = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', data);
-  return res.data.data!;
+  return apiPost<LoginResponse, LoginRequest>('/auth/login', data);
 }
 
 export async function signup(data: SignupRequest): Promise<number> {
-  const res = await apiClient.post<ApiResponse<number>>('/users/signup', data);
-  return res.data.data!;
+  return apiPost<number, SignupRequest>('/users/signup', data);
 }
 
 export async function refresh(data: RefreshRequest): Promise<LoginResponse> {
-  const res = await apiClient.post<ApiResponse<LoginResponse>>('/auth/refresh', data);
-  return res.data.data!;
+  return apiPost<LoginResponse, RefreshRequest>('/auth/refresh', data);
 }
 
 export async function logout(data: LogoutRequest): Promise<void> {
-  await apiClient.post<ApiResponse>('/auth/logout', data);
+  await apiPost<void, LogoutRequest>('/auth/logout', data);
 }

@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "APIGuard"
+  },
+  "sidebar": {
+    "brandTagline": "API Monitoring",
+    "menu": {
+      "dashboard": "Dashboard",
+      "projects": "Projects",
+      "alerts": "Alerts",
+      "admin": "Admin",
+      "settings": "Settings",
+      "billing": "Billing"
+    },
+    "workspace": {
+      "switch": "Switch Workspace",
+      "create": "Create Workspace"
+    },
+    "logout": "Logout",
+    "loggingOut": "Logging out..."
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome to APIGuard",
+      "description": "Monitor your APIs with confidence",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "signIn": "Sign In",
+      "signingIn": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "errors": {
+        "missingCredentials": "Please enter your email and password.",
+        "signInFailed": "Failed to sign in."
+      }
+    },
+    "register": {
+      "title": "Create your account",
+      "description": "Start monitoring your APIs in minutes",
+      "nickname": "Nickname",
+      "nicknamePlaceholder": "John Doe",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "createAccount": "Create Account",
+      "creatingAccount": "Creating account...",
+      "alreadyHaveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errors": {
+        "fillAllFields": "Please fill in all fields.",
+        "passwordsNotMatch": "Passwords do not match.",
+        "signUpFailed": "Failed to sign up."
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Configure your account and preferences",
+    "profile": {
+      "title": "Profile",
+      "description": "View and update your basic account information.",
+      "email": "Email",
+      "nickname": "Nickname",
+      "nicknamePlaceholder": "Enter your nickname",
+      "joined": "Joined",
+      "save": "Save"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Choose your preferred language for the interface.",
+      "displayLanguage": "Display Language",
+      "selectLanguage": "Select language",
+      "english": "English",
+      "korean": "Korean"
+    },
+    "password": {
+      "title": "Change Password",
+      "description": "Update your password regularly to keep your account secure.",
+      "currentPassword": "Current Password",
+      "currentPasswordPlaceholder": "Enter your current password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter a new password",
+      "confirmNewPassword": "Confirm New Password",
+      "confirmNewPasswordPlaceholder": "Re-enter your new password",
+      "updatePassword": "Update Password"
+    },
+    "danger": {
+      "title": "Delete Account",
+      "description": "Deleting your account permanently removes all data and cannot be undone.",
+      "deleteAccount": "Delete Account",
+      "confirmTitle": "Are you sure you want to delete your account?",
+      "confirmDescription": "This action cannot be undone. All projects, endpoints, and alert settings will be permanently deleted.",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "toasts": {
+      "enterNickname": "Please enter a nickname.",
+      "nicknameUpdated": "Nickname updated.",
+      "nicknameUpdateFailed": "Failed to update nickname.",
+      "fillAllFields": "Please fill in all fields.",
+      "passwordsNotMatch": "New passwords do not match.",
+      "passwordUpdated": "Password updated.",
+      "passwordUpdateFailed": "Failed to update password.",
+      "accountDeleted": "Account deleted.",
+      "deleteAccountFailed": "Failed to delete account.",
+      "languageSaved": "Language preference saved."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Monitor your API endpoints in real-time",
+    "errors": {
+      "loadData": "Failed to load data."
+    },
+    "stats": {
+      "totalEndpoints": "Total Endpoints",
+      "endpointsUp": "Endpoints Up",
+      "endpointsDown": "Endpoints Down",
+      "avgResponse": "Avg Response"
+    },
+    "projectsOverview": {
+      "title": "Projects Overview",
+      "empty": "No projects yet. Create a new project to get started.",
+      "noDescription": "No description",
+      "upCount": "{count} up",
+      "downCount": "{count} down"
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Manage your API monitoring projects",
+    "newProject": "New Project",
+    "retry": "Retry",
+    "empty": "No projects yet. Create your first project.",
+    "noDescription": "No description",
+    "errors": {
+      "loadProjects": "Failed to load projects.",
+      "enterProjectName": "Please enter a project name.",
+      "createProjectFailed": "Failed to create project."
+    },
+    "toasts": {
+      "projectCreated": "Project created."
+    },
+    "createDialog": {
+      "title": "Create New Project",
+      "projectName": "Project Name",
+      "projectNamePlaceholder": "My Project",
+      "description": "Description (Optional)",
+      "descriptionPlaceholder": "Enter a short description for this project",
+      "creating": "Creating...",
+      "createProject": "Create Project"
+    },
+    "metrics": {
+      "endpoints": "Endpoints",
+      "status": "Status",
+      "statusValue": "{up} up / {down} down",
+      "avgResponse": "Avg Response"
+    },
+    "status": {
+      "allOperational": "All Systems Operational",
+      "needsAttention": "Needs Attention",
+      "noEndpoints": "No endpoints yet"
+    }
+  },
+  "alerts": {
+    "title": "Alert Configuration",
+    "subtitle": "Manage notification settings for your endpoints",
+    "newAlert": "New Alert",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "empty": "No alert settings yet. Add your first alert.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "confirmDelete": "Delete this alert?",
+    "alertTitle": "{type} Alert",
+    "failureAfter": "Alert after {count} consecutive failures",
+    "errors": {
+      "loadSettings": "Failed to load alert settings.",
+      "selectEndpoint": "Please select an endpoint.",
+      "enterTarget": "Please enter a target.",
+      "createFailed": "Failed to create alert.",
+      "deleteFailed": "Failed to delete alert.",
+      "toggleFailed": "Failed to update alert status."
+    },
+    "toasts": {
+      "created": "Alert created.",
+      "deleted": "Alert deleted.",
+      "enabled": "Alert enabled.",
+      "disabled": "Alert disabled."
+    },
+    "form": {
+      "title": "Create New Alert",
+      "project": "Project",
+      "selectProject": "Select project",
+      "endpoint": "Endpoint",
+      "selectEndpoint": "Select endpoint",
+      "alertType": "Alert Type",
+      "selectType": "Select type",
+      "typeEmail": "Email",
+      "typeSlack": "Slack",
+      "failureThreshold": "Failure Threshold",
+      "failureHelp": "Alert after N consecutive failures",
+      "target": "Target (Email or Slack Webhook URL)",
+      "targetPlaceholder": "admin@example.com or https://hooks.slack.com/services/...",
+      "create": "Create Alert"
+    }
+  },
+  "projectDetail": {
+    "notFound": "Project not found.",
+    "backToProjects": "Back to projects",
+    "noDescription": "No description",
+    "addEndpoint": "Add Endpoint",
+    "empty": "No endpoints yet. Add your first endpoint.",
+    "confirmDeleteEndpoint": "Delete this endpoint?",
+    "endpointMeta": "Expected: {expectedStatusCode} · Interval: {checkInterval}s",
+    "lastChecked": "Last checked",
+    "runCheckNow": "Run check now",
+    "errors": {
+      "loadData": "Failed to load data.",
+      "toggleFailed": "Failed to change endpoint status.",
+      "deleteFailed": "Failed to delete endpoint.",
+      "checkFailed": "Failed to run the check."
+    },
+    "toasts": {
+      "endpointEnabled": "Endpoint enabled.",
+      "endpointDisabled": "Endpoint disabled.",
+      "endpointDeleted": "Endpoint deleted.",
+      "checkSucceeded": "Check succeeded: {statusCode} - {responseTimeMs}ms",
+      "checkFailed": "Check failed: {status} - {detail}"
+    }
+  },
+  "admin": {
+    "members": {
+      "title": "Members",
+      "subtitle": "Manage workspace members and roles",
+      "invite": "Invite Member",
+      "email": "Email",
+      "emailPlaceholder": "user@example.com",
+      "role": "Role",
+      "selectRole": "Select role",
+      "joined": "Joined",
+      "actions": "Actions",
+      "changeRole": "Change Role",
+      "removeMember": "Remove",
+      "confirmRemove": "Remove this member?",
+      "confirmRemoveDescription": "This member will lose access to the workspace.",
+      "cancel": "Cancel",
+      "you": "(you)",
+      "empty": "No members yet.",
+      "errors": {
+        "loadFailed": "Failed to load members.",
+        "inviteFailed": "Failed to invite member.",
+        "updateRoleFailed": "Failed to update role.",
+        "removeFailed": "Failed to remove member.",
+        "enterEmail": "Please enter an email address."
+      },
+      "toasts": {
+        "invited": "Member invited.",
+        "roleUpdated": "Role updated.",
+        "removed": "Member removed."
+      }
+    }
+  },
+  "permissions": {
+    "noAccess": "You don't have permission to access this page.",
+    "contactAdmin": "Please contact your workspace admin.",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Member",
+      "viewer": "Viewer"
+    }
+  },
+  "billing": {
+    "title": "Billing",
+    "tabs": {
+      "pricing": "Plans",
+      "billing": "Billing"
+    },
+    "currentPlan": "Current Plan",
+    "planInfo": {
+      "title": "Plan Information",
+      "plan": "Plan",
+      "status": "Status",
+      "nextBilling": "Next Billing Date",
+      "noBillingDate": "No scheduled billing",
+      "cancelScheduled": "Cancels at period end"
+    },
+    "status": {
+      "active": "Active",
+      "canceled": "Canceled",
+      "past_due": "Past Due",
+      "trialing": "Trial",
+      "none": "No Subscription"
+    },
+    "actions": {
+      "manageSubscription": "Manage Subscription",
+      "changePlan": "Change Plan",
+      "upgrade": "Upgrade to Pro",
+      "currentPlan": "Current Plan",
+      "contactSales": "Contact Sales"
+    },
+    "toasts": {
+      "checkoutMock": "Payment processing is not available in demo mode.",
+      "portalMock": "Subscription management is not available in demo mode.",
+      "checkoutError": "Failed to create checkout session.",
+      "portalError": "Failed to open subscription portal."
+    }
+  },
+  "pricing": {
+    "title": "Choose Your Plan",
+    "subtitle": "Start with Free, upgrade when you need more power.",
+    "perMonth": "/month",
+    "free": "Free",
+    "popular": "Most Popular"
+  },
+  "planLimit": {
+    "projectWarning": "You've used {current} of {max} projects on the {plan} plan.",
+    "endpointWarning": "You've used {current} of {max} endpoints on the {plan} plan.",
+    "upgradeMessage": "Upgrade to Pro for more capacity.",
+    "upgradeCta": "Upgrade to Pro"
+  },
+  "features": {
+    "threeProjects": "Up to 3 projects",
+    "fiveEndpoints": "5 endpoints per project",
+    "fiveMinInterval": "5-minute check interval",
+    "emailAlerts": "Email alerts",
+    "twentyFourHourHistory": "24-hour history",
+    "fiftyProjects": "Up to 50 projects",
+    "hundredEndpoints": "100 endpoints per project",
+    "thirtySecondInterval": "30-second check interval",
+    "emailSlackAlerts": "Email + Slack alerts",
+    "ninetyDayHistory": "90-day history",
+    "prioritySupport": "Priority support",
+    "customWebhooks": "Custom webhooks"
+  }
+}

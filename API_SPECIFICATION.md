@@ -48,18 +48,18 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 
 #### 에러 코드 목록
 
-| code | HTTP Status | 설명 |
-|------|-------------|------|
-| `VALIDATION_ERROR` | 400 | 요청 데이터 검증 실패 |
-| `UNAUTHORIZED` | 401 | 인증 필요 |
-| `INVALID_CREDENTIALS` | 401 | 로그인 실패 |
-| `FORBIDDEN` | 403 | 권한 없음 (다른 사용자의 리소스) |
-| `USER_NOT_FOUND` | 404 | 사용자 없음 |
-| `PROJECT_NOT_FOUND` | 404 | 프로젝트 없음 |
-| `ENDPOINT_NOT_FOUND` | 404 | 엔드포인트 없음 |
-| `ALERT_NOT_FOUND` | 404 | 알림 설정 없음 |
-| `DUPLICATE_EMAIL` | 409 | 이메일 중복 |
-| `INTERNAL_SERVER_ERROR` | 500 | 서버 내부 오류 |
+| code                    | HTTP Status | 설명                             |
+| ----------------------- | ----------- | -------------------------------- |
+| `VALIDATION_ERROR`      | 400         | 요청 데이터 검증 실패            |
+| `UNAUTHORIZED`          | 401         | 인증 필요                        |
+| `INVALID_CREDENTIALS`   | 401         | 로그인 실패                      |
+| `FORBIDDEN`             | 403         | 권한 없음 (다른 사용자의 리소스) |
+| `USER_NOT_FOUND`        | 404         | 사용자 없음                      |
+| `PROJECT_NOT_FOUND`     | 404         | 프로젝트 없음                    |
+| `ENDPOINT_NOT_FOUND`    | 404         | 엔드포인트 없음                  |
+| `ALERT_NOT_FOUND`       | 404         | 알림 설정 없음                   |
+| `DUPLICATE_EMAIL`       | 409         | 이메일 중복                      |
+| `INTERNAL_SERVER_ERROR` | 500         | 서버 내부 오류                   |
 
 ### 인증
 
@@ -79,12 +79,15 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 ### Enum 값
 
 #### HttpMethod
+
 `GET` | `POST` | `PUT` | `PATCH` | `DELETE` | `HEAD` | `OPTIONS`
 
 #### CheckStatus
+
 `SUCCESS` | `FAILURE` | `TIMEOUT` | `ERROR`
 
 #### AlertType
+
 `EMAIL` | `SLACK`
 
 ### 날짜/시간 형식
@@ -102,6 +105,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 회원가입 후 사용자 ID를 반환합니다.
 
 **Request Body**
+
 ```json
 {
   "email": "user@example.com",
@@ -110,13 +114,14 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 |
-|------|------|------|-----------|
-| email | string | O | 이메일 형식 |
-| password | string | O | 8-20자, 대문자+소문자+숫자+특수문자 포함 |
-| nickname | string | O | 2-20자 |
+| 필드     | 타입   | 필수 | 검증 규칙                                |
+| -------- | ------ | ---- | ---------------------------------------- |
+| email    | string | O    | 이메일 형식                              |
+| password | string | O    | 8-20자, 대문자+소문자+숫자+특수문자 포함 |
+| nickname | string | O    | 2-20자                                   |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -131,6 +136,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`POST /auth/login`** (인증 불필요)
 
 **Request Body**
+
 ```json
 {
   "email": "user@example.com",
@@ -138,12 +144,13 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 |
-|------|------|------|-----------|
-| email | string | O | 이메일 형식 |
-| password | string | O | 필수 |
+| 필드     | 타입   | 필수 | 검증 규칙   |
+| -------- | ------ | ---- | ----------- |
+| email    | string | O    | 이메일 형식 |
+| password | string | O    | 필수        |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -161,17 +168,19 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`POST /auth/refresh`** (인증 불필요)
 
 **Request Body**
+
 ```json
 {
   "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
-| 필드 | 타입 | 필수 |
-|------|------|------|
-| refreshToken | string | O |
+| 필드         | 타입   | 필수 |
+| ------------ | ------ | ---- |
+| refreshToken | string | O    |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -189,17 +198,19 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`POST /auth/logout`** (인증 필요)
 
 **Request Body**
+
 ```json
 {
   "refreshToken": "eyJhbGciOiJIUzI1NiJ9..."
 }
 ```
 
-| 필드 | 타입 | 필수 |
-|------|------|------|
-| refreshToken | string | O |
+| 필드         | 타입   | 필수 |
+| ------------ | ------ | ---- |
+| refreshToken | string | O    |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true
@@ -215,6 +226,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`GET /users/me`** (인증 필요)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -234,17 +246,19 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`PATCH /users/me`** (인증 필요)
 
 **Request Body**
+
 ```json
 {
   "nickname": "새닉네임"
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 |
-|------|------|------|-----------|
-| nickname | string | X | 2-20자 |
+| 필드     | 타입   | 필수 | 검증 규칙 |
+| -------- | ------ | ---- | --------- |
+| nickname | string | X    | 2-20자    |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true
@@ -258,6 +272,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`PATCH /users/me/password`** (인증 필요)
 
 **Request Body**
+
 ```json
 {
   "currentPassword": "OldPassword1!",
@@ -266,13 +281,14 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 |
-|------|------|------|-----------|
-| currentPassword | string | O | 필수 |
-| newPassword | string | O | 8-20자, 대문자+소문자+숫자+특수문자 포함 |
-| newPasswordConfirm | string | O | 필수 |
+| 필드               | 타입   | 필수 | 검증 규칙                                |
+| ------------------ | ------ | ---- | ---------------------------------------- |
+| currentPassword    | string | O    | 필수                                     |
+| newPassword        | string | O    | 8-20자, 대문자+소문자+숫자+특수문자 포함 |
+| newPasswordConfirm | string | O    | 필수                                     |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true
@@ -286,6 +302,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`DELETE /users/me`** (인증 필요)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true
@@ -301,6 +318,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`POST /projects`** (인증 필요)
 
 **Request Body**
+
 ```json
 {
   "name": "내 프로젝트",
@@ -308,12 +326,13 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 |
-|------|------|------|-----------|
-| name | string | O | 최대 100자 |
-| description | string | X | 최대 500자 |
+| 필드        | 타입   | 필수 | 검증 규칙  |
+| ----------- | ------ | ---- | ---------- |
+| name        | string | O    | 최대 100자 |
+| description | string | X    | 최대 500자 |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -333,6 +352,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`GET /projects`** (인증 필요)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -359,6 +379,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 | id | Long | 프로젝트 ID |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -378,6 +399,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`PUT /projects/{id}`** (인증 필요)
 
 **Request Body**
+
 ```json
 {
   "name": "수정된 이름",
@@ -385,10 +407,10 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 |
-|------|------|------|-----------|
-| name | string | X | 최대 100자 |
-| description | string | X | 최대 500자 |
+| 필드        | 타입   | 필수 | 검증 규칙  |
+| ----------- | ------ | ---- | ---------- |
+| name        | string | X    | 최대 100자 |
+| description | string | X    | 최대 500자 |
 
 **Response** `200 OK` — ProjectResponse 동일
 
@@ -399,6 +421,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`DELETE /projects/{id}`** (인증 필요, soft delete)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true
@@ -419,6 +442,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 | projectId | Long | 프로젝트 ID |
 
 **Request Body**
+
 ```json
 {
   "url": "https://api.example.com/health",
@@ -430,16 +454,17 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 | 기본값 |
-|------|------|------|-----------|--------|
-| url | string | O | URL 형식 | - |
-| httpMethod | string | O | HttpMethod enum | - |
-| headers | string | X | JSON 문자열 | null |
-| body | string | X | - | null |
-| expectedStatusCode | integer | X | 100-599 | 200 |
-| checkInterval | integer | X | 1 이상 (초 단위) | 60 |
+| 필드               | 타입    | 필수 | 검증 규칙        | 기본값 |
+| ------------------ | ------- | ---- | ---------------- | ------ |
+| url                | string  | O    | URL 형식         | -      |
+| httpMethod         | string  | O    | HttpMethod enum  | -      |
+| headers            | string  | X    | JSON 문자열      | null   |
+| body               | string  | X    | -                | null   |
+| expectedStatusCode | integer | X    | 100-599          | 200    |
+| checkInterval      | integer | X    | 1 이상 (초 단위) | 60     |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -466,6 +491,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`GET /projects/{projectId}/endpoints`** (인증 필요)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -512,6 +538,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`DELETE /endpoints/{id}`** (인증 필요, soft delete)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true
@@ -541,6 +568,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **Request Body**: 없음
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -568,6 +596,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 | limit | int | X | 20 | 조회할 개수 |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -603,6 +632,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 최근 24시간 기준 통계를 반환합니다.
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -625,6 +655,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 최근 24시간을 시간 단위로 집계한 통계입니다.
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -654,6 +685,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 프로젝트 내 모든 엔드포인트의 현재 상태를 합산한 통계입니다.
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -680,6 +712,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 | endpointId | Long | 엔드포인트 ID |
 
 **Request Body**
+
 ```json
 {
   "alertType": "EMAIL",
@@ -688,13 +721,14 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 | 기본값 | 설명 |
-|------|------|------|-----------|--------|------|
-| alertType | string | O | `EMAIL` 또는 `SLACK` | - | 알림 유형 |
-| target | string | O | 필수 | - | 이메일 주소 또는 Slack Webhook URL |
-| threshold | integer | X | 1 이상 | 3 | 연속 실패 횟수 임계값 |
+| 필드      | 타입    | 필수 | 검증 규칙            | 기본값 | 설명                               |
+| --------- | ------- | ---- | -------------------- | ------ | ---------------------------------- |
+| alertType | string  | O    | `EMAIL` 또는 `SLACK` | -      | 알림 유형                          |
+| target    | string  | O    | 필수                 | -      | 이메일 주소 또는 Slack Webhook URL |
+| threshold | integer | X    | 1 이상               | 3      | 연속 실패 횟수 임계값              |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -717,6 +751,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`GET /endpoints/{endpointId}/alerts`** (인증 필요)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -750,6 +785,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`PUT /alerts/{id}`** (인증 필요)
 
 **Request Body**
+
 ```json
 {
   "alertType": "SLACK",
@@ -758,11 +794,11 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 }
 ```
 
-| 필드 | 타입 | 필수 | 검증 규칙 |
-|------|------|------|-----------|
-| alertType | string | X | `EMAIL` 또는 `SLACK` |
-| target | string | X | - |
-| threshold | integer | X | 1 이상 |
+| 필드      | 타입    | 필수 | 검증 규칙            |
+| --------- | ------- | ---- | -------------------- |
+| alertType | string  | X    | `EMAIL` 또는 `SLACK` |
+| target    | string  | X    | -                    |
+| threshold | integer | X    | 1 이상               |
 
 **Response** `200 OK` — AlertResponse 동일
 
@@ -773,6 +809,7 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 **`DELETE /alerts/{id}`** (인증 필요, soft delete)
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true
@@ -794,61 +831,68 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 ## API 엔드포인트 요약
 
 ### 인증 (Public)
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/users/signup` | 회원가입 |
-| POST | `/auth/login` | 로그인 |
-| POST | `/auth/refresh` | 토큰 갱신 |
+
+| Method | URL             | 설명      |
+| ------ | --------------- | --------- |
+| POST   | `/users/signup` | 회원가입  |
+| POST   | `/auth/login`   | 로그인    |
+| POST   | `/auth/refresh` | 토큰 갱신 |
 
 ### 인증 (Protected)
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/auth/logout` | 로그아웃 |
+
+| Method | URL            | 설명     |
+| ------ | -------------- | -------- |
+| POST   | `/auth/logout` | 로그아웃 |
 
 ### 사용자
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/users/me` | 내 정보 조회 |
-| PATCH | `/users/me` | 내 정보 수정 |
-| PATCH | `/users/me/password` | 비밀번호 변경 |
-| DELETE | `/users/me` | 회원 탈퇴 |
+
+| Method | URL                  | 설명          |
+| ------ | -------------------- | ------------- |
+| GET    | `/users/me`          | 내 정보 조회  |
+| PATCH  | `/users/me`          | 내 정보 수정  |
+| PATCH  | `/users/me/password` | 비밀번호 변경 |
+| DELETE | `/users/me`          | 회원 탈퇴     |
 
 ### 프로젝트
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/projects` | 프로젝트 생성 |
-| GET | `/projects` | 내 프로젝트 목록 |
-| GET | `/projects/{id}` | 프로젝트 상세 |
-| PUT | `/projects/{id}` | 프로젝트 수정 |
-| DELETE | `/projects/{id}` | 프로젝트 삭제 |
+
+| Method | URL              | 설명             |
+| ------ | ---------------- | ---------------- |
+| POST   | `/projects`      | 프로젝트 생성    |
+| GET    | `/projects`      | 내 프로젝트 목록 |
+| GET    | `/projects/{id}` | 프로젝트 상세    |
+| PUT    | `/projects/{id}` | 프로젝트 수정    |
+| DELETE | `/projects/{id}` | 프로젝트 삭제    |
 
 ### 엔드포인트
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/projects/{projectId}/endpoints` | 엔드포인트 생성 |
-| GET | `/projects/{projectId}/endpoints` | 엔드포인트 목록 |
-| GET | `/endpoints/{id}` | 엔드포인트 상세 |
-| PUT | `/endpoints/{id}` | 엔드포인트 수정 |
-| DELETE | `/endpoints/{id}` | 엔드포인트 삭제 |
-| PATCH | `/endpoints/{id}/toggle` | 활성화 토글 |
+
+| Method | URL                               | 설명            |
+| ------ | --------------------------------- | --------------- |
+| POST   | `/projects/{projectId}/endpoints` | 엔드포인트 생성 |
+| GET    | `/projects/{projectId}/endpoints` | 엔드포인트 목록 |
+| GET    | `/endpoints/{id}`                 | 엔드포인트 상세 |
+| PUT    | `/endpoints/{id}`                 | 엔드포인트 수정 |
+| DELETE | `/endpoints/{id}`                 | 엔드포인트 삭제 |
+| PATCH  | `/endpoints/{id}/toggle`          | 활성화 토글     |
 
 ### 헬스체크
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/endpoints/{id}/test` | 즉시 체크 실행 |
-| GET | `/endpoints/{id}/checks?limit=20` | 최근 체크 결과 |
-| GET | `/endpoints/{id}/stats` | 24시간 통계 |
-| GET | `/endpoints/{id}/stats/hourly` | 시간별 통계 |
-| GET | `/projects/{id}/stats` | 프로젝트 통계 |
+
+| Method | URL                               | 설명           |
+| ------ | --------------------------------- | -------------- |
+| POST   | `/endpoints/{id}/test`            | 즉시 체크 실행 |
+| GET    | `/endpoints/{id}/checks?limit=20` | 최근 체크 결과 |
+| GET    | `/endpoints/{id}/stats`           | 24시간 통계    |
+| GET    | `/endpoints/{id}/stats/hourly`    | 시간별 통계    |
+| GET    | `/projects/{id}/stats`            | 프로젝트 통계  |
 
 ### 알림 설정
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/endpoints/{endpointId}/alerts` | 알림 설정 생성 |
-| GET | `/endpoints/{endpointId}/alerts` | 알림 설정 목록 |
-| PUT | `/alerts/{id}` | 알림 설정 수정 |
-| DELETE | `/alerts/{id}` | 알림 설정 삭제 |
-| PATCH | `/alerts/{id}/toggle` | 알림 활성화 토글 |
+
+| Method | URL                              | 설명             |
+| ------ | -------------------------------- | ---------------- |
+| POST   | `/endpoints/{endpointId}/alerts` | 알림 설정 생성   |
+| GET    | `/endpoints/{endpointId}/alerts` | 알림 설정 목록   |
+| PUT    | `/alerts/{id}`                   | 알림 설정 수정   |
+| DELETE | `/alerts/{id}`                   | 알림 설정 삭제   |
+| PATCH  | `/alerts/{id}/toggle`            | 알림 활성화 토글 |
 
 ---
 
