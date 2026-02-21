@@ -1,7 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -13,10 +12,12 @@ import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
+import { useTranslations } from "next-intl";
 
 export function LoginPage() {
   const router = useRouter();
   const isDarkMode = useDarkMode();
+  const t = useTranslations("auth.login");
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +32,7 @@ export function LoginPage() {
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!email || !password) {
-      toast.error('이메일과 비밀번호를 입력해 주세요.');
+      toast.error(t('errors.missingCredentials'));
       return;
     }
     setIsLoading(true);
@@ -39,7 +40,7 @@ export function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, '로그인에 실패했습니다.'));
+      toast.error(getApiErrorMessage(error, t('errors.signInFailed')));
     } finally {
       setIsLoading(false);
     }
@@ -72,20 +73,20 @@ export function LoginPage() {
               <Shield className="h-8 w-8 text-white" />
             </motion.div>
             <CardTitle className={`text-2xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Welcome to APIGuard
+              {t('title')}
             </CardTitle>
             <CardDescription className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-              Monitor your APIs with confidence
+              {t('description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Email</Label>
+                <Label htmlFor="email" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{t('email')}</Label>
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="you@example.com"
+                  placeholder={t('emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -94,7 +95,7 @@ export function LoginPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Password</Label>
+                <Label htmlFor="password" className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{t('password')}</Label>
                 <Input 
                   id="password" 
                   type="password" 
@@ -110,20 +111,20 @@ export function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t('signingIn')}
                   </>
                 ) : (
-                  'Sign In'
+                  t('signIn')
                 )}
               </Button>
 
               <div className="text-center text-sm">
-                <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Don&apos;t have an account? </span>
+                <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('noAccount')} </span>
                 <Link 
                   href="/register"
                   className={`font-medium hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
                 >
-                  Sign up
+                  {t('signUp')}
                 </Link>
               </div>
             </form>

@@ -1,7 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Link, useRouter } from "@/i18n/navigation";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -13,10 +12,12 @@ import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
+import { useTranslations } from "next-intl";
 
 export function RegisterPage() {
   const router = useRouter();
   const isDarkMode = useDarkMode();
+  const t = useTranslations("auth.register");
   const { signup } = useAuth();
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
@@ -27,20 +28,19 @@ export function RegisterPage() {
   const handleRegister = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!nickname || !email || !password || !confirmPassword) {
-      toast.error('모든 필드를 입력해 주세요.');
+      toast.error(t('errors.fillAllFields'));
       return;
     }
     if (password !== confirmPassword) {
-      toast.error('비밀번호가 일치하지 않습니다.');
+      toast.error(t('errors.passwordsNotMatch'));
       return;
     }
     setIsLoading(true);
     try {
       await signup(email, password, nickname);
-      toast.success('회원가입이 완료되었습니다. 로그인해 주세요.');
-      router.push('/login');
+      router.push('/register/success');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, '회원가입에 실패했습니다.'));
+      toast.error(getApiErrorMessage(error, t('errors.signUpFailed')));
     } finally {
       setIsLoading(false);
     }
@@ -76,19 +76,19 @@ export function RegisterPage() {
               <Shield className="h-8 w-8 text-white" />
             </motion.div>
             <CardTitle className={`text-2xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Create your account
+              {t('title')}
             </CardTitle>
             <CardDescription className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-              Start monitoring your APIs in minutes
+              {t('description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className={labelStyles}>Nickname</Label>
+                <Label htmlFor="name" className={labelStyles}>{t('nickname')}</Label>
                 <Input
                   id="name"
-                  placeholder="홍길동"
+                  placeholder={t('nicknamePlaceholder')}
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   disabled={isLoading}
@@ -97,11 +97,11 @@ export function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className={labelStyles}>Email</Label>
+                <Label htmlFor="email" className={labelStyles}>{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t('emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -110,7 +110,7 @@ export function RegisterPage() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password" className={labelStyles}>Password</Label>
+                <Label htmlFor="password" className={labelStyles}>{t('password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -123,7 +123,7 @@ export function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-password" className={labelStyles}>Confirm Password</Label>
+                <Label htmlFor="confirm-password" className={labelStyles}>{t('confirmPassword')}</Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -139,20 +139,20 @@ export function RegisterPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {t('creatingAccount')}
                   </>
                 ) : (
-                  'Create Account'
+                  t('createAccount')
                 )}
               </Button>
 
               <div className="text-center text-sm">
-                <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Already have an account? </span>
+                <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('alreadyHaveAccount')} </span>
                 <Link 
                   href="/login"
                   className={`font-medium hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
                 >
-                  Sign in
+                  {t('signIn')}
                 </Link>
               </div>
             </form>

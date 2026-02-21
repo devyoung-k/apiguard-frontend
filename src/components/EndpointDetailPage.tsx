@@ -1,6 +1,7 @@
 "use client"
 
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -47,7 +48,7 @@ export function EndpointDetailPage() {
       setHourlyStats(hourly);
       setError(null);
     } catch {
-      setError('데이터를 불러오는데 실패했습니다.');
+      setError('Failed to load data.');
     } finally {
       setIsLoading(false);
     }
@@ -62,14 +63,14 @@ export function EndpointDetailPage() {
     try {
       const result = await healthChecksApi.testEndpoint(endpointId);
       if (result.status === 'SUCCESS') {
-        toast.success(`체크 성공! ${result.statusCode} - ${result.responseTimeMs}ms`);
+        toast.success(`Check succeeded: ${result.statusCode} - ${result.responseTimeMs}ms`);
       } else {
-        toast.error(`체크 실패: ${result.status} - ${result.errorMessage || result.statusCode}`);
+        toast.error(`Check failed: ${result.status} - ${result.errorMessage || result.statusCode}`);
       }
-      // 데이터 새로고침
+      // Refresh data
       await fetchData();
     } catch {
-      toast.error('체크 실행에 실패했습니다.');
+      toast.error('Failed to run the check.');
     } finally {
       setIsTesting(false);
     }
@@ -82,16 +83,16 @@ export function EndpointDetailPage() {
   if (error || !endpoint) {
     return (
       <PageErrorState
-        message={error || '엔드포인트를 찾을 수 없습니다.'}
+        message={error || 'Endpoint not found.'}
         onAction={() => router.push(`/projects/${projectId}`)}
-        actionLabel="돌아가기"
+        actionLabel="Back"
       />
     );
   }
 
-  // 차트 데이터 변환
+  // Transform chart data
   const responseTimeData = hourlyStats.map((h) => ({
-    time: new Date(h.hour).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+    time: new Date(h.hour).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     value: Math.round(h.avgResponseTimeMs),
   }));
 
@@ -214,7 +215,7 @@ export function EndpointDetailPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className={`text-center py-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  데이터가 아직 없습니다.
+                  No data yet.
                 </div>
               )}
             </CardContent>
@@ -260,7 +261,7 @@ export function EndpointDetailPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className={`text-center py-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  데이터가 아직 없습니다.
+                  No data yet.
                 </div>
               )}
             </CardContent>
@@ -281,7 +282,7 @@ export function EndpointDetailPage() {
           <CardContent>
             {checks.length === 0 ? (
               <div className={`text-center py-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                체크 기록이 없습니다.
+                No check history yet.
               </div>
             ) : (
               <div className="overflow-x-auto">

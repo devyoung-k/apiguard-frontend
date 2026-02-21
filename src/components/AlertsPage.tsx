@@ -17,6 +17,7 @@ import type { AlertResponse, AlertType, EndpointResponse, ProjectResponse } from
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
+import { useTranslations } from "next-intl";
 
 interface AlertWithEndpoint extends AlertResponse {
   endpointUrl?: string;
@@ -25,6 +26,7 @@ interface AlertWithEndpoint extends AlertResponse {
 export function AlertsPage() {
   const [showNewAlertForm, setShowNewAlertForm] = useState(false);
   const isDarkMode = useDarkMode();
+  const t = useTranslations("alerts");
   const [alerts, setAlerts] = useState<AlertWithEndpoint[]>([]);
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
@@ -45,7 +47,7 @@ export function AlertsPage() {
       const projectList = await projectsApi.getProjects();
       setProjects(projectList);
 
-      // 모든 프로젝트의 엔드포인트 가져오기
+      // Load endpoints from all projects
       const allEndpoints: EndpointResponse[] = [];
       const allAlerts: AlertWithEndpoint[] = [];
 
@@ -62,28 +64,28 @@ export function AlertsPage() {
       setAlerts(allAlerts);
       setError(null);
     } catch {
-      setError('알림 설정을 불러오는데 실패했습니다.');
+      setError(t('errors.loadSettings'));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // 프로젝트 선택 시 해당 엔드포인트 필터링
+  // Filter endpoints by selected project
   const filteredEndpoints = selectedProjectId
     ? endpoints.filter((ep) => ep.projectId === Number(selectedProjectId))
     : [];
 
   const handleCreate = async () => {
     if (!selectedEndpointId) {
-      toast.error('엔드포인트를 선택해 주세요.');
+      toast.error(t('errors.selectEndpoint'));
       return;
     }
     if (!newTarget.trim()) {
-      toast.error('대상을 입력해 주세요.');
+      toast.error(t('errors.enterTarget'));
       return;
     }
 
@@ -94,7 +96,7 @@ export function AlertsPage() {
         target: newTarget,
         threshold: Number(newThreshold) || 3,
       });
-      toast.success('알림이 생성되었습니다.');
+      toast.success(t('toasts.created'));
       setShowNewAlertForm(false);
       setNewTarget("");
       setNewThreshold("3");
@@ -102,20 +104,20 @@ export function AlertsPage() {
       setSelectedEndpointId("");
       await fetchData();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, '알림 생성에 실패했습니다.'));
+      toast.error(getApiErrorMessage(err, t('errors.createFailed')));
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleDelete = async (alertId: number) => {
-    if (!confirm('이 알림을 삭제하시겠습니까?')) return;
+    if (!confirm(t('confirmDelete'))) return;
     try {
       await alertsApi.deleteAlert(alertId);
       setAlerts((prev) => prev.filter((a) => a.id !== alertId));
-      toast.success('알림이 삭제되었습니다.');
+      toast.success(t('toasts.deleted'));
     } catch {
-      toast.error('삭제에 실패했습니다.');
+      toast.error(t('errors.deleteFailed'));
     }
   };
 
@@ -123,9 +125,9 @@ export function AlertsPage() {
     try {
       const updated = await alertsApi.toggleAlert(alertId);
       setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, ...updated } : a)));
-      toast.success(`알림이 ${updated.isActive ? '활성화' : '비활성화'}되었습니다.`);
+      toast.success(updated.isActive ? t('toasts.enabled') : t('toasts.disabled'));
     } catch {
-      toast.error('상태 변경에 실패했습니다.');
+      toast.error(t('errors.toggleFailed'));
     }
   };
 
@@ -143,7 +145,7 @@ export function AlertsPage() {
         <div className="text-center space-y-2">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
           <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{error}</p>
-          <Button onClick={fetchData} variant="outline">다시 시도</Button>
+          <Button onClick={fetchData} variant="outline">{t('retry')}</Button>
         </div>
       </div>
     );
@@ -153,12 +155,12 @@ export function AlertsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-3xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Alert Configuration</h1>
-          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Manage notification settings for your endpoints</p>
+          <h1 className={`text-3xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t('title')}</h1>
+          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('subtitle')}</p>
         </div>
         <Button className="gap-2" onClick={() => setShowNewAlertForm(!showNewAlertForm)}>
           {showNewAlertForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {showNewAlertForm ? 'Cancel' : 'New Alert'}
+          {showNewAlertForm ? t('cancel') : t('newAlert')}
         </Button>
       </div>
 
@@ -174,15 +176,15 @@ export function AlertsPage() {
           >
             <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
               <CardHeader>
-                <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Create New Alert</CardTitle>
+                <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>{t('form.title')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className={isDarkMode ? 'text-gray-300' : ''}>프로젝트</Label>
+                    <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.project')}</Label>
                     <Select value={selectedProjectId} onValueChange={(v) => { setSelectedProjectId(v); setSelectedEndpointId(""); }}>
                       <SelectTrigger className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
-                        <SelectValue placeholder="프로젝트 선택" />
+                        <SelectValue placeholder={t('form.selectProject')} />
                       </SelectTrigger>
                       <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
                         {projects.map((p) => (
@@ -193,10 +195,10 @@ export function AlertsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={isDarkMode ? 'text-gray-300' : ''}>엔드포인트</Label>
+                    <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.endpoint')}</Label>
                     <Select value={selectedEndpointId} onValueChange={setSelectedEndpointId} disabled={!selectedProjectId}>
                       <SelectTrigger className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
-                        <SelectValue placeholder="엔드포인트 선택" />
+                        <SelectValue placeholder={t('form.selectEndpoint')} />
                       </SelectTrigger>
                       <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
                         {filteredEndpoints.map((ep) => (
@@ -211,20 +213,20 @@ export function AlertsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className={isDarkMode ? 'text-gray-300' : ''}>Alert Type</Label>
+                    <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.alertType')}</Label>
                     <Select value={newAlertType} onValueChange={(v) => setNewAlertType(v as AlertType)}>
                       <SelectTrigger className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
-                        <SelectValue placeholder="Select type" />
+                        <SelectValue placeholder={t('form.selectType')} />
                       </SelectTrigger>
                       <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
-                        <SelectItem value="EMAIL" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>Email</SelectItem>
-                        <SelectItem value="SLACK" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>Slack</SelectItem>
+                        <SelectItem value="EMAIL" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>{t('form.typeEmail')}</SelectItem>
+                        <SelectItem value="SLACK" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>{t('form.typeSlack')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className={isDarkMode ? 'text-gray-300' : ''}>Failure Threshold</Label>
+                    <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.failureThreshold')}</Label>
                     <Input
                       type="number"
                       placeholder="3"
@@ -232,14 +234,14 @@ export function AlertsPage() {
                       onChange={(e) => setNewThreshold(e.target.value)}
                       className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : ''}
                     />
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>Alert after N consecutive failures</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>{t('form.failureHelp')}</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className={isDarkMode ? 'text-gray-300' : ''}>Target (Email or Slack Channel)</Label>
+                  <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.target')}</Label>
                   <Input
-                    placeholder="admin@example.com or #channel-name"
+                    placeholder={t('form.targetPlaceholder')}
                     value={newTarget}
                     onChange={(e) => setNewTarget(e.target.value)}
                     className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : ''}
@@ -249,12 +251,12 @@ export function AlertsPage() {
                 <div className="flex gap-2">
                   <Button onClick={handleCreate} disabled={isCreating}>
                     {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Alert
+                    {t('form.create')}
                   </Button>
                   <Button variant="outline" onClick={() => setShowNewAlertForm(false)} className={
                     isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700' : ''
                   }>
-                    Cancel
+                    {t('cancel')}
                   </Button>
                 </div>
               </CardContent>
@@ -272,7 +274,7 @@ export function AlertsPage() {
         {alerts.length === 0 ? (
           <div className={`text-center py-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>알림 설정이 없습니다. 새 알림을 추가해 보세요.</p>
+            <p>{t('empty')}</p>
           </div>
         ) : (
           alerts.map((config, index) => (
@@ -303,18 +305,18 @@ export function AlertsPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className={isDarkMode ? 'text-white' : 'text-gray-900'}>
-                            {config.alertType} Alert
+                            {t('alertTitle', {type: config.alertType})}
                           </h3>
                           <Badge variant={config.isActive ? 'default' : 'secondary'} className={
                             config.isActive 
                               ? 'bg-black text-white'
                               : isDarkMode ? 'bg-gray-800 text-gray-300' : ''
                           }>
-                            {config.isActive ? 'Enabled' : 'Disabled'}
+                            {config.isActive ? t('enabled') : t('disabled')}
                           </Badge>
                         </div>
                         <p className={`text-sm mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          Alert after {config.threshold} consecutive failures
+                          {t('failureAfter', {count: config.threshold})}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="outline" className={`text-xs ${

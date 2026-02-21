@@ -1,0 +1,339 @@
+{
+  "app": {
+    "name": "APIGuard"
+  },
+  "sidebar": {
+    "brandTagline": "API 모니터링",
+    "menu": {
+      "dashboard": "대시보드",
+      "projects": "프로젝트",
+      "alerts": "알림",
+      "admin": "관리",
+      "settings": "설정",
+      "billing": "결제"
+    },
+    "workspace": {
+      "switch": "워크스페이스 전환",
+      "create": "워크스페이스 생성"
+    },
+    "logout": "로그아웃",
+    "loggingOut": "로그아웃 중..."
+  },
+  "auth": {
+    "login": {
+      "title": "APIGuard에 오신 것을 환영합니다",
+      "description": "안정적으로 API를 모니터링하세요",
+      "email": "이메일",
+      "emailPlaceholder": "you@example.com",
+      "password": "비밀번호",
+      "signIn": "로그인",
+      "signingIn": "로그인 중...",
+      "noAccount": "계정이 없으신가요?",
+      "signUp": "회원가입",
+      "errors": {
+        "missingCredentials": "이메일과 비밀번호를 입력해 주세요.",
+        "signInFailed": "로그인에 실패했습니다."
+      }
+    },
+    "register": {
+      "title": "계정 만들기",
+      "description": "몇 분 안에 API 모니터링을 시작하세요",
+      "nickname": "닉네임",
+      "nicknamePlaceholder": "홍길동",
+      "email": "이메일",
+      "emailPlaceholder": "you@example.com",
+      "password": "비밀번호",
+      "confirmPassword": "비밀번호 확인",
+      "createAccount": "계정 생성",
+      "creatingAccount": "계정 생성 중...",
+      "alreadyHaveAccount": "이미 계정이 있으신가요?",
+      "signIn": "로그인",
+      "errors": {
+        "fillAllFields": "모든 항목을 입력해 주세요.",
+        "passwordsNotMatch": "비밀번호가 일치하지 않습니다.",
+        "signUpFailed": "회원가입에 실패했습니다."
+      }
+    }
+  },
+  "settings": {
+    "title": "설정",
+    "description": "계정 및 환경설정을 관리하세요",
+    "profile": {
+      "title": "프로필",
+      "description": "기본 계정 정보를 확인하고 수정할 수 있습니다.",
+      "email": "이메일",
+      "nickname": "닉네임",
+      "nicknamePlaceholder": "닉네임을 입력하세요",
+      "joined": "가입일",
+      "save": "저장"
+    },
+    "language": {
+      "title": "언어",
+      "description": "인터페이스에서 사용할 언어를 선택하세요.",
+      "displayLanguage": "표시 언어",
+      "selectLanguage": "언어 선택",
+      "english": "영어",
+      "korean": "한국어"
+    },
+    "password": {
+      "title": "비밀번호 변경",
+      "description": "보안을 위해 비밀번호를 주기적으로 변경하세요.",
+      "currentPassword": "현재 비밀번호",
+      "currentPasswordPlaceholder": "현재 비밀번호를 입력하세요",
+      "newPassword": "새 비밀번호",
+      "newPasswordPlaceholder": "새 비밀번호를 입력하세요",
+      "confirmNewPassword": "새 비밀번호 확인",
+      "confirmNewPasswordPlaceholder": "새 비밀번호를 다시 입력하세요",
+      "updatePassword": "비밀번호 변경"
+    },
+    "danger": {
+      "title": "계정 삭제",
+      "description": "계정을 삭제하면 모든 데이터가 영구적으로 제거되며 되돌릴 수 없습니다.",
+      "deleteAccount": "계정 삭제",
+      "confirmTitle": "정말로 계정을 삭제하시겠습니까?",
+      "confirmDescription": "이 작업은 되돌릴 수 없습니다. 모든 프로젝트, 엔드포인트, 알림 설정이 영구 삭제됩니다.",
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "toasts": {
+      "enterNickname": "닉네임을 입력해 주세요.",
+      "nicknameUpdated": "닉네임이 변경되었습니다.",
+      "nicknameUpdateFailed": "닉네임 변경에 실패했습니다.",
+      "fillAllFields": "모든 항목을 입력해 주세요.",
+      "passwordsNotMatch": "새 비밀번호가 일치하지 않습니다.",
+      "passwordUpdated": "비밀번호가 변경되었습니다.",
+      "passwordUpdateFailed": "비밀번호 변경에 실패했습니다.",
+      "accountDeleted": "계정이 삭제되었습니다.",
+      "deleteAccountFailed": "계정 삭제에 실패했습니다.",
+      "languageSaved": "언어 설정이 저장되었습니다."
+    }
+  },
+  "dashboard": {
+    "title": "대시보드",
+    "subtitle": "API 엔드포인트를 실시간으로 모니터링하세요",
+    "errors": {
+      "loadData": "데이터를 불러오지 못했습니다."
+    },
+    "stats": {
+      "totalEndpoints": "전체 엔드포인트",
+      "endpointsUp": "정상 엔드포인트",
+      "endpointsDown": "장애 엔드포인트",
+      "avgResponse": "평균 응답"
+    },
+    "projectsOverview": {
+      "title": "프로젝트 개요",
+      "empty": "아직 프로젝트가 없습니다. 새 프로젝트를 만들어 시작하세요.",
+      "noDescription": "설명 없음",
+      "upCount": "정상 {count}개",
+      "downCount": "장애 {count}개"
+    }
+  },
+  "projects": {
+    "title": "프로젝트",
+    "subtitle": "API 모니터링 프로젝트를 관리하세요",
+    "newProject": "새 프로젝트",
+    "retry": "다시 시도",
+    "empty": "아직 프로젝트가 없습니다. 첫 프로젝트를 만들어보세요.",
+    "noDescription": "설명 없음",
+    "errors": {
+      "loadProjects": "프로젝트를 불러오지 못했습니다.",
+      "enterProjectName": "프로젝트 이름을 입력해 주세요.",
+      "createProjectFailed": "프로젝트 생성에 실패했습니다."
+    },
+    "toasts": {
+      "projectCreated": "프로젝트가 생성되었습니다."
+    },
+    "createDialog": {
+      "title": "새 프로젝트 만들기",
+      "projectName": "프로젝트 이름",
+      "projectNamePlaceholder": "내 프로젝트",
+      "description": "설명 (선택)",
+      "descriptionPlaceholder": "이 프로젝트에 대한 간단한 설명을 입력하세요",
+      "creating": "생성 중...",
+      "createProject": "프로젝트 생성"
+    },
+    "metrics": {
+      "endpoints": "엔드포인트",
+      "status": "상태",
+      "statusValue": "정상 {up}개 / 장애 {down}개",
+      "avgResponse": "평균 응답"
+    },
+    "status": {
+      "allOperational": "모든 시스템 정상",
+      "needsAttention": "확인 필요",
+      "noEndpoints": "아직 엔드포인트가 없습니다"
+    }
+  },
+  "alerts": {
+    "title": "알림 설정",
+    "subtitle": "엔드포인트 알림 설정을 관리하세요",
+    "newAlert": "새 알림",
+    "cancel": "취소",
+    "retry": "다시 시도",
+    "empty": "아직 알림 설정이 없습니다. 첫 알림을 추가해 보세요.",
+    "enabled": "활성",
+    "disabled": "비활성",
+    "confirmDelete": "이 알림을 삭제하시겠습니까?",
+    "alertTitle": "{type} 알림",
+    "failureAfter": "{count}회 연속 실패 시 알림",
+    "errors": {
+      "loadSettings": "알림 설정을 불러오지 못했습니다.",
+      "selectEndpoint": "엔드포인트를 선택해 주세요.",
+      "enterTarget": "대상 값을 입력해 주세요.",
+      "createFailed": "알림 생성에 실패했습니다.",
+      "deleteFailed": "알림 삭제에 실패했습니다.",
+      "toggleFailed": "알림 상태 변경에 실패했습니다."
+    },
+    "toasts": {
+      "created": "알림이 생성되었습니다.",
+      "deleted": "알림이 삭제되었습니다.",
+      "enabled": "알림이 활성화되었습니다.",
+      "disabled": "알림이 비활성화되었습니다."
+    },
+    "form": {
+      "title": "새 알림 만들기",
+      "project": "프로젝트",
+      "selectProject": "프로젝트 선택",
+      "endpoint": "엔드포인트",
+      "selectEndpoint": "엔드포인트 선택",
+      "alertType": "알림 유형",
+      "selectType": "유형 선택",
+      "typeEmail": "이메일",
+      "typeSlack": "슬랙",
+      "failureThreshold": "실패 임계치",
+      "failureHelp": "연속 N회 실패 시 알림",
+      "target": "대상 (이메일 또는 슬랙 웹훅 URL)",
+      "targetPlaceholder": "admin@example.com 또는 https://hooks.slack.com/services/...",
+      "create": "알림 생성"
+    }
+  },
+  "projectDetail": {
+    "notFound": "프로젝트를 찾을 수 없습니다.",
+    "backToProjects": "프로젝트 목록으로",
+    "noDescription": "설명 없음",
+    "addEndpoint": "엔드포인트 추가",
+    "empty": "아직 엔드포인트가 없습니다. 첫 엔드포인트를 추가하세요.",
+    "confirmDeleteEndpoint": "이 엔드포인트를 삭제하시겠습니까?",
+    "endpointMeta": "예상 상태코드: {expectedStatusCode} · 간격: {checkInterval}초",
+    "lastChecked": "최근 점검",
+    "runCheckNow": "지금 점검 실행",
+    "errors": {
+      "loadData": "데이터를 불러오지 못했습니다.",
+      "toggleFailed": "엔드포인트 상태 변경에 실패했습니다.",
+      "deleteFailed": "엔드포인트 삭제에 실패했습니다.",
+      "checkFailed": "점검 실행에 실패했습니다."
+    },
+    "toasts": {
+      "endpointEnabled": "엔드포인트가 활성화되었습니다.",
+      "endpointDisabled": "엔드포인트가 비활성화되었습니다.",
+      "endpointDeleted": "엔드포인트가 삭제되었습니다.",
+      "checkSucceeded": "점검 성공: {statusCode} - {responseTimeMs}ms",
+      "checkFailed": "점검 실패: {status} - {detail}"
+    }
+  },
+  "admin": {
+    "members": {
+      "title": "멤버",
+      "subtitle": "워크스페이스 멤버와 역할을 관리하세요",
+      "invite": "멤버 초대",
+      "email": "이메일",
+      "emailPlaceholder": "user@example.com",
+      "role": "역할",
+      "selectRole": "역할 선택",
+      "joined": "가입일",
+      "actions": "액션",
+      "changeRole": "역할 변경",
+      "removeMember": "제거",
+      "confirmRemove": "이 멤버를 제거하시겠습니까?",
+      "confirmRemoveDescription": "이 멤버는 워크스페이스에 더 이상 접근할 수 없게 됩니다.",
+      "cancel": "취소",
+      "you": "(나)",
+      "empty": "아직 멤버가 없습니다.",
+      "errors": {
+        "loadFailed": "멤버를 불러오지 못했습니다.",
+        "inviteFailed": "멤버 초대에 실패했습니다.",
+        "updateRoleFailed": "역할 변경에 실패했습니다.",
+        "removeFailed": "멤버 제거에 실패했습니다.",
+        "enterEmail": "이메일을 입력해 주세요."
+      },
+      "toasts": {
+        "invited": "멤버가 초대되었습니다.",
+        "roleUpdated": "역할이 변경되었습니다.",
+        "removed": "멤버가 제거되었습니다."
+      }
+    }
+  },
+  "permissions": {
+    "noAccess": "이 페이지에 접근할 권한이 없습니다.",
+    "contactAdmin": "워크스페이스 관리자에게 문의하세요.",
+    "roles": {
+      "owner": "소유자",
+      "admin": "관리자",
+      "member": "멤버",
+      "viewer": "뷰어"
+    }
+  },
+  "billing": {
+    "title": "결제",
+    "tabs": {
+      "pricing": "플랜",
+      "billing": "결제 관리"
+    },
+    "currentPlan": "현재 플랜",
+    "planInfo": {
+      "title": "플랜 정보",
+      "plan": "플랜",
+      "status": "상태",
+      "nextBilling": "다음 결제일",
+      "noBillingDate": "예정된 결제 없음",
+      "cancelScheduled": "기간 종료 시 취소 예정"
+    },
+    "status": {
+      "active": "활성",
+      "canceled": "취소됨",
+      "past_due": "결제 지연",
+      "trialing": "체험판",
+      "none": "구독 없음"
+    },
+    "actions": {
+      "manageSubscription": "구독 관리",
+      "changePlan": "플랜 변경",
+      "upgrade": "Pro로 업그레이드",
+      "currentPlan": "현재 플랜",
+      "contactSales": "영업팀 문의"
+    },
+    "toasts": {
+      "checkoutMock": "데모 모드에서는 결제 처리가 불가능합니다.",
+      "portalMock": "데모 모드에서는 구독 관리가 불가능합니다.",
+      "checkoutError": "결제 세션 생성에 실패했습니다.",
+      "portalError": "구독 관리 포탈 열기에 실패했습니다."
+    }
+  },
+  "pricing": {
+    "title": "플랜 선택",
+    "subtitle": "Free로 시작하고, 더 많은 기능이 필요할 때 업그레이드하세요.",
+    "perMonth": "/월",
+    "free": "무료",
+    "popular": "인기"
+  },
+  "planLimit": {
+    "projectWarning": "{plan} 플랜의 프로젝트 {max}개 중 {current}개를 사용 중입니다.",
+    "endpointWarning": "{plan} 플랜의 엔드포인트 {max}개 중 {current}개를 사용 중입니다.",
+    "upgradeMessage": "더 많은 용량을 위해 Pro로 업그레이드하세요.",
+    "upgradeCta": "Pro로 업그레이드"
+  },
+  "features": {
+    "threeProjects": "최대 3개 프로젝트",
+    "fiveEndpoints": "프로젝트당 5개 엔드포인트",
+    "fiveMinInterval": "5분 체크 주기",
+    "emailAlerts": "이메일 알림",
+    "twentyFourHourHistory": "24시간 기록",
+    "fiftyProjects": "최대 50개 프로젝트",
+    "hundredEndpoints": "프로젝트당 100개 엔드포인트",
+    "thirtySecondInterval": "30초 체크 주기",
+    "emailSlackAlerts": "이메일 + 슬랙 알림",
+    "ninetyDayHistory": "90일 기록",
+    "prioritySupport": "우선 지원",
+    "customWebhooks": "커스텀 웹훅"
+  }
+}

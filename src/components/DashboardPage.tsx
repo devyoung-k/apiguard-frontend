@@ -6,17 +6,19 @@ import { Badge } from "./ui/badge";
 import { StatCard } from "./StatCard";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { motion } from "framer-motion";
 import * as projectsApi from "@/lib/api/projects";
 import * as healthChecksApi from "@/lib/api/health-checks";
 import type { ProjectWithStats } from "@/types/api";
 import { useDarkMode } from "@/hooks/use-dark-mode";
+import { useTranslations } from "next-intl";
 
 export function DashboardPage() {
   const router = useRouter();
   const { setTheme } = useTheme();
   const isDarkMode = useDarkMode();
+  const t = useTranslations("dashboard");
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function DashboardPage() {
         setIsLoading(true);
         const projectList = await projectsApi.getProjects();
         
-        // 각 프로젝트의 통계도 함께 로드
+        // Load stats for each project
         const projectsWithStats = await Promise.all(
           projectList.map(async (project) => {
             try {
@@ -42,20 +44,20 @@ export function DashboardPage() {
         setProjects(projectsWithStats);
         setError(null);
       } catch {
-        setError('데이터를 불러오는데 실패했습니다.');
+        setError(t('errors.loadData'));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [t]);
 
   const toggleTheme = () => {
     setTheme(isDarkMode ? 'light' : 'dark');
   };
 
-  // 통계 계산
+  // Aggregate stats
   const totalEndpoints = projects.reduce((sum, p) => sum + (p.stats?.totalEndpoints || 0), 0);
   const totalUp = projects.reduce((sum, p) => sum + (p.stats?.upCount || 0), 0);
   const totalDown = projects.reduce((sum, p) => sum + (p.stats?.downCount || 0), 0);
@@ -87,9 +89,9 @@ export function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className={`text-3xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
+          <h1 className={`text-3xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t('title')}</h1>
           <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-            Monitor your API endpoints in real-time
+            {t('subtitle')}
           </p>
         </div>
         <button
@@ -108,28 +110,28 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <StatCard
-            title="Total Endpoints"
+            title={t('stats.totalEndpoints')}
             value={totalEndpoints.toString()}
             icon={Activity}
           />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
           <StatCard
-            title="Endpoints Up"
+            title={t('stats.endpointsUp')}
             value={totalUp.toString()}
             icon={CheckCircle}
           />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <StatCard
-            title="Endpoints Down"
+            title={t('stats.endpointsDown')}
             value={totalDown.toString()}
             icon={XCircle}
           />
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
           <StatCard
-            title="Avg Response"
+            title={t('stats.avgResponse')}
             value={`${Math.round(avgResponseTime)}ms`}
             icon={Clock}
           />
@@ -140,12 +142,12 @@ export function DashboardPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
           <CardHeader>
-            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Projects Overview</CardTitle>
+            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>{t('projectsOverview.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             {projects.length === 0 ? (
               <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                프로젝트가 없습니다. 새 프로젝트를 만들어 보세요.
+                {t('projectsOverview.empty')}
               </p>
             ) : (
               <div className="space-y-4">
@@ -169,7 +171,7 @@ export function DashboardPage() {
                           {project.name}
                         </p>
                         <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {project.description || 'No description'}
+                          {project.description || t('projectsOverview.noDescription')}
                         </p>
                       </div>
                     </div>
@@ -179,14 +181,14 @@ export function DashboardPage() {
                           <div className="flex items-center gap-1">
                             <TrendingUp className="h-3 w-3 text-green-500" />
                             <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-                              {project.stats.upCount} up
+                              {t('projectsOverview.upCount', {count: project.stats.upCount})}
                             </span>
                           </div>
                           {project.stats.downCount > 0 && (
                             <div className="flex items-center gap-1">
                               <TrendingDown className="h-3 w-3 text-red-500" />
                               <span className="text-red-500">
-                                {project.stats.downCount} down
+                                {t('projectsOverview.downCount', {count: project.stats.downCount})}
                               </span>
                             </div>
                           )}

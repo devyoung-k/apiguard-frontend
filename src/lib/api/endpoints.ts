@@ -1,47 +1,35 @@
-import apiClient from '@/lib/api-client';
-import type {
-  ApiResponse,
-  EndpointResponse,
-  CreateEndpointRequest,
-  UpdateEndpointRequest,
-} from '@/types/api';
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/lib/api-client';
+import type { EndpointResponse, CreateEndpointRequest, UpdateEndpointRequest } from '@/types/api';
 
 export async function createEndpoint(
   projectId: number,
   data: CreateEndpointRequest,
 ): Promise<EndpointResponse> {
-  const res = await apiClient.post<ApiResponse<EndpointResponse>>(
+  return apiPost<EndpointResponse, CreateEndpointRequest>(
     `/projects/${projectId}/endpoints`,
     data,
   );
-  return res.data.data!;
 }
 
 export async function getEndpoints(projectId: number): Promise<EndpointResponse[]> {
-  const res = await apiClient.get<ApiResponse<EndpointResponse[]>>(
-    `/projects/${projectId}/endpoints`,
-  );
-  return res.data.data!;
+  return apiGet<EndpointResponse[]>(`/projects/${projectId}/endpoints`);
 }
 
 export async function getEndpoint(id: number): Promise<EndpointResponse> {
-  const res = await apiClient.get<ApiResponse<EndpointResponse>>(`/endpoints/${id}`);
-  return res.data.data!;
+  return apiGet<EndpointResponse>(`/endpoints/${id}`);
 }
 
 export async function updateEndpoint(
   id: number,
   data: UpdateEndpointRequest,
 ): Promise<EndpointResponse> {
-  const res = await apiClient.put<ApiResponse<EndpointResponse>>(`/endpoints/${id}`, data);
-  return res.data.data!;
+  return apiPut<EndpointResponse, UpdateEndpointRequest>(`/endpoints/${id}`, data);
 }
 
 export async function deleteEndpoint(id: number): Promise<void> {
-  await apiClient.delete<ApiResponse>(`/endpoints/${id}`);
+  await apiDelete(`/endpoints/${id}`);
 }
 
 export async function toggleEndpoint(id: number): Promise<EndpointResponse> {
-  const res = await apiClient.patch<ApiResponse<EndpointResponse>>(`/endpoints/${id}/toggle`);
-  return res.data.data!;
+  return apiPatch<EndpointResponse>(`/endpoints/${id}/toggle`);
 }

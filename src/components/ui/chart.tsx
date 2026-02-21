@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
+import type { LegendPayload, TooltipContentProps } from "recharts";
 
 import { cn } from "@/lib/utils";
 
@@ -103,6 +104,17 @@ ${colorConfig
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
+type ChartTooltipProps = TooltipContentProps<
+  number | string | ReadonlyArray<number | string>,
+  string | number
+>;
+type TooltipPayload = ChartTooltipProps["payload"];
+type TooltipPayloadItem = TooltipPayload[number];
+type TooltipFormatter = NonNullable<ChartTooltipProps["formatter"]>;
+type TooltipLabelFormatter = (
+  value: React.ReactNode,
+  payload: TooltipPayload,
+) => React.ReactNode;
 
 function ChartTooltipContent({
   active,
@@ -118,18 +130,18 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+}: ChartTooltipProps &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean;
     hideIndicator?: boolean;
     indicator?: "line" | "dot" | "dashed";
     nameKey?: string;
     labelKey?: string;
-    payload?: any[];
-    label?: any;
-    labelFormatter?: (value: any, payload: any[]) => React.ReactNode;
+    payload?: TooltipPayload;
+    label?: React.ReactNode;
+    labelFormatter?: TooltipLabelFormatter;
     labelClassName?: string;
-    formatter?: any;
+    formatter?: TooltipFormatter;
     color?: string;
   }) {
   const { config } = useChart();
@@ -185,7 +197,7 @@ function ChartTooltipContent({
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {payload.map((item, index) => {
+        {payload.map((item: TooltipPayloadItem, index: number) => {
           const key = `${nameKey || item.name || item.dataKey || "value"}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
           const indicatorColor = color || item.payload.fill || item.color;
@@ -263,7 +275,7 @@ function ChartLegendContent({
   verticalAlign = "bottom",
   nameKey,
 }: React.ComponentProps<"div"> & {
-    payload?: any[];
+    payload?: ReadonlyArray<LegendPayload>;
     verticalAlign?: "top" | "middle" | "bottom";
     hideIcon?: boolean;
     nameKey?: string;
@@ -282,7 +294,7 @@ function ChartLegendContent({
         className,
       )}
     >
-      {payload.map((item) => {
+      {payload.map((item: LegendPayload) => {
         const key = `${nameKey || item.dataKey || "value"}`;
         const itemConfig = getPayloadConfigFromPayload(config, item, key);
 

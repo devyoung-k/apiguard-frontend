@@ -30,7 +30,7 @@ export function PageErrorState({ message, onAction, actionLabel }: PageErrorStat
         <p className="text-muted-foreground">{message}</p>
         {onAction && (
           <Button onClick={onAction} variant="outline">
-            {actionLabel || '다시 시도'}
+            {actionLabel || 'Retry'}
           </Button>
         )}
       </div>

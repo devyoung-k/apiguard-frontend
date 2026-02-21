@@ -1,19 +1,19 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 
 /**
  * 다크 모드 여부를 반환하는 커스텀 훅.
- * SSR hydration 미스매치를 방지하기 위해 mounted 상태를 내부적으로 관리합니다.
+ * `resolvedTheme`를 사용해 system 설정까지 반영된 실제 테마를 반환합니다.
  */
 export function useDarkMode(): boolean {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  return mounted && (theme === 'dark' || theme === 'system');
+  return isHydrated && resolvedTheme === 'dark';
 }
