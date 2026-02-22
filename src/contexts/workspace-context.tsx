@@ -15,6 +15,7 @@ import type {
 } from '@/types/api';
 import * as workspacesApi from '@/lib/api/workspaces';
 import { useAuth } from '@/contexts/auth-context';
+import { USE_MOCK_API } from '@/lib/runtime-config';
 
 interface WorkspaceContextType {
   /** 내가 속한 워크스페이스 목록 */
@@ -85,24 +86,27 @@ const MOCK_MEMBERS: WorkspaceMember[] = [
   },
 ];
 
-// 백엔드 API가 준비되면 false로 변경
-const USE_MOCK = true;
-
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([]);
-  const [currentWorkspace, setCurrentWorkspace] =
-    useState<WorkspaceResponse | null>(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number | null>(
+    null,
+  );
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const currentWorkspace =
+    workspaces.find((workspace) => workspace.id === selectedWorkspaceId) ??
+    workspaces[0] ??
+    null;
 
   // 현재 워크스페이스에서 내 역할 도출
   const myRole =
     members.find((m) => m.userId === user?.id)?.role ??
-    (USE_MOCK ? 'owner' : undefined);
+    (USE_MOCK_API ? 'owner' : undefined);
 
   const refreshWorkspaces = useCallback(async () => {
-    if (USE_MOCK) {
+    if (USE_MOCK_API) {
       setWorkspaces(MOCK_WORKSPACES);
       return;
     }
@@ -116,7 +120,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const refreshMembers = useCallback(async () => {
     if (!currentWorkspace) return;
-    if (USE_MOCK) {
+    if (USE_MOCK_API) {
       setMembers(MOCK_MEMBERS);
       return;
     }
@@ -132,7 +136,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     (id: number) => {
       const ws = workspaces.find((w) => w.id === id);
       if (ws) {
-        setCurrentWorkspace(ws);
+        setSelectedWorkspaceId(ws.id);
         if (typeof window !== 'undefined') {
           localStorage.setItem('currentWorkspaceId', String(id));
         }
@@ -143,44 +147,57 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   // 인증 완료 시 (또는 Mock 모드) 워크스페이스 목록 로드
   useEffect(() => {
-    if (!USE_MOCK && !isAuthenticated) {
-      setWorkspaces([]);
-      setCurrentWorkspace(null);
-      setMembers([]);
-      setIsLoading(false);
-      return;
-    }
-
-    const init = async () => {
+    const initializeWorkspaceState = async () => {
       setIsLoading(true);
+      if (!USE_MOCK_API && !isAuthenticated) {
+        setWorkspaces([]);
+        setMembers([]);
+        setSelectedWorkspaceId(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const savedWorkspaceId =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('currentWorkspaceId')
+          : null;
+      const parsedWorkspaceId = savedWorkspaceId ? Number(savedWorkspaceId) : null;
+      setSelectedWorkspaceId(
+        parsedWorkspaceId && Number.isFinite(parsedWorkspaceId)
+          ? parsedWorkspaceId
+          : null,
+      );
+
       await refreshWorkspaces();
       setIsLoading(false);
     };
-    init();
+
+    void initializeWorkspaceState();
   }, [isAuthenticated, refreshWorkspaces]);
-
-  // 워크스페이스 목록이 바뀌면 자동으로 선택
-  useEffect(() => {
-    if (workspaces.length === 0) return;
-
-    const savedId =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('currentWorkspaceId')
-        : null;
-
-    const found = savedId
-      ? workspaces.find((w) => w.id === Number(savedId))
-      : null;
-
-    setCurrentWorkspace(found ?? workspaces[0]);
-  }, [workspaces]);
 
   // 현재 워크스페이스가 바뀌면 멤버 목록 로드
   useEffect(() => {
-    if (currentWorkspace) {
-      refreshMembers();
-    }
-  }, [currentWorkspace, refreshMembers]);
+    const loadMembers = async () => {
+      if (!currentWorkspace) {
+        setMembers([]);
+        return;
+      }
+
+      if (USE_MOCK_API) {
+        setMembers(MOCK_MEMBERS);
+        return;
+      }
+
+      try {
+        const data = await workspacesApi.getMembers(currentWorkspace.id);
+        setMembers(data);
+      } catch {
+        setMembers([]);
+      }
+    };
+
+    void loadMembers();
+  }, [currentWorkspace]);
 
   return (
     <WorkspaceContext.Provider

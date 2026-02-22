@@ -13,8 +13,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import * as billingApi from '@/lib/api/billing';
 import type { PlanType } from '@/types/api';
-
-const USE_MOCK = true;
+import { USE_MOCK_API } from '@/lib/runtime-config';
 
 export function PricingPage() {
   const { currentPlan } = usePlan();
@@ -26,14 +25,14 @@ export function PricingPage() {
   const handleUpgrade = async (planType: PlanType) => {
     if (planType === currentPlan) return;
 
-    if (USE_MOCK) {
+    if (USE_MOCK_API) {
       toast.info(tBilling('toasts.checkoutMock'));
       return;
     }
 
     try {
       const { url } = await billingApi.createCheckoutSession(planType);
-      window.location.href = url;
+      window.location.assign(url);
     } catch {
       toast.error(tBilling('toasts.checkoutError'));
     }

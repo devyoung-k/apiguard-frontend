@@ -9,9 +9,10 @@ import {
   type ReactNode,
 } from 'react';
 import type { PlanType, SubscriptionResponse, PlanLimits } from '@/types/api';
-import { getPlanLimits, getPlanInfo } from '@/lib/plans';
+import { getPlanLimits } from '@/lib/plans';
 import * as billingApi from '@/lib/api/billing';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { USE_MOCK_API } from '@/lib/runtime-config';
 
 interface PlanContextType {
   /** 현재 플랜 타입 */
@@ -29,9 +30,6 @@ interface PlanContextType {
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
-
-// 백엔드 API가 준비되면 false로 변경
-const USE_MOCK = true;
 
 const MOCK_SUBSCRIPTION: SubscriptionResponse = {
   planType: 'free',
@@ -52,7 +50,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
   const limits = getPlanLimits(currentPlan);
 
   const refreshSubscription = useCallback(async () => {
-    if (USE_MOCK) {
+    if (USE_MOCK_API) {
       setSubscription(MOCK_SUBSCRIPTION);
       return;
     }

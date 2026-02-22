@@ -16,6 +16,7 @@ import type { HttpMethod, EndpointResponse } from "@/types/api";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
+import { useTranslations } from "next-intl";
 
 interface EndpointFormPageProps {
   isEdit?: boolean;
@@ -25,6 +26,7 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
   const router = useRouter();
   const params = useParams();
   const isDarkMode = useDarkMode();
+  const t = useTranslations("endpointForm");
 
   // Form state
   const [url, setUrl] = useState("");
@@ -62,11 +64,11 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
         }
       }
     } catch {
-      toast.error('Failed to load endpoint details.');
+      toast.error(t('errors.loadEndpoint'));
     } finally {
       setIsLoadingEndpoint(false);
     }
-  }, [isEdit, endpointId]);
+  }, [endpointId, isEdit, t]);
 
   useEffect(() => {
     loadEndpoint();
@@ -96,7 +98,7 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
 
   const handleSubmit = async () => {
     if (!url.trim()) {
-      toast.error('Please enter a URL.');
+      toast.error(t('errors.enterUrl'));
       return;
     }
 
@@ -119,15 +121,15 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
     try {
       if (isEdit && endpointId) {
         await endpointsApi.updateEndpoint(endpointId, payload);
-        toast.success('Endpoint updated.');
+        toast.success(t('toasts.updated'));
         router.push(`/projects/${projectId}/endpoints/${endpointId}`);
       } else {
         const created = await endpointsApi.createEndpoint(projectId, payload);
-        toast.success('Endpoint created.');
+        toast.success(t('toasts.created'));
         router.push(`/projects/${projectId}/endpoints/${created.id}`);
       }
     } catch (err) {
-      toast.error(getApiErrorMessage(err, isEdit ? 'Failed to update endpoint.' : 'Failed to create endpoint.'));
+      toast.error(getApiErrorMessage(err, isEdit ? t('errors.updateFailed') : t('errors.createFailed')));
     } finally {
       setIsSubmitting(false);
     }
@@ -154,13 +156,13 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
           className={isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900'}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {t('actions.back')}
         </Button>
       </div>
 
       <div>
-        <h1 className={`text-3xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{isEdit ? 'Edit Endpoint' : 'New Endpoint'}</h1>
-        <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Configure your API endpoint for monitoring</p>
+        <h1 className={`text-3xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{isEdit ? t('titles.edit') : t('titles.new')}</h1>
+        <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('subtitle')}</p>
       </div>
 
       <motion.div
@@ -170,14 +172,14 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       >
         <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
           <CardHeader>
-            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Basic Information</CardTitle>
+            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>{t('sections.basicInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="url" className={labelStyles}>URL</Label>
+              <Label htmlFor="url" className={labelStyles}>{t('fields.url')}</Label>
               <Input
                 id="url"
-                placeholder="https://api.example.com/v1/endpoint"
+                placeholder={t('placeholders.url')}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className={inputStyles}
@@ -186,10 +188,10 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="method" className={labelStyles}>HTTP Method</Label>
+                <Label htmlFor="method" className={labelStyles}>{t('fields.httpMethod')}</Label>
                 <Select value={httpMethod} onValueChange={(v) => setHttpMethod(v as HttpMethod)}>
                   <SelectTrigger id="method" className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
-                    <SelectValue placeholder="Select method" />
+                    <SelectValue placeholder={t('placeholders.selectMethod')} />
                   </SelectTrigger>
                   <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
                     {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as HttpMethod[]).map((m) => (
@@ -200,10 +202,10 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="expected-status" className={labelStyles}>Expected Status Code</Label>
+                <Label htmlFor="expected-status" className={labelStyles}>{t('fields.expectedStatusCode')}</Label>
                 <Input
                   id="expected-status"
-                  placeholder="200"
+                  placeholder={t('placeholders.expectedStatusCode')}
                   value={expectedStatusCode}
                   onChange={(e) => setExpectedStatusCode(e.target.value)}
                   className={inputStyles}
@@ -222,10 +224,10 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
         <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Headers</CardTitle>
+              <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>{t('sections.headers')}</CardTitle>
               <Button variant="outline" size="sm" onClick={addHeader} className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : ''}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Header
+                {t('actions.addHeader')}
               </Button>
             </div>
           </CardHeader>
@@ -233,13 +235,13 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
             {headers.map((header, index) => (
               <div key={index} className="flex gap-3">
                 <Input
-                  placeholder="Header name"
+                  placeholder={t('placeholders.headerName')}
                   value={header.key}
                   onChange={(e) => updateHeader(index, 'key', e.target.value)}
                   className={`flex-1 ${inputStyles}`}
                 />
                 <Input
-                  placeholder="Header value"
+                  placeholder={t('placeholders.headerValue')}
                   value={header.value}
                   onChange={(e) => updateHeader(index, 'value', e.target.value)}
                   className={`flex-1 ${inputStyles}`}
@@ -266,7 +268,7 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       >
         <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
           <CardHeader>
-            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Request Body</CardTitle>
+            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>{t('sections.requestBody')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea 
@@ -287,15 +289,15 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       >
         <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
           <CardHeader>
-            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Monitoring Settings</CardTitle>
+            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>{t('sections.monitoringSettings')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="interval" className={labelStyles}>Check Interval (seconds)</Label>
+              <Label htmlFor="interval" className={labelStyles}>{t('fields.checkIntervalSeconds')}</Label>
               <Input
                 id="interval"
                 type="number"
-                placeholder="60"
+                placeholder={t('placeholders.checkInterval')}
                 value={checkInterval}
                 onChange={(e) => setCheckInterval(e.target.value)}
                 className={inputStyles}
@@ -308,14 +310,14 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       <div className="flex gap-3">
         <Button className="flex-1" onClick={handleSubmit} disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEdit ? 'Update Endpoint' : 'Create Endpoint'}
+          {isEdit ? t('actions.updateEndpoint') : t('actions.createEndpoint')}
         </Button>
         <Button 
           variant="outline" 
           onClick={handleBack}
           className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : ''}
         >
-          Cancel
+          {t('actions.cancel')}
         </Button>
       </div>
     </div>

@@ -18,13 +18,13 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import * as projectsApi from '@/lib/api/projects';
-import * as healthChecksApi from '@/lib/api/health-checks';
 import type { ProjectWithStats } from '@/types/api';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/utils';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { useTranslations } from 'next-intl';
 import { PlanLimitBanner } from '@/components/PlanLimitBanner';
+import { getProjectsWithStats } from '@/lib/project-stats';
 
 export function ProjectsPage() {
   const router = useRouter();
@@ -41,18 +41,7 @@ export function ProjectsPage() {
   const fetchProjects = useCallback(async () => {
     try {
       setIsLoading(true);
-      const projectList = await projectsApi.getProjects();
-
-      const projectsWithStats = await Promise.all(
-        projectList.map(async (project) => {
-          try {
-            const stats = await healthChecksApi.getProjectStats(project.id);
-            return { ...project, stats };
-          } catch {
-            return { ...project };
-          }
-        }),
-      );
+      const projectsWithStats = await getProjectsWithStats();
 
       setProjects(projectsWithStats);
       setError(null);
