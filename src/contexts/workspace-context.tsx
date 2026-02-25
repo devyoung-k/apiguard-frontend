@@ -15,7 +15,6 @@ import type {
 } from '@/types/api';
 import * as workspacesApi from '@/lib/api/workspaces';
 import { useAuth } from '@/contexts/auth-context';
-import { USE_MOCK_API } from '@/lib/runtime-config';
 
 interface WorkspaceContextType {
   /** 내가 속한 워크스페이스 목록 */
@@ -40,52 +39,6 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
   undefined,
 );
 
-// ── Mock 데이터 (백엔드 API 미구현 시 사용) ──
-
-const MOCK_WORKSPACES: WorkspaceResponse[] = [
-  {
-    id: 1,
-    name: 'My Workspace',
-    slug: 'my-workspace',
-    createdAt: '2025-01-15T14:30:00',
-  },
-];
-
-const MOCK_MEMBERS: WorkspaceMember[] = [
-  {
-    id: 1,
-    userId: 1,
-    email: 'owner@example.com',
-    nickname: 'Owner',
-    role: 'owner',
-    joinedAt: '2025-01-15T14:30:00',
-  },
-  {
-    id: 2,
-    userId: 2,
-    email: 'admin@example.com',
-    nickname: 'Admin User',
-    role: 'admin',
-    joinedAt: '2025-01-20T10:00:00',
-  },
-  {
-    id: 3,
-    userId: 3,
-    email: 'member@example.com',
-    nickname: 'Team Member',
-    role: 'member',
-    joinedAt: '2025-02-01T09:00:00',
-  },
-  {
-    id: 4,
-    userId: 4,
-    email: 'viewer@example.com',
-    nickname: 'Read Only',
-    role: 'viewer',
-    joinedAt: '2025-02-10T11:30:00',
-  },
-];
-
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([]);
@@ -101,15 +54,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     null;
 
   // 현재 워크스페이스에서 내 역할 도출
-  const myRole =
-    members.find((m) => m.userId === user?.id)?.role ??
-    (USE_MOCK_API ? 'owner' : undefined);
+  const myRole = members.find((m) => m.userId === user?.id)?.role;
 
   const refreshWorkspaces = useCallback(async () => {
-    if (USE_MOCK_API) {
-      setWorkspaces(MOCK_WORKSPACES);
-      return;
-    }
     try {
       const data = await workspacesApi.getWorkspaces();
       setWorkspaces(data);
@@ -120,10 +67,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const refreshMembers = useCallback(async () => {
     if (!currentWorkspace) return;
-    if (USE_MOCK_API) {
-      setMembers(MOCK_MEMBERS);
-      return;
-    }
     try {
       const data = await workspacesApi.getMembers(currentWorkspace.id);
       setMembers(data);
@@ -149,7 +92,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeWorkspaceState = async () => {
       setIsLoading(true);
-      if (!USE_MOCK_API && !isAuthenticated) {
+      if (!isAuthenticated) {
         setWorkspaces([]);
         setMembers([]);
         setSelectedWorkspaceId(null);
@@ -161,7 +104,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         typeof window !== 'undefined'
           ? localStorage.getItem('currentWorkspaceId')
           : null;
-      const parsedWorkspaceId = savedWorkspaceId ? Number(savedWorkspaceId) : null;
+      const parsedWorkspaceId = savedWorkspaceId
+        ? Number(savedWorkspaceId)
+        : null;
       setSelectedWorkspaceId(
         parsedWorkspaceId && Number.isFinite(parsedWorkspaceId)
           ? parsedWorkspaceId
@@ -180,11 +125,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const loadMembers = async () => {
       if (!currentWorkspace) {
         setMembers([]);
-        return;
-      }
-
-      if (USE_MOCK_API) {
-        setMembers(MOCK_MEMBERS);
         return;
       }
 
