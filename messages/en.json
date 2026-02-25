@@ -53,6 +53,11 @@
         "passwordsNotMatch": "Passwords do not match.",
         "signUpFailed": "Failed to sign up."
       }
+    },
+    "registerSuccess": {
+      "title": "Sign up successful",
+      "description": "Your account is ready. Sign in to start monitoring your APIs.",
+      "signIn": "Sign In"
     }
   },
   "settings": {
@@ -231,6 +236,95 @@
       "checkFailed": "Check failed: {status} - {detail}"
     }
   },
+  "endpointDetail": {
+    "notFound": "Endpoint not found.",
+    "back": "Back",
+    "status": {
+      "active": "ACTIVE",
+      "inactive": "INACTIVE"
+    },
+    "endpointMeta": "Expected: {expectedStatusCode} · Interval: {checkInterval}s",
+    "lastChecked": "Last checked",
+    "actions": {
+      "testNow": "Test Now",
+      "edit": "Edit"
+    },
+    "stats": {
+      "successRate": "Success Rate",
+      "avgResponseTime": "Avg Response Time",
+      "totalChecks": "Total Checks",
+      "checkInterval": "Check Interval"
+    },
+    "charts": {
+      "responseTimeTrend": "Response Time Trend",
+      "successVsFailed": "Success vs Failed",
+      "success": "Success",
+      "failed": "Failed",
+      "noData": "No data yet."
+    },
+    "recentChecks": {
+      "title": "Recent Checks",
+      "empty": "No check history yet.",
+      "columns": {
+        "timestamp": "Timestamp",
+        "statusCode": "Status Code",
+        "responseTime": "Response Time",
+        "result": "Result"
+      }
+    },
+    "errors": {
+      "loadData": "Failed to load data.",
+      "checkFailed": "Failed to run the check."
+    },
+    "toasts": {
+      "checkSucceeded": "Check succeeded: {statusCode} - {responseTimeMs}ms",
+      "checkFailed": "Check failed: {status} - {detail}"
+    }
+  },
+  "endpointForm": {
+    "titles": {
+      "edit": "Edit Endpoint",
+      "new": "New Endpoint"
+    },
+    "subtitle": "Configure your API endpoint for monitoring",
+    "sections": {
+      "basicInfo": "Basic Information",
+      "headers": "Headers",
+      "requestBody": "Request Body",
+      "monitoringSettings": "Monitoring Settings"
+    },
+    "fields": {
+      "url": "URL",
+      "httpMethod": "HTTP Method",
+      "expectedStatusCode": "Expected Status Code",
+      "checkIntervalSeconds": "Check Interval (seconds)"
+    },
+    "placeholders": {
+      "url": "https://api.example.com/v1/endpoint",
+      "selectMethod": "Select method",
+      "expectedStatusCode": "200",
+      "headerName": "Header name",
+      "headerValue": "Header value",
+      "checkInterval": "60"
+    },
+    "actions": {
+      "back": "Back",
+      "addHeader": "Add Header",
+      "updateEndpoint": "Update Endpoint",
+      "createEndpoint": "Create Endpoint",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "loadEndpoint": "Failed to load endpoint details.",
+      "enterUrl": "Please enter a URL.",
+      "updateFailed": "Failed to update endpoint.",
+      "createFailed": "Failed to create endpoint."
+    },
+    "toasts": {
+      "updated": "Endpoint updated.",
+      "created": "Endpoint created."
+    }
+  },
   "admin": {
     "members": {
       "title": "Members",
@@ -283,6 +377,7 @@
     "planInfo": {
       "title": "Plan Information",
       "plan": "Plan",
+      "freeLabel": "Free",
       "status": "Status",
       "nextBilling": "Next Billing Date",
       "noBillingDate": "No scheduled billing",

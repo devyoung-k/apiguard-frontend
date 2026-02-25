@@ -8,11 +8,10 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { motion } from "framer-motion";
-import * as projectsApi from "@/lib/api/projects";
-import * as healthChecksApi from "@/lib/api/health-checks";
 import type { ProjectWithStats } from "@/types/api";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useTranslations } from "next-intl";
+import { getProjectsWithStats } from "@/lib/project-stats";
 
 export function DashboardPage() {
   const router = useRouter();
@@ -27,20 +26,8 @@ export function DashboardPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const projectList = await projectsApi.getProjects();
-        
-        // Load stats for each project
-        const projectsWithStats = await Promise.all(
-          projectList.map(async (project) => {
-            try {
-              const stats = await healthChecksApi.getProjectStats(project.id);
-              return { ...project, stats };
-            } catch {
-              return { ...project };
-            }
-          })
-        );
-        
+        const projectsWithStats = await getProjectsWithStats();
+
         setProjects(projectsWithStats);
         setError(null);
       } catch {

@@ -3,25 +3,26 @@
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { ArrowLeft, Play, Edit, Loader2 } from "lucide-react";
 import { Badge } from "./ui/badge";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { motion } from "framer-motion";
 import { PageLoadingState, PageErrorState } from "./ui/page-states";
 import * as endpointsApi from "@/lib/api/endpoints";
 import * as healthChecksApi from "@/lib/api/health-checks";
 import type { EndpointResponse, HealthCheckResult, EndpointStats, HourlyStats } from "@/types/api";
 import { toast } from "sonner";
 import { useDarkMode } from "@/hooks/use-dark-mode";
-
-const COLORS = ['#10b981', '#ef4444'];
+import { useLocale, useTranslations } from "next-intl";
+import { EndpointStatsCards } from "@/components/endpoint-detail/EndpointStatsCards";
+import { EndpointCharts } from "@/components/endpoint-detail/EndpointCharts";
+import { RecentChecksTable } from "@/components/endpoint-detail/RecentChecksTable";
 
 export function EndpointDetailPage() {
   const router = useRouter();
   const params = useParams();
   const isDarkMode = useDarkMode();
+  const t = useTranslations("endpointDetail");
+  const locale = useLocale();
   const [endpoint, setEndpoint] = useState<EndpointResponse | null>(null);
   const [checks, setChecks] = useState<HealthCheckResult[]>([]);
   const [stats, setStats] = useState<EndpointStats | null>(null);
@@ -48,11 +49,11 @@ export function EndpointDetailPage() {
       setHourlyStats(hourly);
       setError(null);
     } catch {
-      setError('Failed to load data.');
+      setError(t('errors.loadData'));
     } finally {
       setIsLoading(false);
     }
-  }, [endpointId]);
+  }, [endpointId, t]);
 
   useEffect(() => {
     if (endpointId) fetchData();
@@ -63,14 +64,20 @@ export function EndpointDetailPage() {
     try {
       const result = await healthChecksApi.testEndpoint(endpointId);
       if (result.status === 'SUCCESS') {
-        toast.success(`Check succeeded: ${result.statusCode} - ${result.responseTimeMs}ms`);
+        toast.success(t('toasts.checkSucceeded', {
+          statusCode: result.statusCode,
+          responseTimeMs: result.responseTimeMs,
+        }));
       } else {
-        toast.error(`Check failed: ${result.status} - ${result.errorMessage || result.statusCode}`);
+        toast.error(t('toasts.checkFailed', {
+          status: result.status,
+          detail: result.errorMessage || result.statusCode,
+        }));
       }
       // Refresh data
       await fetchData();
     } catch {
-      toast.error('Failed to run the check.');
+      toast.error(t('errors.checkFailed'));
     } finally {
       setIsTesting(false);
     }
@@ -83,23 +90,23 @@ export function EndpointDetailPage() {
   if (error || !endpoint) {
     return (
       <PageErrorState
-        message={error || 'Endpoint not found.'}
+        message={error || t('notFound')}
         onAction={() => router.push(`/projects/${projectId}`)}
-        actionLabel="Back"
+        actionLabel={t('back')}
       />
     );
   }
 
   // Transform chart data
   const responseTimeData = hourlyStats.map((h) => ({
-    time: new Date(h.hour).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    time: new Date(h.hour).toLocaleTimeString(locale === "ko" ? "ko-KR" : "en-US", { hour: '2-digit', minute: '2-digit' }),
     value: Math.round(h.avgResponseTimeMs),
   }));
 
   const uptimeData = stats
     ? [
-        { name: 'Success', value: stats.successCount },
-        { name: 'Failed', value: stats.totalChecks - stats.successCount },
+        { name: t('charts.success'), value: stats.successCount },
+        { name: t('charts.failed'), value: stats.totalChecks - stats.successCount },
       ]
     : [];
 
@@ -113,7 +120,7 @@ export function EndpointDetailPage() {
           className={isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900'}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {t('back')}
         </Button>
       </div>
 
@@ -123,12 +130,15 @@ export function EndpointDetailPage() {
             <h1 className={`text-3xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{endpoint.url}</h1>
             <Badge className="bg-blue-100 text-blue-700">{endpoint.httpMethod}</Badge>
             <Badge variant="outline" className={endpoint.isActive ? 'border-green-500 text-green-700' : 'border-gray-400 text-gray-500'}>
-              {endpoint.isActive ? 'ACTIVE' : 'INACTIVE'}
+              {endpoint.isActive ? t('status.active') : t('status.inactive')}
             </Badge>
           </div>
           <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-            Expected: {endpoint.expectedStatusCode} · Interval: {endpoint.checkInterval}s
-            {endpoint.lastCheckedAt && ` · Last checked: ${new Date(endpoint.lastCheckedAt).toLocaleString()}`}
+            {t('endpointMeta', {
+              expectedStatusCode: endpoint.expectedStatusCode,
+              checkInterval: endpoint.checkInterval,
+            })}
+            {endpoint.lastCheckedAt && ` · ${t('lastChecked')}: ${new Date(endpoint.lastCheckedAt).toLocaleString()}`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -139,194 +149,29 @@ export function EndpointDetailPage() {
             disabled={isTesting}
           >
             {isTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            Test Now
+            {t('actions.testNow')}
           </Button>
           <Button className="gap-2" onClick={() => router.push(`/projects/${projectId}/endpoints/${endpointId}/edit`)}>
             <Edit className="h-4 w-4" />
-            Edit
+            {t('actions.edit')}
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats */}
       {stats && (
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
-            <CardContent className="pt-6">
-              <div className="text-2xl text-green-600 mb-1">{stats.successRate.toFixed(2)}%</div>
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Success Rate</div>
-            </CardContent>
-          </Card>
-          <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
-            <CardContent className="pt-6">
-              <div className={`text-2xl mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{Math.round(stats.avgResponseTimeMs)}ms</div>
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Response Time</div>
-            </CardContent>
-          </Card>
-          <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
-            <CardContent className="pt-6">
-              <div className={`text-2xl mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{stats.totalChecks.toLocaleString()}</div>
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Checks</div>
-            </CardContent>
-          </Card>
-          <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
-            <CardContent className="pt-6">
-              <div className={`text-2xl mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{endpoint.checkInterval}s</div>
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Check Interval</div>
-            </CardContent>
-          </Card>
-        </motion.div>
+        <EndpointStatsCards
+          stats={stats}
+          checkInterval={endpoint.checkInterval}
+        />
       )}
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <motion.div 
-          className="lg:col-span-2"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
-            <CardHeader>
-              <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Response Time Trend</CardTitle>
-            </CardHeader>
-            <CardContent className={isDarkMode ? 'bg-gray-900' : ''}>
-              {responseTimeData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={responseTimeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
-                    <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '12px' }} />
-                    <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '12px' }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                        border: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        color: isDarkMode ? '#ffffff' : '#000000'
-                      }}
-                    />
-                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6', r: 4 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className={`text-center py-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  No data yet.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
+      <EndpointCharts
+        responseTimeData={responseTimeData}
+        uptimeData={uptimeData}
+        hasChecks={Boolean(stats && stats.totalChecks > 0)}
+      />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
-            <CardHeader>
-              <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Success vs Failed</CardTitle>
-            </CardHeader>
-            <CardContent className={isDarkMode ? 'bg-gray-900' : ''}>
-              {uptimeData.length > 0 && stats && stats.totalChecks > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={uptimeData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }: { name?: string; percent?: number }) => `${name || ''}: ${((percent || 0) * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {uptimeData.map((_entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                        border: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        color: isDarkMode ? '#ffffff' : '#000000'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className={`text-center py-12 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  No data yet.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Recent Checks Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      >
-        <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
-          <CardHeader>
-            <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>Recent Checks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {checks.length === 0 ? (
-              <div className={`text-center py-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                No check history yet.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className={isDarkMode ? 'border-gray-800 border-b' : 'border-b'}>
-                      <th className={`text-left py-3 px-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Timestamp</th>
-                      <th className={`text-left py-3 px-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Status Code</th>
-                      <th className={`text-left py-3 px-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Response Time</th>
-                      <th className={`text-left py-3 px-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {checks.map((check) => (
-                      <tr key={check.id} className={`border-b ${isDarkMode ? 'border-gray-800 hover:bg-gray-800/50' : 'hover:bg-gray-50'}`}>
-                        <td className={`py-3 px-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                          {new Date(check.checkedAt).toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge
-                            variant={check.statusCode >= 200 && check.statusCode < 300 ? 'outline' : 'destructive'}
-                            className={isDarkMode && check.statusCode >= 200 && check.statusCode < 300 ? 'border-green-500/50 text-green-400' : ''}
-                          >
-                            {check.statusCode}
-                          </Badge>
-                        </td>
-                        <td className={`py-3 px-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>{check.responseTimeMs}ms</td>
-                        <td className="py-3 px-4">
-                          <Badge
-                            variant={check.status === 'SUCCESS' ? 'outline' : 'destructive'}
-                            className={isDarkMode && check.status === 'SUCCESS' ? 'border-green-500/50 text-green-400' : ''}
-                          >
-                            {check.status}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+      <RecentChecksTable checks={checks} />
     </div>
   );
 }

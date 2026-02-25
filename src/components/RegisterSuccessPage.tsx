@@ -6,9 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Button } from "./ui/button";
 import { CheckCircle2, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export function RegisterSuccessPage() {
   const isDarkMode = useDarkMode();
+  const t = useTranslations("auth.registerSuccess");
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
@@ -37,17 +39,17 @@ export function RegisterSuccessPage() {
               <CheckCircle2 className="h-8 w-8 text-white" />
             </motion.div>
             <CardTitle className={`text-2xl ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-              Sign up successful
+              {t('title')}
             </CardTitle>
             <CardDescription className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
-              Your account is ready. Sign in to start monitoring your APIs.
+              {t('description')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button asChild className="w-full h-11 text-base">
               <Link href="/login">
                 <LogIn className="mr-2 h-4 w-4" />
-                Sign In
+                {t('signIn')}
               </Link>
             </Button>
           </CardContent>

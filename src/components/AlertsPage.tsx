@@ -47,18 +47,33 @@ export function AlertsPage() {
       const projectList = await projectsApi.getProjects();
       setProjects(projectList);
 
-      // Load endpoints from all projects
-      const allEndpoints: EndpointResponse[] = [];
-      const allAlerts: AlertWithEndpoint[] = [];
+      const endpointResults = await Promise.allSettled(
+        projectList.map((project) => endpointsApi.getEndpoints(project.id)),
+      );
 
-      for (const project of projectList) {
-        const eps = await endpointsApi.getEndpoints(project.id);
-        allEndpoints.push(...eps);
-        for (const ep of eps) {
-          const epAlerts = await alertsApi.getAlerts(ep.id);
-          allAlerts.push(...epAlerts.map(a => ({ ...a, endpointUrl: ep.url })));
-        }
-      }
+      const allEndpoints = endpointResults
+        .filter(
+          (result): result is PromiseFulfilledResult<EndpointResponse[]> =>
+            result.status === "fulfilled",
+        )
+        .flatMap((result) => result.value);
+
+      const alertResults = await Promise.allSettled(
+        allEndpoints.map(async (endpoint) => {
+          const endpointAlerts = await alertsApi.getAlerts(endpoint.id);
+          return endpointAlerts.map((alert) => ({
+            ...alert,
+            endpointUrl: endpoint.url,
+          }));
+        }),
+      );
+
+      const allAlerts = alertResults
+        .filter(
+          (result): result is PromiseFulfilledResult<AlertWithEndpoint[]> =>
+            result.status === "fulfilled",
+        )
+        .flatMap((result) => result.value);
 
       setEndpoints(allEndpoints);
       setAlerts(allAlerts);

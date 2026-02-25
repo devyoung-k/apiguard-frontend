@@ -17,8 +17,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import * as billingApi from '@/lib/api/billing';
 import type { SubscriptionStatus } from '@/types/api';
-
-const USE_MOCK = true;
+import { USE_MOCK_API } from '@/lib/runtime-config';
 
 function getStatusVariant(
   status: SubscriptionStatus,
@@ -61,14 +60,14 @@ export function BillingPage() {
   const status = subscription?.status ?? 'none';
 
   const handleManageSubscription = async () => {
-    if (USE_MOCK) {
+    if (USE_MOCK_API) {
       toast.info(t('toasts.portalMock'));
       return;
     }
 
     try {
       const { url } = await billingApi.createPortalSession();
-      window.location.href = url;
+      window.location.assign(url);
     } catch {
       toast.error(t('toasts.portalError'));
     }
@@ -124,7 +123,7 @@ export function BillingPage() {
                 <span
                   className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}
                 >
-                  ({planInfo.price === 0 ? 'Free' : formatPrice(planInfo.price)}
+                  ({planInfo.price === 0 ? t('planInfo.freeLabel') : formatPrice(planInfo.price)}
                   /mo)
                 </span>
               </div>
