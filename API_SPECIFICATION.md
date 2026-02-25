@@ -828,6 +828,397 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 
 ---
 
+## 7. 워크스페이스 및 멤버 관리 API
+
+### 공통 사항
+
+#### WorkspaceResponse
+
+```json
+{
+  "id": 1,
+  "name": "My Workspace",
+  "slug": "my-workspace",
+  "createdAt": "2025-01-15T14:30:00"
+}
+```
+
+| 필드      | 타입   | 설명                                                 |
+| --------- | ------ | ---------------------------------------------------- |
+| id        | Long   | 워크스페이스 ID                                      |
+| name      | string | 워크스페이스 이름                                    |
+| slug      | string | URL용 식별자 (name 기반 자동 생성, 영문/숫자/하이픈) |
+| createdAt | string | 생성일시 (ISO 8601)                                  |
+
+#### WorkspaceMemberResponse
+
+```json
+{
+  "id": 1,
+  "userId": 1,
+  "email": "user@example.com",
+  "nickname": "홍길동",
+  "role": "owner",
+  "joinedAt": "2025-01-15T14:30:00"
+}
+```
+
+| 필드     | 타입   | 설명                                             |
+| -------- | ------ | ------------------------------------------------ |
+| id       | Long   | 멤버십 ID (memberId로 사용)                      |
+| userId   | Long   | 사용자 ID                                        |
+| email    | string | 사용자 이메일                                    |
+| nickname | string | 사용자 닉네임                                    |
+| role     | string | 역할: `owner` \| `admin` \| `member` \| `viewer` |
+| joinedAt | string | 워크스페이스 참여일시 (ISO 8601)                 |
+
+#### 역할 계층 및 권한
+
+| 역할     | 워크스페이스 조회 | 멤버 목록 조회 | 멤버 초대/수정/제거 | 워크스페이스 삭제 |
+| -------- | :---------------: | :------------: | :-----------------: | :---------------: |
+| `owner`  |        ✅         |       ✅       |         ✅          |        ✅         |
+| `admin`  |        ✅         |       ✅       |         ✅          |        ❌         |
+| `member` |        ✅         |       ✅       |         ❌          |        ❌         |
+| `viewer` |        ✅         |       ✅       |         ❌          |        ❌         |
+
+> - `owner`는 초대로 부여할 수 없으며, 초대/역할변경 시 `admin` \| `member` \| `viewer`만 지정 가능
+> - `owner`의 역할은 변경하거나 제거할 수 없음
+> - 워크스페이스를 생성한 사용자는 자동으로 `owner`로 등록됨
+
+---
+
+### 7.1 워크스페이스 생성
+
+**`POST /workspaces`** (인증 필요)
+
+워크스페이스를 생성하고, 생성자를 `owner`로 자동 등록합니다.
+
+**Request Body**
+
+```json
+{
+  "name": "My Workspace"
+}
+```
+
+| 필드 | 타입   | 필수 | 검증 규칙             |
+| ---- | ------ | ---- | --------------------- |
+| name | string | O    | 공백 불가, 최대 100자 |
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "My Workspace",
+    "slug": "my-workspace",
+    "createdAt": "2025-01-15T14:30:00"
+  }
+}
+```
+
+> `slug`는 `name`에서 자동 생성됩니다 (소문자 변환, 공백·특수문자 → `-`).
+> 동일한 slug가 이미 존재하면 `-1`, `-2` 형태로 suffix가 붙습니다.
+
+**Error Responses**
+
+| 상태코드 | 설명                        |
+| -------- | --------------------------- |
+| 400      | 이름 미입력 또는 100자 초과 |
+| 401      | 인증 필요                   |
+
+---
+
+### 7.2 내 워크스페이스 목록 조회
+
+**`GET /workspaces`** (인증 필요)
+
+현재 사용자가 속한 모든 워크스페이스를 반환합니다 (역할 무관).
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "My Workspace",
+      "slug": "my-workspace",
+      "createdAt": "2025-01-15T14:30:00"
+    },
+    {
+      "id": 2,
+      "name": "Team Workspace",
+      "slug": "team-workspace",
+      "createdAt": "2025-01-16T09:00:00"
+    }
+  ]
+}
+```
+
+**Error Responses**
+
+| 상태코드 | 설명      |
+| -------- | --------- |
+| 401      | 인증 필요 |
+
+---
+
+### 7.3 워크스페이스 상세 조회
+
+**`GET /workspaces/{id}`** (인증 필요)
+
+해당 워크스페이스의 멤버인 경우에만 조회 가능합니다.
+
+**Path Parameter**
+
+| 파라미터 | 타입 | 설명            |
+| -------- | ---- | --------------- |
+| id       | Long | 워크스페이스 ID |
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "My Workspace",
+    "slug": "my-workspace",
+    "createdAt": "2025-01-15T14:30:00"
+  }
+}
+```
+
+**Error Responses**
+
+| 상태코드 | 설명                            |
+| -------- | ------------------------------- |
+| 401      | 인증 필요                       |
+| 403      | 해당 워크스페이스의 멤버가 아님 |
+| 404      | 워크스페이스 없음               |
+
+---
+
+### 7.4 워크스페이스 삭제
+
+**`DELETE /workspaces/{id}`** (인증 필요, `owner`만 가능)
+
+**Path Parameter**
+
+| 파라미터 | 타입 | 설명            |
+| -------- | ---- | --------------- |
+| id       | Long | 워크스페이스 ID |
+
+**Request Body**: 없음
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true
+}
+```
+
+**Error Responses**
+
+| 상태코드 | 설명                            |
+| -------- | ------------------------------- |
+| 401      | 인증 필요                       |
+| 403      | `owner`가 아님 또는 멤버가 아님 |
+| 404      | 워크스페이스 없음               |
+
+---
+
+### 7.5 워크스페이스 멤버 목록 조회
+
+**`GET /workspaces/{workspaceId}/members`** (인증 필요)
+
+해당 워크스페이스의 멤버인 경우에만 조회 가능합니다.
+
+**Path Parameter**
+
+| 파라미터    | 타입 | 설명            |
+| ----------- | ---- | --------------- |
+| workspaceId | Long | 워크스페이스 ID |
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "userId": 1,
+      "email": "owner@example.com",
+      "nickname": "Owner User",
+      "role": "owner",
+      "joinedAt": "2025-01-15T14:30:00"
+    },
+    {
+      "id": 2,
+      "userId": 2,
+      "email": "admin@example.com",
+      "nickname": "Admin User",
+      "role": "admin",
+      "joinedAt": "2025-01-16T09:00:00"
+    }
+  ]
+}
+```
+
+**Error Responses**
+
+| 상태코드 | 설명                            |
+| -------- | ------------------------------- |
+| 401      | 인증 필요                       |
+| 403      | 해당 워크스페이스의 멤버가 아님 |
+| 404      | 워크스페이스 없음               |
+
+---
+
+### 7.6 멤버 초대
+
+**`POST /workspaces/{workspaceId}/members/invite`** (인증 필요, `admin` 이상 권한 필요)
+
+이미 가입된 사용자를 이메일로 워크스페이스에 초대합니다.
+
+**Path Parameter**
+
+| 파라미터    | 타입 | 설명            |
+| ----------- | ---- | --------------- |
+| workspaceId | Long | 워크스페이스 ID |
+
+**Request Body**
+
+```json
+{
+  "email": "new.member@example.com",
+  "role": "member"
+}
+```
+
+| 필드  | 타입   | 필수 | 검증 규칙                                  |
+| ----- | ------ | ---- | ------------------------------------------ |
+| email | string | O    | 이메일 형식, 서비스에 가입된 계정이어야 함 |
+| role  | string | O    | `admin` \| `member` \| `viewer`            |
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 3,
+    "userId": 5,
+    "email": "new.member@example.com",
+    "nickname": "신규 멤버",
+    "role": "member",
+    "joinedAt": "2025-01-17T10:00:00"
+  }
+}
+```
+
+**Error Responses**
+
+| 상태코드 | 설명                                                |
+| -------- | --------------------------------------------------- |
+| 400      | 필드 검증 실패 또는 이미 워크스페이스 멤버인 사용자 |
+| 401      | 인증 필요                                           |
+| 403      | `admin` 이상 권한 없음                              |
+| 404      | 워크스페이스 없음 또는 해당 이메일의 사용자 없음    |
+
+---
+
+### 7.7 멤버 역할 변경
+
+**`PUT /workspaces/{workspaceId}/members/{memberId}/role`** (인증 필요, `admin` 이상 권한 필요)
+
+`owner`의 역할은 변경할 수 없습니다.
+
+**Path Parameter**
+
+| 파라미터    | 타입 | 설명                                     |
+| ----------- | ---- | ---------------------------------------- |
+| workspaceId | Long | 워크스페이스 ID                          |
+| memberId    | Long | 멤버십 ID (`WorkspaceMemberResponse.id`) |
+
+**Request Body**
+
+```json
+{
+  "role": "admin"
+}
+```
+
+| 필드 | 타입   | 필수 | 검증 규칙                       |
+| ---- | ------ | ---- | ------------------------------- |
+| role | string | O    | `admin` \| `member` \| `viewer` |
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "userId": 3,
+    "email": "user@example.com",
+    "nickname": "홍길동",
+    "role": "admin",
+    "joinedAt": "2025-01-16T09:00:00"
+  }
+}
+```
+
+**Error Responses**
+
+| 상태코드 | 설명                                               |
+| -------- | -------------------------------------------------- |
+| 400      | 필드 검증 실패                                     |
+| 401      | 인증 필요                                          |
+| 403      | `admin` 이상 권한 없음 또는 `owner` 역할 변경 시도 |
+| 404      | 워크스페이스 없음 또는 해당 멤버 없음              |
+
+---
+
+### 7.8 멤버 제거
+
+**`DELETE /workspaces/{workspaceId}/members/{memberId}`** (인증 필요, `admin` 이상 권한 필요)
+
+`owner`는 제거할 수 없습니다.
+
+**Path Parameter**
+
+| 파라미터    | 타입 | 설명                                     |
+| ----------- | ---- | ---------------------------------------- |
+| workspaceId | Long | 워크스페이스 ID                          |
+| memberId    | Long | 멤버십 ID (`WorkspaceMemberResponse.id`) |
+
+**Request Body**: 없음
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true
+}
+```
+
+**Error Responses**
+
+| 상태코드 | 설명                                          |
+| -------- | --------------------------------------------- |
+| 401      | 인증 필요                                     |
+| 403      | `admin` 이상 권한 없음 또는 `owner` 제거 시도 |
+| 404      | 워크스페이스 없음 또는 해당 멤버 없음         |
+
+---
+
 ## API 엔드포인트 요약
 
 ### 인증 (Public)
@@ -852,6 +1243,19 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 | PATCH  | `/users/me`          | 내 정보 수정  |
 | PATCH  | `/users/me/password` | 비밀번호 변경 |
 | DELETE | `/users/me`          | 회원 탈퇴     |
+
+### 워크스페이스 및 멤버 (추가됨)
+
+| Method | URL                                                 | 설명              |
+| ------ | --------------------------------------------------- | ----------------- |
+| POST   | `/workspaces`                                       | 워크스페이스 생성 |
+| GET    | `/workspaces`                                       | 워크스페이스 목록 |
+| GET    | `/workspaces/{id}`                                  | 워크스페이스 상세 |
+| DELETE | `/workspaces/{id}`                                  | 워크스페이스 삭제 |
+| GET    | `/workspaces/{workspaceId}/members`                 | 멤버 목록 조회    |
+| POST   | `/workspaces/{workspaceId}/members/invite`          | 멤버 초대         |
+| PUT    | `/workspaces/{workspaceId}/members/{memberId}/role` | 멤버 역할 변경    |
+| DELETE | `/workspaces/{workspaceId}/members/{memberId}`      | 멤버 제거         |
 
 ### 프로젝트
 
@@ -896,5 +1300,5 @@ Validation 실패 및 비즈니스 예외 시 RFC 7807 형식으로 응답합니
 
 ---
 
-**총 API 수**: 25개
-**최종 업데이트**: 2025-01-15
+**총 API 수**: 33개
+**최종 업데이트**: 2026-02-25
