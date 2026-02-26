@@ -3,7 +3,7 @@ import type { PlanType, PlanInfo, PlanLimits } from '@/types/api';
 // ── 플랜 정의 ──
 
 export const FREE_PLAN: PlanInfo = {
-  type: 'free',
+  type: 'FREE',
   name: 'Free',
   price: 0,
   limits: {
@@ -21,7 +21,7 @@ export const FREE_PLAN: PlanInfo = {
 };
 
 export const PRO_PLAN: PlanInfo = {
-  type: 'pro',
+  type: 'PRO',
   name: 'Pro',
   price: 2900, // $29.00
   limits: {
@@ -45,11 +45,11 @@ export const PLANS: PlanInfo[] = [FREE_PLAN, PRO_PLAN];
 // ── 유틸리티 ──
 
 export function getPlanLimits(planType: PlanType): PlanLimits {
-  return planType === 'pro' ? PRO_PLAN.limits : FREE_PLAN.limits;
+  return planType === 'PRO' ? PRO_PLAN.limits : FREE_PLAN.limits;
 }
 
 export function getPlanInfo(planType: PlanType): PlanInfo {
-  return planType === 'pro' ? PRO_PLAN : FREE_PLAN;
+  return planType === 'PRO' ? PRO_PLAN : FREE_PLAN;
 }
 
 export interface UsageInfo {

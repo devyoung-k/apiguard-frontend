@@ -53,10 +53,10 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       setCheckInterval(String(ep.checkInterval));
       setBody(ep.body || "");
 
-      // Parse headers JSON
+      // Parse headers object
       if (ep.headers) {
         try {
-          const parsed = JSON.parse(ep.headers);
+          const parsed = typeof ep.headers === 'string' ? JSON.parse(ep.headers) : ep.headers;
           const headerEntries = Object.entries(parsed).map(([k, v]) => ({ key: k, value: String(v) }));
           setHeaders(headerEntries.length > 0 ? headerEntries : [{ key: '', value: '' }]);
         } catch {
@@ -102,16 +102,16 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       return;
     }
 
-    // Convert headers to JSON string
+    // headers is now expected to be stringified JSON by backend
     const validHeaders = headers.filter((h) => h.key.trim());
-    const headersJson = validHeaders.length > 0
+    const headersStr = validHeaders.length > 0
       ? JSON.stringify(Object.fromEntries(validHeaders.map((h) => [h.key, h.value])))
       : null;
 
     const payload = {
       url,
       httpMethod,
-      headers: headersJson,
+      headers: headersStr,
       body: body.trim() || null,
       expectedStatusCode: Number(expectedStatusCode) || 200,
       checkInterval: Number(checkInterval) || 60,

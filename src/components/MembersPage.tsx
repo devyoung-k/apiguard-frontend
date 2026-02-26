@@ -3,7 +3,12 @@
 import { useState, useCallback } from 'react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useAuth } from '@/contexts/auth-context';
-import { canManageMembers } from '@/lib/permissions';
+import {
+  canManageMembers,
+  canInviteMembers,
+  canChangeMemberRole,
+  canRemoveMember,
+} from '@/lib/permissions';
 import { ASSIGNABLE_ROLES } from '@/lib/permissions';
 import * as workspacesApi from '@/lib/api/workspaces';
 import type { WorkspaceRole } from '@/types/api';
@@ -22,18 +27,18 @@ import {
 } from 'lucide-react';
 
 const ROLE_ICONS: Record<WorkspaceRole, typeof Shield> = {
-  owner: Crown,
-  admin: ShieldCheck,
-  member: UserCog,
-  viewer: Eye,
+  OWNER: Crown,
+  ADMIN: ShieldCheck,
+  MEMBER: UserCog,
+  VIEWER: Eye,
 };
 
 const ROLE_COLORS: Record<WorkspaceRole, string> = {
-  owner: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
-  admin: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  member:
+  OWNER: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  ADMIN: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  MEMBER:
     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  viewer: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  VIEWER: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
 export function MembersPage() {
@@ -44,14 +49,17 @@ export function MembersPage() {
 
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<WorkspaceRole>('member');
+  const [inviteRole, setInviteRole] = useState<WorkspaceRole>('MEMBER');
   const [isInviting, setIsInviting] = useState(false);
 
   const [editingMemberId, setEditingMemberId] = useState<number | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const isAdmin = canManageMembers(myRole);
+  const canAccess = canManageMembers(myRole);
+  const canInvite = canInviteMembers(myRole);
+  const canChangeRole = canChangeMemberRole(myRole);
+  const canRemove = canRemoveMember(myRole);
 
   const handleInvite = useCallback(async () => {
     if (!inviteEmail.trim()) {
@@ -68,7 +76,7 @@ export function MembersPage() {
       });
       toast.success(t('toasts.invited'));
       setInviteEmail('');
-      setInviteRole('member');
+      setInviteRole('MEMBER');
       setIsInviteOpen(false);
       await refreshMembers();
     } catch {
@@ -116,7 +124,7 @@ export function MembersPage() {
     [currentWorkspace, refreshMembers, t],
   );
 
-  if (!isAdmin) {
+  if (!canAccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
         <Shield className="h-16 w-16 text-gray-300 dark:text-gray-600 mb-4" />
@@ -142,17 +150,19 @@ export function MembersPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsInviteOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
-        >
-          <UserPlus className="h-4 w-4" />
-          {t('invite')}
-        </button>
+        {canInvite && (
+          <button
+            onClick={() => setIsInviteOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
+          >
+            <UserPlus className="h-4 w-4" />
+            {t('invite')}
+          </button>
+        )}
       </div>
 
       {/* 초대 다이얼로그 */}
-      {isInviteOpen && (
+      {isInviteOpen && canInvite && (
         <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-6 dark:border-blue-800/50 dark:bg-blue-900/10">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('invite')}
@@ -228,7 +238,7 @@ export function MembersPage() {
                 {members.map((member) => {
                   const RoleIcon = ROLE_ICONS[member.role];
                   const isMe = member.userId === user?.id;
-                  const isOwner = member.role === 'owner';
+                  const isOwner = member.role === 'OWNER';
 
                   return (
                     <tr
@@ -289,53 +299,55 @@ export function MembersPage() {
 
                       {/* 액션 */}
                       <td className="px-6 py-4 text-right">
-                        {!isMe && !isOwner && (
+                        {!isMe && !isOwner && (canChangeRole || canRemove) && (
                           <div className="flex items-center justify-end gap-2">
-                            {editingMemberId === member.id ? (
-                              <button
-                                onClick={() => setEditingMemberId(null)}
-                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
-                              >
-                                {t('cancel')}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => setEditingMemberId(member.id)}
-                                className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-                              >
-                                {t('changeRole')}
-                              </button>
-                            )}
-
-                            {removingMemberId === member.id ? (
-                              <div className="flex items-center gap-1">
+                            {canChangeRole &&
+                              (editingMemberId === member.id ? (
                                 <button
-                                  onClick={() => handleRemove(member.id)}
-                                  disabled={isProcessing}
-                                  className="px-3 py-1.5 text-xs rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                                >
-                                  {isProcessing ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    t('removeMember')
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => setRemovingMemberId(null)}
+                                  onClick={() => setEditingMemberId(null)}
                                   className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
                                 >
                                   {t('cancel')}
                                 </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => setRemovingMemberId(member.id)}
-                                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                title={t('removeMember')}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
+                              ) : (
+                                <button
+                                  onClick={() => setEditingMemberId(member.id)}
+                                  className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                                >
+                                  {t('changeRole')}
+                                </button>
+                              ))}
+
+                            {canRemove &&
+                              (removingMemberId === member.id ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleRemove(member.id)}
+                                    disabled={isProcessing}
+                                    className="px-3 py-1.5 text-xs rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                                  >
+                                    {isProcessing ? (
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                      t('removeMember')
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => setRemovingMemberId(null)}
+                                    className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                  >
+                                    {t('cancel')}
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setRemovingMemberId(member.id)}
+                                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  title={t('removeMember')}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              ))}
                           </div>
                         )}
                       </td>

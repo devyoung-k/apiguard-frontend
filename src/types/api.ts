@@ -210,12 +210,13 @@ export interface UpdateAlertRequest {
 // 워크스페이스 / RBAC
 // ============================================================
 
-export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+export type WorkspaceRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'VIEWER';
 
 export interface WorkspaceResponse {
   id: number;
   name: string;
   slug: string;
+  role: WorkspaceRole;
   createdAt: string;
 }
 
@@ -245,13 +246,13 @@ export interface UpdateMemberRoleRequest {
 // 결제 / 플랜
 // ============================================================
 
-export type PlanType = 'free' | 'pro';
+export type PlanType = 'FREE' | 'PRO';
 export type SubscriptionStatus =
-  | 'active'
-  | 'canceled'
-  | 'past_due'
-  | 'trialing'
-  | 'none';
+  | 'ACTIVE'
+  | 'CANCELED'
+  | 'PAST_DUE'
+  | 'TRIALING'
+  | 'NONE';
 
 export interface PlanLimits {
   maxProjects: number;
@@ -269,7 +270,11 @@ export interface PlanInfo {
 
 export interface SubscriptionResponse {
   planType: PlanType;
-  status: SubscriptionStatus;
-  currentPeriodEnd: string | null;
-  cancelAtPeriodEnd: boolean;
+  active: boolean;
+  expiredAt: string | null;
+  maxEndpointsPerProject: number;
+  minCheckIntervalSeconds: number;
+  maxAlertChannels: number;
+  maxMembers: number;
+  dataRetentionDays: number;
 }

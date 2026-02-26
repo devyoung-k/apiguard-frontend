@@ -40,7 +40,7 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
 );
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number | null>(
     null,
@@ -53,8 +53,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     workspaces[0] ??
     null;
 
-  // 현재 워크스페이스에서 내 역할 도출
-  const myRole = members.find((m) => m.userId === user?.id)?.role;
+  // 현재 워크스페이스에서 내 역할: WorkspaceResponse.role에서 직접 도출
+  const myRole = currentWorkspace?.role;
 
   const refreshWorkspaces = useCallback(async () => {
     try {

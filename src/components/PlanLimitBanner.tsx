@@ -29,7 +29,7 @@ export function PlanLimitBanner({ type, current }: PlanLimitBannerProps) {
   if (percentage < 70) return null;
 
   const isAtLimit = current >= max;
-  const planName = currentPlan === 'free' ? 'Free' : 'Pro';
+  const planName = currentPlan === 'FREE' ? 'Free' : 'Pro';
 
   const warningKey = type === 'project' ? 'projectWarning' : 'endpointWarning';
 
