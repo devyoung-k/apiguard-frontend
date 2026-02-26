@@ -1,17 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AppSidebar } from '@/components/AppSidebar';
 import { WorkspaceProvider } from '@/contexts/workspace-context';
 import { PlanProvider } from '@/contexts/plan-context';
 import { Menu } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from '@/i18n/navigation';
+import { PageLoadingState } from '@/components/ui/page-states';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading || !isAuthenticated) {
+    return <PageLoadingState />;
+  }
 
   return (
     <WorkspaceProvider>
