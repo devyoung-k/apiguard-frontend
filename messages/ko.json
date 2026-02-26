@@ -364,7 +364,11 @@
       "owner": "소유자",
       "admin": "관리자",
       "member": "멤버",
-      "viewer": "뷰어"
+      "viewer": "뷰어",
+      "OWNER": "소유자",
+      "ADMIN": "관리자",
+      "MEMBER": "멤버",
+      "VIEWER": "뷰어"
     }
   },
   "billing": {
@@ -384,24 +388,31 @@
       "cancelScheduled": "기간 종료 시 취소 예정"
     },
     "status": {
-      "active": "활성",
-      "canceled": "취소됨",
-      "past_due": "결제 지연",
-      "trialing": "체험판",
-      "none": "구독 없음"
+      "ACTIVE": "활성",
+      "CANCELED": "취소됨",
+      "PAST_DUE": "결제 지연",
+      "TRIALING": "체험판",
+      "NONE": "구독 없음"
     },
     "actions": {
       "manageSubscription": "구독 관리",
       "changePlan": "플랜 변경",
       "upgrade": "Pro로 업그레이드",
+      "upgradeToPro": "Pro로 업그레이드",
       "currentPlan": "현재 플랜",
       "contactSales": "영업팀 문의"
+    },
+    "limits": {
+      "maxEndpoints": "엔드포인트 한도",
+      "minInterval": "최소 체크 주기"
     },
     "toasts": {
       "checkoutMock": "데모 모드에서는 결제 처리가 불가능합니다.",
       "portalMock": "데모 모드에서는 구독 관리가 불가능합니다.",
       "checkoutError": "결제 세션 생성에 실패했습니다.",
-      "portalError": "구독 관리 포탈 열기에 실패했습니다."
+      "portalError": "구독 관리 포탈 열기에 실패했습니다.",
+      "sdkNotLoaded": "결제 모듈을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      "upgradeError": "업그레이드 요청 중 오류가 발생했습니다."
     }
   },
   "pricing": {
@@ -416,6 +427,21 @@
     "endpointWarning": "{plan} 플랜의 엔드포인트 {max}개 중 {current}개를 사용 중입니다.",
     "upgradeMessage": "더 많은 용량을 위해 Pro로 업그레이드하세요.",
     "upgradeCta": "Pro로 업그레이드"
+  },
+  "payment": {
+    "success": {
+      "title": "결제가 완료되었습니다",
+      "confirming": "결제 확인 중입니다...",
+      "done": "구독 정보가 정상적으로 반영되었습니다.",
+      "missingParams": "결제 정보가 누락되었습니다.",
+      "confirmFailed": "결제 확인에 실패했습니다.",
+      "goBilling": "결제 페이지로 이동"
+    },
+    "fail": {
+      "title": "결제에 실패했습니다",
+      "defaultReason": "결제를 완료하지 못했습니다.",
+      "goBilling": "결제 페이지로 돌아가기"
+    }
   },
   "features": {
     "threeProjects": "최대 3개 프로젝트",

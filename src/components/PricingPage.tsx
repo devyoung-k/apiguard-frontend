@@ -10,31 +10,64 @@ import { PLANS } from '@/lib/plans';
 import { formatPrice } from '@/lib/plans';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import * as billingApi from '@/lib/api/billing';
 import type { PlanType } from '@/types/api';
 import { USE_MOCK_API } from '@/lib/runtime-config';
+import { useWorkspace } from '@/contexts/workspace-context';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 export function PricingPage() {
   const { currentPlan } = usePlan();
+  const { currentWorkspace } = useWorkspace();
   const isDarkMode = useDarkMode();
   const t = useTranslations('pricing');
   const tBilling = useTranslations('billing');
   const tFeatures = useTranslations('features');
+  const locale = useLocale();
+  const [loadingPlan, setLoadingPlan] = useState<PlanType | null>(null);
 
   const handleUpgrade = async (planType: PlanType) => {
     if (planType === currentPlan) return;
+    if (planType !== 'PRO') return; // Free 다운그레이드 불가
 
     if (USE_MOCK_API) {
       toast.info(tBilling('toasts.checkoutMock'));
       return;
     }
 
+    if (!currentWorkspace) return;
+    setLoadingPlan(planType);
     try {
-      const { url } = await billingApi.createCheckoutSession(planType);
-      window.location.assign(url);
+      // 1단계: 결제 준비 (주문 정보 생성)
+      const prepareData = await billingApi.preparePayment(currentWorkspace.id, {
+        planType: 'PRO',
+      });
+
+      // 2단계: 토스페이먼츠 결제창 호출
+      // @ts-expect-error 토스페이먼츠 SDK는 window에 주입됨
+      const tossPayments = window.TossPayments?.(
+        process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY,
+      );
+      if (!tossPayments) {
+        toast.error(tBilling('toasts.sdkNotLoaded'));
+        return;
+      }
+      await tossPayments.requestPayment('카드', {
+        amount: prepareData.amount,
+        orderId: prepareData.orderId,
+        orderName: prepareData.orderName,
+        customerEmail: prepareData.customerEmail,
+        customerName: prepareData.customerName,
+        successUrl: `${window.location.origin}/${locale}/payment/success`,
+        failUrl: `${window.location.origin}/${locale}/payment/fail`,
+      });
     } catch {
-      toast.error(tBilling('toasts.checkoutError'));
+      toast.error(tBilling('toasts.upgradeError'));
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -54,7 +87,7 @@ export function PricingPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
         {PLANS.map((plan, index) => {
           const isCurrent = plan.type === currentPlan;
-          const isPro = plan.type === 'pro';
+          const isPro = plan.type === 'PRO';
 
           return (
             <motion.div
@@ -139,7 +172,7 @@ export function PricingPage() {
                   {/* 버튼 */}
                   <Button
                     onClick={() => handleUpgrade(plan.type)}
-                    disabled={isCurrent}
+                    disabled={isCurrent || loadingPlan === plan.type}
                     className={`w-full ${
                       isCurrent
                         ? isDarkMode
@@ -153,9 +186,13 @@ export function PricingPage() {
                       isCurrent ? 'outline' : isPro ? 'default' : 'default'
                     }
                   >
-                    {isCurrent
-                      ? tBilling('actions.currentPlan')
-                      : tBilling('actions.upgrade')}
+                    {loadingPlan === plan.type ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isCurrent ? (
+                      tBilling('actions.currentPlan')
+                    ) : (
+                      tBilling('actions.upgrade')
+                    )}
                   </Button>
                 </CardContent>
               </Card>
