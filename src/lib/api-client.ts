@@ -3,8 +3,9 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 import type { ApiResponse, LoginResponse } from '@/types/api';
+import { toast } from 'sonner';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 const SUPPORTED_LOCALES = ['en', 'ko'] as const;
 const DEFAULT_LOCALE = 'en';
 
@@ -120,6 +121,15 @@ apiClient.interceptors.response.use(
         // 토큰 삭제 후 로그인 페이지로 이동
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        
+        // 언어별 세션 만료 알림 표시
+        const locale = getCurrentLocale();
+        if (locale === 'ko') {
+          toast.error('세션이 만료되었습니다. 다시 로그인해 주세요.');
+        } else {
+          toast.error('Session expired. Please log in again.');
+        }
+
         redirectToLogin();
         return Promise.reject(refreshError);
       } finally {

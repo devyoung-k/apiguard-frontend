@@ -12,12 +12,14 @@ import type { ProjectWithStats } from "@/types/api";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useTranslations } from "next-intl";
 import { getProjectsWithStats } from "@/lib/project-stats";
+import { useWorkspace } from "@/contexts/workspace-context";
 
 export function DashboardPage() {
   const router = useRouter();
   const { setTheme } = useTheme();
   const isDarkMode = useDarkMode();
   const t = useTranslations("dashboard");
+  const { currentWorkspace } = useWorkspace();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,13 @@ export function DashboardPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const projectsWithStats = await getProjectsWithStats();
+        if (!currentWorkspace) {
+          setProjects([]);
+          setError(null);
+          return;
+        }
+
+        const projectsWithStats = await getProjectsWithStats(currentWorkspace.id);
 
         setProjects(projectsWithStats);
         setError(null);
@@ -38,7 +46,7 @@ export function DashboardPage() {
     };
 
     fetchData();
-  }, [t]);
+  }, [currentWorkspace, t]);
 
   const toggleTheme = () => {
     setTheme(isDarkMode ? 'light' : 'dark');

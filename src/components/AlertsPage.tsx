@@ -18,15 +18,17 @@ import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useTranslations } from "next-intl";
+import { useWorkspace } from "@/contexts/workspace-context";
 
-interface AlertWithEndpoint extends AlertResponse {
-  endpointUrl?: string;
-}
+type AlertWithEndpoint = AlertResponse & {
+  endpointUrl: string;
+};
 
 export function AlertsPage() {
   const [showNewAlertForm, setShowNewAlertForm] = useState(false);
   const isDarkMode = useDarkMode();
   const t = useTranslations("alerts");
+  const { currentWorkspace } = useWorkspace();
   const [alerts, setAlerts] = useState<AlertWithEndpoint[]>([]);
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
@@ -42,9 +44,10 @@ export function AlertsPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   const fetchData = useCallback(async () => {
+    if (!currentWorkspace) return;
     try {
       setIsLoading(true);
-      const projectList = await projectsApi.getProjects();
+      const projectList = await projectsApi.getProjects(currentWorkspace.id);
       setProjects(projectList);
 
       const endpointResults = await Promise.allSettled(
@@ -83,7 +86,7 @@ export function AlertsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, [currentWorkspace, t]);
 
   useEffect(() => {
     fetchData();

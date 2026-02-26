@@ -25,11 +25,13 @@ import { useDarkMode } from '@/hooks/use-dark-mode';
 import { useTranslations } from 'next-intl';
 import { PlanLimitBanner } from '@/components/PlanLimitBanner';
 import { getProjectsWithStats } from '@/lib/project-stats';
+import { useWorkspace } from '@/contexts/workspace-context';
 
 export function ProjectsPage() {
   const router = useRouter();
   const isDarkMode = useDarkMode();
   const t = useTranslations('projects');
+  const { currentWorkspace } = useWorkspace();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,10 +41,10 @@ export function ProjectsPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   const fetchProjects = useCallback(async () => {
+    if (!currentWorkspace) return;
     try {
       setIsLoading(true);
-      const projectsWithStats = await getProjectsWithStats();
-
+      const projectsWithStats = await getProjectsWithStats(currentWorkspace.id);
       setProjects(projectsWithStats);
       setError(null);
     } catch {
@@ -50,7 +52,7 @@ export function ProjectsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+  }, [currentWorkspace, t]);
 
   useEffect(() => {
     fetchProjects();
@@ -61,9 +63,10 @@ export function ProjectsPage() {
       toast.error(t('errors.enterProjectName'));
       return;
     }
+    if (!currentWorkspace) return;
     setIsCreating(true);
     try {
-      const created = await projectsApi.createProject({
+      const created = await projectsApi.createProject(currentWorkspace.id, {
         name: newProjectName,
         description: newProjectDesc || undefined,
       });

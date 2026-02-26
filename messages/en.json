@@ -364,7 +364,11 @@
       "owner": "Owner",
       "admin": "Admin",
       "member": "Member",
-      "viewer": "Viewer"
+      "viewer": "Viewer",
+      "OWNER": "Owner",
+      "ADMIN": "Admin",
+      "MEMBER": "Member",
+      "VIEWER": "Viewer"
     }
   },
   "billing": {
@@ -384,24 +388,31 @@
       "cancelScheduled": "Cancels at period end"
     },
     "status": {
-      "active": "Active",
-      "canceled": "Canceled",
-      "past_due": "Past Due",
-      "trialing": "Trial",
-      "none": "No Subscription"
+      "ACTIVE": "Active",
+      "CANCELED": "Canceled",
+      "PAST_DUE": "Past Due",
+      "TRIALING": "Trial",
+      "NONE": "No Subscription"
     },
     "actions": {
       "manageSubscription": "Manage Subscription",
       "changePlan": "Change Plan",
       "upgrade": "Upgrade to Pro",
+      "upgradeToPro": "Upgrade to Pro",
       "currentPlan": "Current Plan",
       "contactSales": "Contact Sales"
+    },
+    "limits": {
+      "maxEndpoints": "Endpoint Limit",
+      "minInterval": "Min Check Interval"
     },
     "toasts": {
       "checkoutMock": "Payment processing is not available in demo mode.",
       "portalMock": "Subscription management is not available in demo mode.",
       "checkoutError": "Failed to create checkout session.",
-      "portalError": "Failed to open subscription portal."
+      "portalError": "Failed to open subscription portal.",
+      "sdkNotLoaded": "Payment module could not be loaded. Please try again.",
+      "upgradeError": "An error occurred during the upgrade request."
     }
   },
   "pricing": {
@@ -416,6 +427,21 @@
     "endpointWarning": "You've used {current} of {max} endpoints on the {plan} plan.",
     "upgradeMessage": "Upgrade to Pro for more capacity.",
     "upgradeCta": "Upgrade to Pro"
+  },
+  "payment": {
+    "success": {
+      "title": "Payment Completed",
+      "confirming": "Confirming payment...",
+      "done": "Your subscription has been updated successfully.",
+      "missingParams": "Payment information is missing.",
+      "confirmFailed": "Failed to confirm payment.",
+      "goBilling": "Go to Billing"
+    },
+    "fail": {
+      "title": "Payment Failed",
+      "defaultReason": "The payment could not be completed.",
+      "goBilling": "Back to Billing"
+    }
   },
   "features": {
     "threeProjects": "Up to 3 projects",

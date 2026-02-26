@@ -32,10 +32,14 @@ interface PlanContextType {
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
 
 const MOCK_SUBSCRIPTION: SubscriptionResponse = {
-  planType: 'free',
-  status: 'none',
-  currentPeriodEnd: null,
-  cancelAtPeriodEnd: false,
+  planType: 'FREE',
+  active: false,
+  expiredAt: null,
+  maxEndpointsPerProject: 5,
+  minCheckIntervalSeconds: 300,
+  maxAlertChannels: 2,
+  maxMembers: 3,
+  dataRetentionDays: 1,
 };
 
 export function PlanProvider({ children }: { children: ReactNode }) {
@@ -45,8 +49,8 @@ export function PlanProvider({ children }: { children: ReactNode }) {
   );
   const [isLoading, setIsLoading] = useState(true);
 
-  const currentPlan: PlanType = subscription?.planType ?? 'free';
-  const isPro = currentPlan === 'pro';
+  const currentPlan: PlanType = subscription?.planType ?? 'FREE';
+  const isPro = currentPlan === 'PRO';
   const limits = getPlanLimits(currentPlan);
 
   const refreshSubscription = useCallback(async () => {
@@ -54,13 +58,14 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       setSubscription(MOCK_SUBSCRIPTION);
       return;
     }
+    if (!currentWorkspace) return;
     try {
-      const data = await billingApi.getSubscription();
+      const data = await billingApi.getSubscription(currentWorkspace.id);
       setSubscription(data);
     } catch {
       setSubscription(MOCK_SUBSCRIPTION);
     }
-  }, []);
+  }, [currentWorkspace]);
 
   useEffect(() => {
     const init = async () => {
