@@ -70,8 +70,8 @@ export function BillingPage() {
         <Card
           className={
             isDarkMode
-              ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-800'
-              : 'bg-gradient-to-br from-white via-white to-gray-50 border-gray-200 shadow-sm'
+              ? 'bg-linear-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-800'
+              : 'bg-linear-to-br from-white via-white to-gray-50 border-gray-200 shadow-sm'
           }
         >
           <CardHeader>

@@ -64,7 +64,7 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
   };
 
   return (
-    <div className="w-64 min-h-screen flex flex-col border-r border-gray-200 bg-white text-gray-900 transition-colors dark:border-gray-800 dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 dark:text-white">
+    <div className="w-64 min-h-screen flex flex-col border-r border-gray-200 bg-white text-gray-900 transition-colors dark:border-gray-800 dark:bg-linear-to-b dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 dark:text-white">
       <div className="border-b border-gray-200 p-6 dark:border-gray-800">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">

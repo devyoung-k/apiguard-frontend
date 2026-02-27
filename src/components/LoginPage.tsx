@@ -49,8 +49,8 @@ export function LoginPage() {
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${
       isDarkMode 
-        ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-black' 
-        : 'bg-gradient-to-br from-blue-50 to-indigo-100'
+        ? 'bg-linear-to-br from-gray-900 via-gray-900 to-black' 
+        : 'bg-linear-to-br from-blue-50 to-indigo-100'
     }`}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}

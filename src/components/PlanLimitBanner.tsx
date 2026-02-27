@@ -104,7 +104,7 @@ export function PlanLimitBanner({ type, current }: PlanLimitBannerProps) {
       <Link href="/billing">
         <Button
           size="sm"
-          className="gap-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white whitespace-nowrap"
+          className="gap-1 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white whitespace-nowrap"
         >
           {t('upgradeCta')}
           <ArrowRight className="h-3.5 w-3.5" />

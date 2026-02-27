@@ -100,8 +100,8 @@ export function PricingPage() {
                 className={`relative overflow-hidden transition-all h-full ${
                   isPro
                     ? isDarkMode
-                      ? 'border-blue-500/50 bg-gradient-to-br from-gray-900 via-gray-900 to-blue-950/30 shadow-xl shadow-blue-500/10'
-                      : 'border-blue-300 bg-gradient-to-br from-white via-white to-blue-50 shadow-xl shadow-blue-200/40'
+                      ? 'border-blue-500/50 bg-linear-to-br from-gray-900 via-gray-900 to-blue-950/30 shadow-xl shadow-blue-500/10'
+                      : 'border-blue-300 bg-linear-to-br from-white via-white to-blue-50 shadow-xl shadow-blue-200/40'
                     : isDarkMode
                       ? 'border-gray-800 bg-gray-900'
                       : 'border-gray-300 bg-white shadow-sm'
@@ -110,7 +110,7 @@ export function PricingPage() {
                 {/* Pro 리본 */}
                 {isPro && (
                   <div className="absolute top-4 right-4">
-                    <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 gap-1">
+                    <Badge className="bg-linear-to-r from-blue-600 to-purple-600 text-white border-0 gap-1">
                       <Sparkles className="h-3 w-3" />
                       {t('popular')}
                     </Badge>
@@ -179,7 +179,7 @@ export function PricingPage() {
                           ? 'bg-gray-800 text-gray-400 border border-gray-700'
                           : 'bg-gray-100 text-gray-500 border border-gray-300'
                         : isPro
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25'
+                          ? 'bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25'
                           : ''
                     }`}
                     variant={
