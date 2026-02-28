@@ -30,6 +30,7 @@ export default function BillingRoute() {
         {(['pricing', 'billing'] as const).map((tab) => (
           <button
             key={tab}
+            type="button"
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === tab
