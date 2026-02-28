@@ -90,6 +90,8 @@ export function DashboardPage() {
           </p>
         </div>
         <button
+          type="button"
+          aria-label={isDarkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
           onClick={toggleTheme}
           className={`p-3 rounded-xl transition-all ${
             isDarkMode 
@@ -149,12 +151,21 @@ export function DashboardPage() {
                 {projects.map((project) => (
                   <div
                     key={project.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${project.name} 상세 보기`}
                     className={`flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all ${
                       isDarkMode
                         ? 'bg-gray-800/50 hover:bg-gray-800'
                         : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                     onClick={() => router.push(`/projects/${project.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        router.push(`/projects/${project.id}`);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-2 rounded-full ${

@@ -34,6 +34,8 @@ export default function DashboardLayout({
         <div className="flex min-h-screen bg-gray-100 dark:bg-gray-950">
           {/* Mobile Menu Button */}
           <button
+            type="button"
+            aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden fixed top-4 left-4 z-50 rounded-lg bg-white p-2 text-gray-900 shadow-md dark:bg-gray-800 dark:text-white"
           >
@@ -42,7 +44,9 @@ export default function DashboardLayout({
 
           {/* Mobile Overlay */}
           {isMobileMenuOpen && (
-            <div
+            <button
+              type="button"
+              aria-label="메뉴 닫기"
               className="md:hidden fixed inset-0 bg-black/50 z-40"
               onClick={() => setIsMobileMenuOpen(false)}
             />

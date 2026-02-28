@@ -207,7 +207,16 @@ export function ProjectsPage() {
                     ? 'bg-gray-900 border-gray-800 hover:bg-gray-800 hover:border-gray-700'
                     : 'bg-white border-gray-300 shadow-sm hover:shadow-lg'
                 }`}
+                role="button"
+                tabIndex={0}
+                aria-label={`${project.name} 상세 보기`}
                 onClick={() => router.push(`/projects/${project.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    router.push(`/projects/${project.id}`);
+                  }
+                }}
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">

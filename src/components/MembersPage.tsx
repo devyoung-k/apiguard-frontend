@@ -152,6 +152,8 @@ export function MembersPage() {
 
         {canInvite && (
           <button
+            type="button"
+            aria-label="멤버 초대"
             onClick={() => setIsInviteOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20"
           >
@@ -170,12 +172,14 @@ export function MembersPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="email"
+              aria-label={t('emailPlaceholder')}
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder={t('emailPlaceholder')}
               className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
             <select
+              aria-label="Select role"
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as WorkspaceRole)}
               className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
@@ -188,6 +192,8 @@ export function MembersPage() {
             </select>
             <div className="flex gap-2">
               <button
+                type="button"
+                aria-label="멤버 초대"
                 onClick={handleInvite}
                 disabled={isInviting}
                 className="px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
@@ -199,6 +205,8 @@ export function MembersPage() {
                 )}
               </button>
               <button
+                type="button"
+                aria-label="멤버 초대 취소"
                 onClick={() => setIsInviteOpen(false)}
                 className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
               >
@@ -266,6 +274,7 @@ export function MembersPage() {
                       <td className="px-6 py-4">
                         {editingMemberId === member.id ? (
                           <select
+                            aria-label="역할 선택"
                             defaultValue={member.role}
                             onChange={(e) =>
                               handleRoleChange(
@@ -304,6 +313,8 @@ export function MembersPage() {
                             {canChangeRole &&
                               (editingMemberId === member.id ? (
                                 <button
+                                  type="button"
+                                  aria-label="역할 변경 취소"
                                   onClick={() => setEditingMemberId(null)}
                                   className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
                                 >
@@ -311,6 +322,8 @@ export function MembersPage() {
                                 </button>
                               ) : (
                                 <button
+                                  type="button"
+                                  aria-label="역할 변경"
                                   onClick={() => setEditingMemberId(member.id)}
                                   className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
                                 >
@@ -322,6 +335,8 @@ export function MembersPage() {
                               (removingMemberId === member.id ? (
                                 <div className="flex items-center gap-1">
                                   <button
+                                    type="button"
+                                    aria-label="멤버 삭제 확인"
                                     onClick={() => handleRemove(member.id)}
                                     disabled={isProcessing}
                                     className="px-3 py-1.5 text-xs rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
@@ -333,6 +348,8 @@ export function MembersPage() {
                                     )}
                                   </button>
                                   <button
+                                    type="button"
+                                    aria-label="멤버 삭제 취소"
                                     onClick={() => setRemovingMemberId(null)}
                                     className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
                                   >
@@ -341,6 +358,8 @@ export function MembersPage() {
                                 </div>
                               ) : (
                                 <button
+                                  type="button"
+                                  aria-label="멤버 삭제"
                                   onClick={() => setRemovingMemberId(member.id)}
                                   className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                                   title={t('removeMember')}

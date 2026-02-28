@@ -82,7 +82,10 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
         <div className="px-3 pt-3">
           <div className="relative">
             <button
+              type="button"
               onClick={() => setIsWsSelectorOpen(!isWsSelectorOpen)}
+              aria-label={isWsSelectorOpen ? '워크스페이스 목록 닫기' : '워크스페이스 목록 열기'}
+              aria-expanded={isWsSelectorOpen}
               className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
             >
               <span className="truncate font-medium">
@@ -96,6 +99,7 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
                 {workspaces.map((ws) => (
                   <button
                     key={ws.id}
+                    type="button"
                     onClick={() => handleSwitchWorkspace(ws.id)}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
                       ws.id === currentWorkspace?.id
@@ -136,6 +140,7 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
 
       <div className="border-t border-gray-200 p-3 dark:border-gray-800">
         <button
+          type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"
