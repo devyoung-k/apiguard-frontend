@@ -9,8 +9,13 @@
       "projects": "프로젝트",
       "alerts": "알림",
       "admin": "관리",
+      "systemAdminUsers": "시스템 회원관리",
+      "systemAdminNotices": "시스템 공지관리",
       "settings": "설정",
-      "billing": "결제"
+      "billing": "결제",
+      "notices": "공지사항",
+      "systemAdmin": "시스템 관리",
+      "systemAdminExit": "시스템 관리 종료"
     },
     "workspace": {
       "switch": "워크스페이스 전환",
@@ -357,6 +362,93 @@
       }
     }
   },
+  "systemAdmin": {
+    "guard": {
+      "title": "접근 권한이 없습니다",
+      "description": "시스템 관리자 기능은 관리자(ADMIN) 권한 사용자만 접근할 수 있습니다.",
+      "goDashboard": "대시보드로 이동"
+    },
+    "users": {
+      "title": "시스템 회원관리",
+      "subtitle": "전체 회원을 조회하고 역할을 변경하거나 강제 탈퇴 처리합니다.",
+      "empty": "조회된 회원이 없습니다.",
+      "table": {
+        "email": "이메일",
+        "nickname": "닉네임",
+        "role": "역할",
+        "createdAt": "가입일",
+        "actions": "관리"
+      },
+      "actions": {
+        "refresh": "새로고침",
+        "retry": "다시 시도",
+        "saveRole": "역할 저장",
+        "delete": "강제 탈퇴",
+        "cancel": "취소",
+        "confirmDelete": "탈퇴 처리"
+      },
+      "deleteDialog": {
+        "title": "회원 강제 탈퇴",
+        "description": "{email} 계정을 강제 탈퇴 처리하시겠습니까?"
+      },
+      "toasts": {
+        "roleUpdated": "회원 역할이 변경되었습니다.",
+        "deleted": "회원이 강제 탈퇴 처리되었습니다."
+      },
+      "errors": {
+        "loadFailed": "회원 목록을 불러오지 못했습니다.",
+        "roleUpdateFailed": "회원 역할 변경에 실패했습니다.",
+        "deleteFailed": "회원 강제 탈퇴에 실패했습니다."
+      }
+    },
+    "notices": {
+      "title": "시스템 공지관리",
+      "subtitle": "관리자 공지사항을 작성, 수정, 삭제합니다.",
+      "empty": "등록된 공지사항이 없습니다.",
+      "form": {
+        "createTitle": "공지사항 작성",
+        "editTitle": "공지사항 수정",
+        "titlePlaceholder": "공지 제목을 입력하세요",
+        "contentPlaceholder": "공지 내용을 입력하세요",
+        "pinned": "상단 고정"
+      },
+      "list": {
+        "pinned": "고정",
+        "meta": "작성: {createdAt} · 수정: {updatedAt}"
+      },
+      "actions": {
+        "refresh": "새로고침",
+        "retry": "다시 시도",
+        "create": "작성",
+        "update": "수정",
+        "edit": "수정 열기",
+        "delete": "삭제",
+        "cancel": "취소",
+        "confirmDelete": "삭제",
+        "cancelEdit": "수정 취소"
+      },
+      "deleteDialog": {
+        "title": "공지사항 삭제",
+        "description": "\"{title}\" 공지사항을 삭제하시겠습니까?"
+      },
+      "toasts": {
+        "created": "공지사항이 작성되었습니다.",
+        "updated": "공지사항이 수정되었습니다.",
+        "deleted": "공지사항이 삭제되었습니다."
+      },
+      "errors": {
+        "loadFailed": "공지사항 목록을 불러오지 못했습니다.",
+        "required": "제목과 내용을 모두 입력해 주세요.",
+        "saveFailed": "공지사항 저장에 실패했습니다.",
+        "detailFailed": "공지사항 상세 조회에 실패했습니다.",
+        "deleteFailed": "공지사항 삭제에 실패했습니다."
+      }
+    },
+    "nav": {
+      "users": "회원관리",
+      "notices": "공지관리"
+    }
+  },
   "permissions": {
     "noAccess": "이 페이지에 접근할 권한이 없습니다.",
     "contactAdmin": "워크스페이스 관리자에게 문의하세요.",
@@ -456,5 +548,19 @@
     "ninetyDayHistory": "90일 기록",
     "prioritySupport": "우선 지원",
     "customWebhooks": "커스텀 웹훅"
+  },
+  "notices": {
+    "title": "공지사항",
+    "subtitle": "서비스 운영 공지와 업데이트 소식을 확인하세요",
+    "pinned": "고정",
+    "empty": "등록된 공지사항이 없습니다.",
+    "meta": "작성: {createdAt} · 수정: {updatedAt}",
+    "actions": {
+      "refresh": "새로고침",
+      "retry": "다시 시도"
+    },
+    "errors": {
+      "loadFailed": "공지사항을 불러오지 못했습니다."
+    }
   }
 }

@@ -9,8 +9,13 @@
       "projects": "Projects",
       "alerts": "Alerts",
       "admin": "Admin",
+      "systemAdminUsers": "System Users",
+      "systemAdminNotices": "System Notices",
       "settings": "Settings",
-      "billing": "Billing"
+      "billing": "Billing",
+      "notices": "Notices",
+      "systemAdmin": "System Admin",
+      "systemAdminExit": "Exit System Admin"
     },
     "workspace": {
       "switch": "Switch Workspace",
@@ -357,6 +362,93 @@
       }
     }
   },
+  "systemAdmin": {
+    "guard": {
+      "title": "Access denied",
+      "description": "System admin features are available only to users with ADMIN role.",
+      "goDashboard": "Go to Dashboard"
+    },
+    "users": {
+      "title": "System User Management",
+      "subtitle": "View all users, change roles, and force withdrawal.",
+      "empty": "No users found.",
+      "table": {
+        "email": "Email",
+        "nickname": "Nickname",
+        "role": "Role",
+        "createdAt": "Created At",
+        "actions": "Actions"
+      },
+      "actions": {
+        "refresh": "Refresh",
+        "retry": "Retry",
+        "saveRole": "Save Role",
+        "delete": "Force Delete",
+        "cancel": "Cancel",
+        "confirmDelete": "Delete"
+      },
+      "deleteDialog": {
+        "title": "Force user deletion",
+        "description": "Do you want to force delete {email}?"
+      },
+      "toasts": {
+        "roleUpdated": "User role updated.",
+        "deleted": "User was deleted."
+      },
+      "errors": {
+        "loadFailed": "Failed to load users.",
+        "roleUpdateFailed": "Failed to update user role.",
+        "deleteFailed": "Failed to delete user."
+      }
+    },
+    "notices": {
+      "title": "System Notice Management",
+      "subtitle": "Create, edit, and delete admin notices.",
+      "empty": "No notices found.",
+      "form": {
+        "createTitle": "Create Notice",
+        "editTitle": "Edit Notice",
+        "titlePlaceholder": "Enter a notice title",
+        "contentPlaceholder": "Enter notice content",
+        "pinned": "Pin to top"
+      },
+      "list": {
+        "pinned": "Pinned",
+        "meta": "Created: {createdAt} · Updated: {updatedAt}"
+      },
+      "actions": {
+        "refresh": "Refresh",
+        "retry": "Retry",
+        "create": "Create",
+        "update": "Update",
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "confirmDelete": "Delete",
+        "cancelEdit": "Cancel Edit"
+      },
+      "deleteDialog": {
+        "title": "Delete notice",
+        "description": "Delete notice \"{title}\"?"
+      },
+      "toasts": {
+        "created": "Notice created.",
+        "updated": "Notice updated.",
+        "deleted": "Notice deleted."
+      },
+      "errors": {
+        "loadFailed": "Failed to load notices.",
+        "required": "Please fill in both title and content.",
+        "saveFailed": "Failed to save notice.",
+        "detailFailed": "Failed to load notice detail.",
+        "deleteFailed": "Failed to delete notice."
+      }
+    },
+    "nav": {
+      "users": "Users",
+      "notices": "Notices"
+    }
+  },
   "permissions": {
     "noAccess": "You don't have permission to access this page.",
     "contactAdmin": "Please contact your workspace admin.",
@@ -456,5 +548,19 @@
     "ninetyDayHistory": "90-day history",
     "prioritySupport": "Priority support",
     "customWebhooks": "Custom webhooks"
+  },
+  "notices": {
+    "title": "Notices",
+    "subtitle": "Read service announcements and product updates",
+    "pinned": "Pinned",
+    "empty": "No notices available.",
+    "meta": "Created: {createdAt} · Updated: {updatedAt}",
+    "actions": {
+      "refresh": "Refresh",
+      "retry": "Retry"
+    },
+    "errors": {
+      "loadFailed": "Failed to load notices."
+    }
   }
 }

@@ -68,8 +68,11 @@ export interface UserResponse {
   id: number;
   email: string;
   nickname: string;
+  role: UserRole;
   createdAt: string;
 }
+
+export type UserRole = 'USER' | 'ADMIN';
 
 export interface UpdateUserRequest {
   nickname?: string;
@@ -79,6 +82,19 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
   newPasswordConfirm: string;
+}
+
+export interface AdminUserResponse {
+  id: number;
+  email: string;
+  nickname: string;
+  role: UserRole;
+  createdAt: string;
+  deletedAt: string | null;
+}
+
+export interface UpdateAdminUserRoleRequest {
+  role: UserRole;
 }
 
 // ============================================================
@@ -192,6 +208,31 @@ export interface AlertResponse {
   threshold: number;
   isActive: boolean;
   createdAt: string;
+}
+
+// ============================================================
+// 공지사항
+// ============================================================
+
+export interface NoticeResponse {
+  id: number;
+  title: string;
+  content: string;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateNoticeRequest {
+  title: string;
+  content: string;
+  pinned?: boolean;
+}
+
+export interface UpdateNoticeRequest {
+  title: string;
+  content: string;
+  pinned: boolean;
 }
 
 export interface CreateAlertRequest {

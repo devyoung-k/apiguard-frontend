@@ -8,6 +8,7 @@ import * as usersApi from '@/lib/api/users';
 interface AuthContextType {
   user: UserResponse | null;
   isAuthenticated: boolean;
+  isSystemAdmin: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, nickname: string) => Promise<void>;
@@ -17,11 +18,38 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function getRoleFromAccessToken(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    return null;
+  }
+
+  const [, payload] = token.split('.');
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const decodedPayload = JSON.parse(atob(padded)) as Record<string, unknown>;
+    const role = decodedPayload.role ?? decodedPayload['User.role'];
+    return typeof role === 'string' ? role : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!user;
+  const isSystemAdmin = (user?.role ?? getRoleFromAccessToken()) === 'ADMIN';
 
   // 앱 시작 시 토큰 존재하면 유저 정보 복원
   useEffect(() => {
@@ -82,7 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, isLoading, login, signup, logout, refreshUser }}
+      value={{
+        user,
+        isAuthenticated,
+        isSystemAdmin,
+        isLoading,
+        login,
+        signup,
+        logout,
+        refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>
