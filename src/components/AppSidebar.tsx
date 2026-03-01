@@ -9,6 +9,8 @@ import {
   Users,
   ChevronsUpDown,
   CreditCard,
+  BellRing,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
@@ -23,23 +25,36 @@ interface AppSidebarProps {
 export function AppSidebar({ onMobileClose }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, isSystemAdmin } = useAuth();
   const { currentWorkspace, workspaces, myRole, switchWorkspace } =
     useWorkspace();
   const t = useTranslations('sidebar');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isWsSelectorOpen, setIsWsSelectorOpen] = useState(false);
+  const [isSystemMenuOpen, setIsSystemMenuOpen] = useState(
+    pathname.startsWith('/system-admin'),
+  );
 
-  const menuItems = [
+  const normalMenuItems = [
     { id: '/dashboard', label: t('menu.dashboard'), icon: LayoutDashboard },
     { id: '/projects', label: t('menu.projects'), icon: FolderKanban },
     { id: '/alerts', label: t('menu.alerts'), icon: Bell },
+    { id: '/notices', label: t('menu.notices'), icon: BellRing },
     ...(canManageMembers(myRole)
       ? [{ id: '/admin/members', label: t('menu.admin'), icon: Users }]
       : []),
     { id: '/settings', label: t('menu.settings'), icon: Settings },
     { id: '/billing', label: t('menu.billing'), icon: CreditCard },
   ];
+  const systemMenuItems = [
+    { id: '/system-admin/users', label: t('menu.systemAdminUsers'), icon: Users },
+    {
+      id: '/system-admin/notices',
+      label: t('menu.systemAdminNotices'),
+      icon: BellRing,
+    },
+  ];
+  const menuItems = isSystemMenuOpen ? systemMenuItems : normalMenuItems;
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -61,6 +76,19 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
   const handleSwitchWorkspace = (id: number) => {
     switchWorkspace(id);
     setIsWsSelectorOpen(false);
+  };
+
+  const handleToggleSystemMenu = () => {
+    const next = !isSystemMenuOpen;
+    setIsSystemMenuOpen(next);
+
+    if (next) {
+      router.push('/system-admin/users');
+    } else {
+      router.push('/dashboard');
+    }
+
+    if (onMobileClose) onMobileClose();
   };
 
   return (
@@ -137,6 +165,27 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
           );
         })}
       </nav>
+
+      {isSystemAdmin && (
+        <div className="px-3 pb-3">
+          <button
+            type="button"
+            onClick={handleToggleSystemMenu}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all border ${
+              isSystemMenuOpen
+                ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20'
+                : 'border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 dark:border-blue-900 dark:text-blue-300 dark:bg-blue-950/30 dark:hover:bg-blue-900/40'
+            }`}
+          >
+            <Shield className="h-5 w-5" />
+            <span className="text-sm">
+              {isSystemMenuOpen
+                ? t('menu.systemAdminExit')
+                : t('menu.systemAdmin')}
+            </span>
+          </button>
+        </div>
+      )}
 
       <div className="border-t border-gray-200 p-3 dark:border-gray-800">
         <button
