@@ -19,7 +19,11 @@
     },
     "workspace": {
       "switch": "워크스페이스 전환",
-      "create": "워크스페이스 생성"
+      "create": "워크스페이스 생성",
+      "namePlaceholder": "워크스페이스 이름",
+      "nameRequired": "워크스페이스 이름을 입력해 주세요.",
+      "created": "워크스페이스가 생성되었습니다.",
+      "createFailed": "워크스페이스 생성에 실패했습니다."
     },
     "logout": "로그아웃",
     "loggingOut": "로그아웃 중..."
@@ -148,7 +152,8 @@
     "errors": {
       "loadProjects": "프로젝트를 불러오지 못했습니다.",
       "enterProjectName": "프로젝트 이름을 입력해 주세요.",
-      "createProjectFailed": "프로젝트 생성에 실패했습니다."
+      "createProjectFailed": "프로젝트 생성에 실패했습니다.",
+      "workspaceRequired": "워크스페이스를 먼저 생성하거나 선택해 주세요."
     },
     "toasts": {
       "projectCreated": "프로젝트가 생성되었습니다."
@@ -504,7 +509,9 @@
       "checkoutError": "결제 세션 생성에 실패했습니다.",
       "portalError": "구독 관리 포탈 열기에 실패했습니다.",
       "sdkNotLoaded": "결제 모듈을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
-      "upgradeError": "업그레이드 요청 중 오류가 발생했습니다."
+      "upgradeError": "업그레이드 요청 중 오류가 발생했습니다.",
+      "workspaceRequired": "워크스페이스를 먼저 선택해 주세요.",
+      "ownerOnly": "결제는 워크스페이스 OWNER만 진행할 수 있습니다."
     }
   },
   "pricing": {

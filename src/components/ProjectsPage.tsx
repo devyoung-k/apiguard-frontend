@@ -31,7 +31,7 @@ export function ProjectsPage() {
   const router = useRouter();
   const isDarkMode = useDarkMode();
   const t = useTranslations('projects');
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,15 +55,29 @@ export function ProjectsPage() {
   }, [currentWorkspace, t]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    if (isWorkspaceLoading) {
+      return;
+    }
+
+    if (!currentWorkspace) {
+      setProjects([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    void fetchProjects();
+  }, [currentWorkspace, fetchProjects, isWorkspaceLoading]);
 
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) {
       toast.error(t('errors.enterProjectName'));
       return;
     }
-    if (!currentWorkspace) return;
+    if (!currentWorkspace) {
+      toast.error(t('errors.workspaceRequired'));
+      return;
+    }
     setIsCreating(true);
     try {
       const created = await projectsApi.createProject(currentWorkspace.id, {
@@ -167,7 +181,7 @@ export function ProjectsPage() {
               <Button
                 onClick={handleCreateProject}
                 className="w-full"
-                disabled={isCreating}
+                disabled={isCreating || !currentWorkspace}
               >
                 {isCreating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

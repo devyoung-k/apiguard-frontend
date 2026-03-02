@@ -11,12 +11,24 @@ import {
   CreditCard,
   BellRing,
   Shield,
+  Plus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useTranslations } from 'next-intl';
 import { canManageMembers } from '@/lib/permissions';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
 
 interface AppSidebarProps {
   onMobileClose?: () => void;
@@ -26,11 +38,20 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, isSystemAdmin } = useAuth();
-  const { currentWorkspace, workspaces, myRole, switchWorkspace } =
+  const {
+    currentWorkspace,
+    workspaces,
+    myRole,
+    switchWorkspace,
+    createWorkspace,
+  } =
     useWorkspace();
   const t = useTranslations('sidebar');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isWsSelectorOpen, setIsWsSelectorOpen] = useState(false);
+  const [isCreateWsOpen, setIsCreateWsOpen] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [isCreatingWs, setIsCreatingWs] = useState(false);
   const [isSystemMenuOpen, setIsSystemMenuOpen] = useState(
     pathname.startsWith('/system-admin'),
   );
@@ -91,6 +112,25 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
     if (onMobileClose) onMobileClose();
   };
 
+  const handleCreateWorkspace = async () => {
+    if (!newWorkspaceName.trim()) {
+      toast.error(t('workspace.nameRequired'));
+      return;
+    }
+
+    setIsCreatingWs(true);
+    try {
+      await createWorkspace(newWorkspaceName.trim());
+      setNewWorkspaceName('');
+      setIsCreateWsOpen(false);
+      toast.success(t('workspace.created'));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t('workspace.createFailed')));
+    } finally {
+      setIsCreatingWs(false);
+    }
+  };
+
   return (
     <div className="w-64 min-h-screen flex flex-col border-r border-gray-200 bg-white text-gray-900 transition-colors dark:border-gray-800 dark:bg-linear-to-b dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 dark:text-white">
       <div className="border-b border-gray-200 p-6 dark:border-gray-800">
@@ -105,9 +145,9 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
         </p>
       </div>
 
-      {/* 워크스페이스 셀렉터 */}
-      {workspaces.length > 0 && (
-        <div className="px-3 pt-3">
+      {/* 워크스페이스 영역 */}
+      <div className="px-3 pt-3 space-y-2">
+        {workspaces.length > 0 && (
           <div className="relative">
             <button
               type="button"
@@ -141,8 +181,36 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+
+        <Dialog open={isCreateWsOpen} onOpenChange={setIsCreateWsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full justify-start gap-2">
+              <Plus className="h-4 w-4" />
+              {t('workspace.create')}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('workspace.create')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                placeholder={t('workspace.namePlaceholder')}
+              />
+              <Button
+                onClick={handleCreateWorkspace}
+                disabled={isCreatingWs}
+                className="w-full"
+              >
+                {isCreatingWs ? <Loader2 className="h-4 w-4 animate-spin" /> : t('workspace.create')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <nav className="flex-1 px-3 py-4">
         {menuItems.map((item) => {

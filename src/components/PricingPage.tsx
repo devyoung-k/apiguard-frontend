@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Loader2, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -17,11 +17,12 @@ import type { PlanType } from '@/types/api';
 import { USE_MOCK_API } from '@/lib/runtime-config';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { openTossCheckout } from '@/lib/toss-payments';
+import { getApiErrorMessage } from '@/lib/utils';
 
 export function PricingPage() {
   const { currentPlan } = usePlan();
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, myRole } = useWorkspace();
   const isDarkMode = useDarkMode();
   const t = useTranslations('pricing');
   const tBilling = useTranslations('billing');
@@ -38,34 +39,37 @@ export function PricingPage() {
       return;
     }
 
-    if (!currentWorkspace) return;
+    if (!currentWorkspace) {
+      toast.error(tBilling('toasts.workspaceRequired'));
+      return;
+    }
+    if (myRole !== 'OWNER') {
+      toast.error(tBilling('toasts.ownerOnly'));
+      return;
+    }
     setLoadingPlan(planType);
     try {
       // 1단계: 결제 준비 (주문 정보 생성)
-      const prepareData = await billingApi.preparePayment(currentWorkspace.id, {
-        planType: 'PRO',
-      });
+      const prepareData = await billingApi.preparePayment(currentWorkspace.id);
 
-      // 2단계: 토스페이먼츠 결제창 호출
-      // @ts-expect-error 토스페이먼츠 SDK는 window에 주입됨
-      const tossPayments = window.TossPayments?.(
-        process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY,
-      );
-      if (!tossPayments) {
+      if (!prepareData.clientKey) {
         toast.error(tBilling('toasts.sdkNotLoaded'));
         return;
       }
-      await tossPayments.requestPayment('카드', {
+
+      // 2단계: 토스페이먼츠 결제창 호출
+      await openTossCheckout({
+        clientKey: prepareData.clientKey,
         amount: prepareData.amount,
         orderId: prepareData.orderId,
         orderName: prepareData.orderName,
         customerEmail: prepareData.customerEmail,
         customerName: prepareData.customerName,
-        successUrl: `${window.location.origin}/${locale}/payment/success`,
-        failUrl: `${window.location.origin}/${locale}/payment/fail`,
+        successUrl: `${window.location.origin}/${locale}/payment/success?workspaceId=${currentWorkspace.id}`,
+        failUrl: `${window.location.origin}/${locale}/payment/fail?workspaceId=${currentWorkspace.id}`,
       });
-    } catch {
-      toast.error(tBilling('toasts.upgradeError'));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, tBilling('toasts.upgradeError')));
     } finally {
       setLoadingPlan(null);
     }
