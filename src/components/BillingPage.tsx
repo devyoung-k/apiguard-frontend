@@ -14,10 +14,12 @@ import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import * as billingApi from '@/lib/api/billing';
 import { useState } from 'react';
+import { openTossCheckout } from '@/lib/toss-payments';
+import { getApiErrorMessage } from '@/lib/utils';
 
 export function BillingPage() {
   const { currentPlan, subscription, isPro, limits } = usePlan();
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, myRole } = useWorkspace();
   const isDarkMode = useDarkMode();
   const t = useTranslations('billing');
   const locale = useLocale();
@@ -26,34 +28,37 @@ export function BillingPage() {
   const planInfo = getPlanInfo(currentPlan);
 
   const handleUpgradeToPro = async () => {
-    if (!currentWorkspace) return;
+    if (!currentWorkspace) {
+      toast.error(t('toasts.workspaceRequired'));
+      return;
+    }
+    if (myRole !== 'OWNER') {
+      toast.error(t('toasts.ownerOnly'));
+      return;
+    }
     setIsUpgrading(true);
     try {
       // 1단계: 결제 준비 (토스페이먼츠 주문 정보 생성)
-      const prepareData = await billingApi.preparePayment(currentWorkspace.id, {
-        planType: 'PRO',
-      });
+      const prepareData = await billingApi.preparePayment(currentWorkspace.id);
 
-      // 2단계: 토스페이먼츠 결제창 호출
-      // @ts-expect-error 토스페이먼츠 SDK는 window에 주입됨
-      const tossPayments = window.TossPayments?.(
-        process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY,
-      );
-      if (!tossPayments) {
+      if (!prepareData.clientKey) {
         toast.error(t('toasts.sdkNotLoaded'));
         return;
       }
-      await tossPayments.requestPayment('카드', {
+
+      // 2단계: 토스페이먼츠 결제창 호출
+      await openTossCheckout({
+        clientKey: prepareData.clientKey,
         amount: prepareData.amount,
         orderId: prepareData.orderId,
         orderName: prepareData.orderName,
         customerEmail: prepareData.customerEmail,
         customerName: prepareData.customerName,
-        successUrl: `${window.location.origin}/${locale}/payment/success`,
-        failUrl: `${window.location.origin}/${locale}/payment/fail`,
+        successUrl: `${window.location.origin}/${locale}/payment/success?workspaceId=${currentWorkspace.id}`,
+        failUrl: `${window.location.origin}/${locale}/payment/fail?workspaceId=${currentWorkspace.id}`,
       });
-    } catch {
-      toast.error(t('toasts.upgradeError'));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t('toasts.upgradeError')));
     } finally {
       setIsUpgrading(false);
     }

@@ -28,7 +28,7 @@ export function AlertsPage() {
   const [showNewAlertForm, setShowNewAlertForm] = useState(false);
   const isDarkMode = useDarkMode();
   const t = useTranslations("alerts");
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
   const [alerts, setAlerts] = useState<AlertWithEndpoint[]>([]);
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
@@ -89,8 +89,21 @@ export function AlertsPage() {
   }, [currentWorkspace, t]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (isWorkspaceLoading) {
+      return;
+    }
+
+    if (!currentWorkspace) {
+      setAlerts([]);
+      setProjects([]);
+      setEndpoints([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    void fetchData();
+  }, [currentWorkspace, fetchData, isWorkspaceLoading]);
 
   // Filter endpoints by selected project
   const filteredEndpoints = selectedProjectId
