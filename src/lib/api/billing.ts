@@ -13,16 +13,13 @@ export function getSubscription(
 
 // ── 결제 (토스페이먼츠 플로우) ──
 
-export interface PreparePaymentRequest {
-  planType: 'PRO';
-}
-
 export interface PreparePaymentResponse {
   orderId: string;
   orderName: string;
   amount: number;
-  customerEmail: string;
-  customerName: string;
+  clientKey: string;
+  customerEmail?: string;
+  customerName?: string;
 }
 
 export interface ConfirmPaymentRequest {
@@ -31,31 +28,29 @@ export interface ConfirmPaymentRequest {
   amount: number;
 }
 
-export interface PaymentHistoryItem {
+export interface PaymentResponse {
   id: number;
   orderId: string;
-  orderName: string;
+  paymentKey: string;
+  planType: 'FREE' | 'PRO';
   amount: number;
-  status: string;
-  method: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED';
   paidAt: string;
 }
 
 export function preparePayment(
   workspaceId: number,
-  data: PreparePaymentRequest,
 ): Promise<PreparePaymentResponse> {
-  return apiPost<PreparePaymentResponse, PreparePaymentRequest>(
+  return apiPost<PreparePaymentResponse>(
     `/workspaces/${workspaceId}/payment/prepare`,
-    data,
   );
 }
 
 export function confirmPayment(
   workspaceId: number,
   data: ConfirmPaymentRequest,
-): Promise<SubscriptionResponse> {
-  return apiPost<SubscriptionResponse, ConfirmPaymentRequest>(
+): Promise<PaymentResponse> {
+  return apiPost<PaymentResponse, ConfirmPaymentRequest>(
     `/workspaces/${workspaceId}/payment/confirm`,
     data,
   );
@@ -63,8 +58,8 @@ export function confirmPayment(
 
 export function getPaymentHistory(
   workspaceId: number,
-): Promise<PaymentHistoryItem[]> {
-  return apiGet<PaymentHistoryItem[]>(
+): Promise<PaymentResponse[]> {
+  return apiGet<PaymentResponse[]>(
     `/workspaces/${workspaceId}/payment/history`,
   );
 }

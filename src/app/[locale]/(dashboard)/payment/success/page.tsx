@@ -27,22 +27,30 @@ export default function PaymentSuccessPage() {
     const orderId = searchParams.get('orderId');
     const paymentKey = searchParams.get('paymentKey');
     const amount = Number(searchParams.get('amount'));
-    if (!orderId || !paymentKey || !Number.isFinite(amount)) {
+    if (!orderId || !paymentKey || !Number.isFinite(amount) || amount <= 0) {
       return null;
     }
     return { orderId, paymentKey, amount };
   }, [searchParams]);
 
+  const workspaceId = useMemo(() => {
+    const value = Number(searchParams.get('workspaceId'));
+    if (Number.isInteger(value) && value > 0) {
+      return value;
+    }
+    return currentWorkspace?.id;
+  }, [searchParams, currentWorkspace?.id]);
+
   useEffect(() => {
     const confirm = async () => {
-      if (!currentWorkspace || !payload) {
+      if (!workspaceId || !payload) {
         setStatus('error');
         setErrorMessage(t('missingParams'));
         return;
       }
 
       try {
-        await billingApi.confirmPayment(currentWorkspace.id, payload);
+        await billingApi.confirmPayment(workspaceId, payload);
         await refreshSubscription();
         setStatus('success');
       } catch (error) {
@@ -52,7 +60,7 @@ export default function PaymentSuccessPage() {
     };
 
     void confirm();
-  }, [currentWorkspace, payload, refreshSubscription, t]);
+  }, [workspaceId, payload, refreshSubscription, t]);
 
   return (
     <div className="mx-auto max-w-xl py-10">

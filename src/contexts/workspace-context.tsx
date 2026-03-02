@@ -33,6 +33,8 @@ interface WorkspaceContextType {
   refreshWorkspaces: () => Promise<void>;
   /** 멤버 목록 새로고침 */
   refreshMembers: () => Promise<void>;
+  /** 워크스페이스 생성 */
+  createWorkspace: (name: string) => Promise<WorkspaceResponse>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
@@ -87,6 +89,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     },
     [workspaces],
   );
+
+  const createWorkspace = useCallback(async (name: string) => {
+    const created = await workspacesApi.createWorkspace({ name });
+    setWorkspaces((prev) => [...prev, created]);
+    setSelectedWorkspaceId(created.id);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentWorkspaceId', String(created.id));
+    }
+    return created;
+  }, []);
 
   // 인증 완료 시 (또는 Mock 모드) 워크스페이스 목록 로드
   useEffect(() => {
@@ -150,6 +162,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         switchWorkspace,
         refreshWorkspaces,
         refreshMembers,
+        createWorkspace,
       }}
     >
       {children}
