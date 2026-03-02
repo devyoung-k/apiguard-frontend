@@ -5,7 +5,8 @@ import axios, {
 import type { ApiResponse, LoginResponse } from '@/types/api';
 import { toast } from 'sonner';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// 클라이언트 요청은 항상 Next.js rewrite(/api)를 통해 백엔드로 전달한다.
+const API_BASE_URL = '/api';
 const SUPPORTED_LOCALES = ['en', 'ko'] as const;
 const DEFAULT_LOCALE = 'en';
 
@@ -55,7 +56,9 @@ function getCurrentLocale(): string {
   }
 
   const [, firstSegment] = window.location.pathname.split('/');
-  return SUPPORTED_LOCALES.includes(firstSegment as (typeof SUPPORTED_LOCALES)[number])
+  return SUPPORTED_LOCALES.includes(
+    firstSegment as (typeof SUPPORTED_LOCALES)[number],
+  )
     ? firstSegment
     : DEFAULT_LOCALE;
 }
@@ -121,7 +124,7 @@ apiClient.interceptors.response.use(
         // 토큰 삭제 후 로그인 페이지로 이동
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        
+
         // 언어별 세션 만료 알림 표시
         const locale = getCurrentLocale();
         if (locale === 'ko') {
@@ -148,7 +151,10 @@ export function unwrap<T>(res: { data: ApiResponse<T> }): T {
   return res.data.data as T;
 }
 
-export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+export async function apiGet<T>(
+  url: string,
+  config?: AxiosRequestConfig,
+): Promise<T> {
   const res = await apiClient.get<ApiResponse<T>>(url, config);
   return unwrap(res);
 }
@@ -180,7 +186,10 @@ export async function apiPatch<TResponse, TRequest = unknown>(
   return unwrap(res);
 }
 
-export async function apiDelete(url: string, config?: AxiosRequestConfig): Promise<void> {
+export async function apiDelete(
+  url: string,
+  config?: AxiosRequestConfig,
+): Promise<void> {
   await apiClient.delete<ApiResponse>(url, config);
 }
 

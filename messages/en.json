@@ -19,7 +19,11 @@
     },
     "workspace": {
       "switch": "Switch Workspace",
-      "create": "Create Workspace"
+      "create": "Create Workspace",
+      "namePlaceholder": "Workspace name",
+      "nameRequired": "Please enter a workspace name.",
+      "created": "Workspace has been created.",
+      "createFailed": "Failed to create workspace."
     },
     "logout": "Logout",
     "loggingOut": "Logging out..."
@@ -148,7 +152,8 @@
     "errors": {
       "loadProjects": "Failed to load projects.",
       "enterProjectName": "Please enter a project name.",
-      "createProjectFailed": "Failed to create project."
+      "createProjectFailed": "Failed to create project.",
+      "workspaceRequired": "Please create or select a workspace first."
     },
     "toasts": {
       "projectCreated": "Project created."
@@ -504,7 +509,9 @@
       "checkoutError": "Failed to create checkout session.",
       "portalError": "Failed to open subscription portal.",
       "sdkNotLoaded": "Payment module could not be loaded. Please try again.",
-      "upgradeError": "An error occurred during the upgrade request."
+      "upgradeError": "An error occurred during the upgrade request.",
+      "workspaceRequired": "Please select a workspace first.",
+      "ownerOnly": "Only the workspace OWNER can proceed with payment."
     }
   },
   "pricing": {
