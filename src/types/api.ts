@@ -127,7 +127,7 @@ export interface EndpointResponse {
   projectId: number;
   url: string;
   httpMethod: HttpMethod;
-  headers: string | null;
+  headers: Record<string, string> | null;
   body: string | null;
   expectedStatusCode: number;
   checkInterval: number;
@@ -139,7 +139,7 @@ export interface EndpointResponse {
 export interface CreateEndpointRequest {
   url: string;
   httpMethod: HttpMethod;
-  headers?: string | null;
+  headers?: Record<string, string> | null;
   body?: string | null;
   expectedStatusCode?: number;
   checkInterval?: number;
@@ -148,7 +148,7 @@ export interface CreateEndpointRequest {
 export interface UpdateEndpointRequest {
   url?: string;
   httpMethod?: HttpMethod;
-  headers?: string | null;
+  headers?: Record<string, string> | null;
   body?: string | null;
   expectedStatusCode?: number;
   checkInterval?: number;

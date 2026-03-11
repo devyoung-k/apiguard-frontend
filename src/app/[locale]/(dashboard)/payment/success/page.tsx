@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useWorkspace } from '@/contexts/workspace-context';
@@ -22,6 +22,7 @@ export default function PaymentSuccessPage() {
     'loading',
   );
   const [errorMessage, setErrorMessage] = useState('');
+  const hasAttemptedConfirmationRef = useRef(false);
 
   const payload = useMemo(() => {
     const orderId = searchParams.get('orderId');
@@ -41,17 +42,43 @@ export default function PaymentSuccessPage() {
     return currentWorkspace?.id;
   }, [searchParams, currentWorkspace?.id]);
 
+  const confirmationCacheKey = useMemo(() => {
+    if (!workspaceId || !payload) {
+      return null;
+    }
+
+    return `payment-confirmed:${workspaceId}:${payload.orderId}:${payload.paymentKey}`;
+  }, [payload, workspaceId]);
+
   useEffect(() => {
     const confirm = async () => {
+      if (hasAttemptedConfirmationRef.current) {
+        return;
+      }
+
       if (!workspaceId || !payload) {
         setStatus('error');
         setErrorMessage(t('missingParams'));
         return;
       }
 
+      hasAttemptedConfirmationRef.current = true;
+
       try {
+        if (
+          confirmationCacheKey &&
+          window.sessionStorage.getItem(confirmationCacheKey) === 'done'
+        ) {
+          await refreshSubscription(workspaceId);
+          setStatus('success');
+          return;
+        }
+
         await billingApi.confirmPayment(workspaceId, payload);
-        await refreshSubscription();
+        if (confirmationCacheKey) {
+          window.sessionStorage.setItem(confirmationCacheKey, 'done');
+        }
+        await refreshSubscription(workspaceId);
         setStatus('success');
       } catch (error) {
         setStatus('error');
@@ -60,7 +87,7 @@ export default function PaymentSuccessPage() {
     };
 
     void confirm();
-  }, [workspaceId, payload, refreshSubscription, t]);
+  }, [confirmationCacheKey, payload, refreshSubscription, t, workspaceId]);
 
   return (
     <div className="mx-auto max-w-xl py-10">
