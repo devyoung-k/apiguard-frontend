@@ -26,12 +26,13 @@ import { useTranslations } from 'next-intl';
 import { PlanLimitBanner } from '@/components/PlanLimitBanner';
 import { getProjectsWithStats } from '@/lib/project-stats';
 import { useWorkspace } from '@/contexts/workspace-context';
+import { canEdit } from '@/lib/permissions';
 
 export function ProjectsPage() {
   const router = useRouter();
   const isDarkMode = useDarkMode();
   const t = useTranslations('projects');
-  const { currentWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
+  const { currentWorkspace, myRole, isLoading: isWorkspaceLoading } = useWorkspace();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDesc, setNewProjectDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const canCreateProject = canEdit(myRole);
 
   const fetchProjects = useCallback(async () => {
     if (!currentWorkspace) return;
@@ -138,7 +140,7 @@ export function ProjectsPage() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2" disabled={!canCreateProject}>
               <Plus className="h-4 w-4" />
               {t('newProject')}
             </Button>
@@ -181,7 +183,7 @@ export function ProjectsPage() {
               <Button
                 onClick={handleCreateProject}
                 className="w-full"
-                disabled={isCreating || !currentWorkspace}
+                disabled={isCreating || !currentWorkspace || !canCreateProject}
               >
                 {isCreating ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

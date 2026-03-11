@@ -1,21 +1,57 @@
 'use client';
 
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, Calendar, Loader2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+import {
+  Calendar,
+  CreditCard,
+  Loader2,
+  ReceiptText,
+  RefreshCw,
+} from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
+import { toast } from 'sonner';
 import { usePlan } from '@/contexts/plan-context';
 import { useWorkspace } from '@/contexts/workspace-context';
-import { getPlanInfo, formatPrice } from '@/lib/plans';
 import { useDarkMode } from '@/hooks/use-dark-mode';
-import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
-import { toast } from 'sonner';
 import * as billingApi from '@/lib/api/billing';
-import { useState } from 'react';
+import { formatPrice, getPlanInfo } from '@/lib/plans';
 import { openTossCheckout } from '@/lib/toss-payments';
 import { getApiErrorMessage } from '@/lib/utils';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from './ui/table';
+
+function formatBillingDate(value: string | null | undefined, locale: string) {
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+const PAYMENT_BADGE_CLASSNAME: Record<billingApi.PaymentStatus, string> = {
+  PENDING: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  SUCCESS: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  FAILED: 'bg-red-500/10 text-red-600 border-red-500/20',
+  CANCELLED: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
+};
 
 export function BillingPage() {
   const { currentPlan, subscription, isPro, limits } = usePlan();
@@ -23,9 +59,49 @@ export function BillingPage() {
   const isDarkMode = useDarkMode();
   const t = useTranslations('billing');
   const locale = useLocale();
+  const localeTag = locale === 'ko' ? 'ko-KR' : 'en-US';
+  const billingPeriodLabel = locale === 'ko' ? '/월' : '/month';
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [payments, setPayments] = useState<billingApi.PaymentResponse[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const planInfo = getPlanInfo(currentPlan);
+  const canManageBilling = Boolean(currentWorkspace && myRole === 'OWNER');
+  const latestSuccessfulPayment = useMemo(
+    () =>
+      payments
+        .filter((payment) => payment.status === 'SUCCESS')
+        .sort(
+          (left, right) =>
+            new Date(right.paidAt).getTime() - new Date(left.paidAt).getTime(),
+        )[0] ?? null,
+    [payments],
+  );
+
+  const loadPaymentHistory = useCallback(async () => {
+    if (!currentWorkspace || myRole !== 'OWNER') {
+      setPayments([]);
+      setHistoryLoaded(false);
+      return;
+    }
+
+    setIsHistoryLoading(true);
+    try {
+      const data = await billingApi.getPaymentHistory(currentWorkspace.id);
+      setPayments(data);
+    } catch (error) {
+      setPayments([]);
+      toast.error(getApiErrorMessage(error, t('toasts.historyLoadError')));
+    } finally {
+      setIsHistoryLoading(false);
+      setHistoryLoaded(true);
+    }
+  }, [currentWorkspace, myRole, t]);
+
+  useEffect(() => {
+    void loadPaymentHistory();
+  }, [loadPaymentHistory]);
 
   const handleUpgradeToPro = async () => {
     if (!currentWorkspace) {
@@ -36,9 +112,9 @@ export function BillingPage() {
       toast.error(t('toasts.ownerOnly'));
       return;
     }
+
     setIsUpgrading(true);
     try {
-      // 1단계: 결제 준비 (토스페이먼츠 주문 정보 생성)
       const prepareData = await billingApi.preparePayment(currentWorkspace.id);
 
       if (!prepareData.clientKey) {
@@ -46,7 +122,6 @@ export function BillingPage() {
         return;
       }
 
-      // 2단계: 토스페이먼츠 결제창 호출
       await openTossCheckout({
         clientKey: prepareData.clientKey,
         amount: prepareData.amount,
@@ -65,8 +140,7 @@ export function BillingPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      {/* 현재 플랜 카드 */}
+    <div className="mx-auto max-w-5xl space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -75,14 +149,14 @@ export function BillingPage() {
         <Card
           className={
             isDarkMode
-              ? 'bg-linear-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-800'
-              : 'bg-linear-to-br from-white via-white to-gray-50 border-gray-200 shadow-sm'
+              ? 'border-gray-800 bg-linear-to-br from-gray-900 via-gray-900 to-gray-800'
+              : 'border-gray-200 bg-linear-to-br from-white via-white to-gray-50 shadow-sm'
           }
         >
           <CardHeader>
             <div className="flex items-center gap-3">
               <div
-                className={`p-2.5 rounded-xl ${
+                className={`rounded-xl p-2.5 ${
                   isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50'
                 }`}
               >
@@ -90,22 +164,28 @@ export function BillingPage() {
                   className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
                 />
               </div>
-              <CardTitle
-                className={isDarkMode ? 'text-white' : 'text-gray-900'}
-              >
-                {t('planInfo.title')}
-              </CardTitle>
+              <div className="space-y-1">
+                <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+                  {t('planInfo.title')}
+                </CardTitle>
+                <p
+                  className={`text-sm ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}
+                >
+                  {t('description')}
+                </p>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* 플랜 & 가격 */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <span
                 className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
               >
                 {t('planInfo.plan')}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-right">
                 <span
                   className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                 >
@@ -114,14 +194,16 @@ export function BillingPage() {
                 <span
                   className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}
                 >
-                  ({planInfo.price === 0 ? t('planInfo.freeLabel') : formatPrice(planInfo.price)}
-                  /mo)
+                  (
+                  {planInfo.price === 0
+                    ? t('planInfo.freeLabel')
+                    : formatPrice(planInfo.price, localeTag)}
+                  {billingPeriodLabel})
                 </span>
               </div>
             </div>
 
-            {/* 구독 상태 */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <span
                 className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
               >
@@ -131,57 +213,81 @@ export function BillingPage() {
                 variant={subscription?.active ? 'default' : 'outline'}
                 className={
                   subscription?.active
-                    ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                    : 'bg-gray-500/10 text-gray-500 border-gray-500/20'
+                    ? 'border-green-500/20 bg-green-500/10 text-green-500'
+                    : 'border-gray-500/20 bg-gray-500/10 text-gray-500'
                 }
               >
                 {subscription?.active ? t('status.ACTIVE') : t('status.NONE')}
               </Badge>
             </div>
 
-            {/* 만료일 */}
-            {subscription?.expiredAt && (
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
-                >
-                  {t('planInfo.nextBilling')}
+            <div className="flex items-center justify-between gap-4">
+              <span
+                className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
+              >
+                {t('planInfo.nextBilling')}
+              </span>
+              <div className="flex items-center gap-2">
+                <Calendar
+                  className={`h-4 w-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}
+                />
+                <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                  {subscription?.expiredAt
+                    ? formatBillingDate(subscription.expiredAt, localeTag)
+                    : t('planInfo.noBillingDate')}
                 </span>
-                <div className="flex items-center gap-2">
-                  <Calendar
-                    className={`h-4 w-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}
-                  />
-                  <span
-                    className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}
-                  >
-                    {new Date(subscription.expiredAt).toLocaleDateString()}
-                  </span>
-                </div>
               </div>
-            )}
+            </div>
 
-            {/* 플랜 제한 정보 */}
-            <div className={`grid grid-cols-2 gap-3 pt-2 border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+            <div
+              className={`grid grid-cols-2 gap-3 border-t pt-2 ${
+                isDarkMode ? 'border-gray-800' : 'border-gray-200'
+              }`}
+            >
               {[
-                { label: t('limits.maxEndpoints'), value: limits.maxEndpointsPerProject },
-                { label: t('limits.minInterval'), value: `${limits.minCheckInterval}s` },
+                {
+                  label: t('limits.maxEndpoints'),
+                  value: limits.maxEndpointsPerProject,
+                },
+                {
+                  label: t('limits.minInterval'),
+                  value: `${limits.minCheckInterval}s`,
+                },
               ].map(({ label, value }) => (
-                <div key={label} className={`rounded-lg p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{label}</p>
-                  <p className={`text-sm font-semibold mt-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{value}</p>
+                <div
+                  key={label}
+                  className={`rounded-lg p-3 ${
+                    isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                  }`}
+                >
+                  <p
+                    className={`text-xs ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    className={`mt-1 text-sm font-semibold ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}
+                  >
+                    {value}
+                  </p>
                 </div>
               ))}
             </div>
 
-            {/* 업그레이드 버튼 (Free 플랜에만 표시) */}
             {!isPro && (
               <div
-                className={`flex gap-3 pt-4 border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}
+                className={`space-y-3 border-t pt-4 ${
+                  isDarkMode ? 'border-gray-800' : 'border-gray-200'
+                }`}
               >
                 <Button
                   onClick={handleUpgradeToPro}
-                  disabled={isUpgrading}
-                  className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isUpgrading || !canManageBilling}
+                  className="flex w-full gap-2 bg-blue-600 text-white hover:bg-blue-700"
                 >
                   {isUpgrading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -189,7 +295,194 @@ export function BillingPage() {
                     t('actions.upgradeToPro')
                   )}
                 </Button>
+                {!canManageBilling && (
+                  <p
+                    className={`text-sm ${
+                      isDarkMode ? 'text-amber-300' : 'text-amber-700'
+                    }`}
+                  >
+                    {t('notes.ownerOnly')}
+                  </p>
+                )}
               </div>
+            )}
+
+            {latestSuccessfulPayment && (
+              <div
+                className={`rounded-xl border p-4 ${
+                  isDarkMode
+                    ? 'border-gray-800 bg-gray-900/80'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <p
+                      className={`text-sm ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}
+                    >
+                      {t('history.latestPaidAt')}
+                    </p>
+                    <p
+                      className={`font-medium ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      {formatBillingDate(latestSuccessfulPayment.paidAt, localeTag)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className={`text-sm ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}
+                    >
+                      {t('history.latestAmount')}
+                    </p>
+                    <p
+                      className={`font-semibold ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}
+                    >
+                      {formatPrice(latestSuccessfulPayment.amount, localeTag)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.05 }}
+      >
+        <Card
+          className={
+            isDarkMode
+              ? 'border-gray-800 bg-gray-900'
+              : 'border-gray-200 bg-white shadow-sm'
+          }
+        >
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={`rounded-xl p-2.5 ${
+                  isDarkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'
+                }`}
+              >
+                <ReceiptText
+                  className={`h-5 w-5 ${
+                    isDarkMode ? 'text-emerald-400' : 'text-emerald-600'
+                  }`}
+                />
+              </div>
+              <div className="space-y-1">
+                <CardTitle className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+                  {t('history.title')}
+                </CardTitle>
+                <p
+                  className={`text-sm ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}
+                >
+                  {t('history.description')}
+                </p>
+              </div>
+            </div>
+            {canManageBilling && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void loadPaymentHistory()}
+                disabled={isHistoryLoading}
+                className="gap-2"
+              >
+                {isHistoryLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                {t('history.refresh')}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            {!currentWorkspace && (
+              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                {t('toasts.workspaceRequired')}
+              </p>
+            )}
+
+            {currentWorkspace && !canManageBilling && (
+              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                {t('history.ownerOnly')}
+              </p>
+            )}
+
+            {canManageBilling && isHistoryLoading && !historyLoaded && (
+              <div
+                className={`flex items-center gap-2 text-sm ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
+              >
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t('history.loading')}
+              </div>
+            )}
+
+            {canManageBilling &&
+              !isHistoryLoading &&
+              historyLoaded &&
+              payments.length === 0 && (
+                <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                  {t('history.empty')}
+                </p>
+              )}
+
+            {canManageBilling && payments.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('history.columns.orderId')}</TableHead>
+                    <TableHead>{t('history.columns.plan')}</TableHead>
+                    <TableHead>{t('history.columns.status')}</TableHead>
+                    <TableHead className="text-right">
+                      {t('history.columns.amount')}
+                    </TableHead>
+                    <TableHead>{t('history.columns.paidAt')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="max-w-[240px] font-mono text-xs">
+                        <span className="block truncate" title={payment.orderId}>
+                          {payment.orderId}
+                        </span>
+                      </TableCell>
+                      <TableCell>{payment.planType}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={PAYMENT_BADGE_CLASSNAME[payment.status]}
+                        >
+                          {t(`history.status.${payment.status}`)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatPrice(payment.amount, localeTag)}
+                      </TableCell>
+                      <TableCell>
+                        {formatBillingDate(payment.paidAt, localeTag)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>

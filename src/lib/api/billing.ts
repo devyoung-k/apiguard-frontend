@@ -28,13 +28,15 @@ export interface ConfirmPaymentRequest {
   amount: number;
 }
 
+export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+
 export interface PaymentResponse {
   id: number;
   orderId: string;
   paymentKey: string;
   planType: 'FREE' | 'PRO';
   amount: number;
-  status: 'PENDING' | 'SUCCESS' | 'FAILED';
+  status: PaymentStatus;
   paidAt: string;
 }
 
