@@ -470,6 +470,7 @@
   },
   "billing": {
     "title": "결제",
+    "description": "워크스페이스 구독 상태와 결제 내역을 확인하세요.",
     "tabs": {
       "pricing": "플랜",
       "billing": "결제 관리"
@@ -503,6 +504,32 @@
       "maxEndpoints": "엔드포인트 한도",
       "minInterval": "최소 체크 주기"
     },
+    "history": {
+      "title": "결제 내역",
+      "description": "토스 결제 주문과 처리 상태를 확인할 수 있습니다.",
+      "refresh": "새로고침",
+      "loading": "결제 이력을 불러오는 중입니다.",
+      "empty": "아직 결제 이력이 없습니다.",
+      "ownerOnly": "결제 내역은 워크스페이스 OWNER만 확인할 수 있습니다.",
+      "latestPaidAt": "최근 결제 시각",
+      "latestAmount": "최근 결제 금액",
+      "columns": {
+        "orderId": "주문 번호",
+        "plan": "플랜",
+        "status": "상태",
+        "amount": "금액",
+        "paidAt": "결제 시각"
+      },
+      "status": {
+        "PENDING": "결제 대기",
+        "SUCCESS": "결제 완료",
+        "FAILED": "결제 실패",
+        "CANCELLED": "취소됨"
+      }
+    },
+    "notes": {
+      "ownerOnly": "결제와 결제 내역 조회는 워크스페이스 OWNER만 진행할 수 있습니다."
+    },
     "toasts": {
       "checkoutMock": "데모 모드에서는 결제 처리가 불가능합니다.",
       "portalMock": "데모 모드에서는 구독 관리가 불가능합니다.",
@@ -510,6 +537,7 @@
       "portalError": "구독 관리 포탈 열기에 실패했습니다.",
       "sdkNotLoaded": "결제 모듈을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
       "upgradeError": "업그레이드 요청 중 오류가 발생했습니다.",
+      "historyLoadError": "결제 이력을 불러오지 못했습니다.",
       "workspaceRequired": "워크스페이스를 먼저 선택해 주세요.",
       "ownerOnly": "결제는 워크스페이스 OWNER만 진행할 수 있습니다."
     }

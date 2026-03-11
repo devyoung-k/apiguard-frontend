@@ -23,7 +23,7 @@ export const FREE_PLAN: PlanInfo = {
 export const PRO_PLAN: PlanInfo = {
   type: 'PRO',
   name: 'Pro',
-  price: 2900, // $29.00
+  price: 19900, // KRW 19,900
   limits: {
     maxProjects: 50,
     maxEndpointsPerProject: 100,
@@ -36,7 +36,6 @@ export const PRO_PLAN: PlanInfo = {
     'features.emailSlackAlerts',
     'features.ninetyDayHistory',
     'features.prioritySupport',
-    'features.customWebhooks',
   ],
 };
 
@@ -77,6 +76,10 @@ export function getUsagePercentage(current: number, max: number): number {
   return Math.min(Math.round((current / max) * 100), 100);
 }
 
-export function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+export function formatPrice(amount: number, locale = 'ko-KR'): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'KRW',
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
