@@ -19,6 +19,7 @@ import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useTranslations } from "next-intl";
 import { useWorkspace } from "@/contexts/workspace-context";
+import { canEdit } from "@/lib/permissions";
 
 type AlertWithEndpoint = AlertResponse & {
   endpointUrl: string;
@@ -28,7 +29,7 @@ export function AlertsPage() {
   const [showNewAlertForm, setShowNewAlertForm] = useState(false);
   const isDarkMode = useDarkMode();
   const t = useTranslations("alerts");
-  const { currentWorkspace, isLoading: isWorkspaceLoading } = useWorkspace();
+  const { currentWorkspace, isLoading: isWorkspaceLoading, myRole } = useWorkspace();
   const [alerts, setAlerts] = useState<AlertWithEndpoint[]>([]);
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
@@ -42,6 +43,7 @@ export function AlertsPage() {
   const [newTarget, setNewTarget] = useState("");
   const [newThreshold, setNewThreshold] = useState("3");
   const [isCreating, setIsCreating] = useState(false);
+  const canManageAlerts = canEdit(myRole);
 
   const fetchData = useCallback(async () => {
     if (!currentWorkspace) return;
@@ -189,15 +191,17 @@ export function AlertsPage() {
           <h1 className={`text-3xl mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t('title')}</h1>
           <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('subtitle')}</p>
         </div>
-        <Button className="gap-2" onClick={() => setShowNewAlertForm(!showNewAlertForm)}>
-          {showNewAlertForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {showNewAlertForm ? t('cancel') : t('newAlert')}
-        </Button>
+        {canManageAlerts && (
+          <Button className="gap-2" onClick={() => setShowNewAlertForm(!showNewAlertForm)}>
+            {showNewAlertForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {showNewAlertForm ? t('cancel') : t('newAlert')}
+          </Button>
+        )}
       </div>
 
       {/* New Alert Form */}
       <AnimatePresence mode="wait">
-        {showNewAlertForm && (
+        {showNewAlertForm && canManageAlerts && (
           <motion.div
             key="alert-form"
             initial={{ opacity: 0, y: -20, scale: 0.95, height: 0 }}
@@ -364,17 +368,19 @@ export function AlertsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={config.isActive}
-                        onCheckedChange={() => handleToggle(config.id)}
-                      />
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(config.id)} className={
-                        isDarkMode ? 'hover:bg-gray-800' : ''
-                      }>
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
+                    {canManageAlerts && (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={config.isActive}
+                          onCheckedChange={() => handleToggle(config.id)}
+                        />
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(config.id)} className={
+                          isDarkMode ? 'hover:bg-gray-800' : ''
+                        }>
+                          <Trash2 className="h-4 w-4 text-red-600" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
