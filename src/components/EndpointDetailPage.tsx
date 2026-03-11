@@ -16,6 +16,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { EndpointStatsCards } from "@/components/endpoint-detail/EndpointStatsCards";
 import { EndpointCharts } from "@/components/endpoint-detail/EndpointCharts";
 import { RecentChecksTable } from "@/components/endpoint-detail/RecentChecksTable";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { canEdit } from "@/lib/permissions";
 
 export function EndpointDetailPage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export function EndpointDetailPage() {
   const isDarkMode = useDarkMode();
   const t = useTranslations("endpointDetail");
   const locale = useLocale();
+  const { myRole } = useWorkspace();
   const [endpoint, setEndpoint] = useState<EndpointResponse | null>(null);
   const [checks, setChecks] = useState<HealthCheckResult[]>([]);
   const [stats, setStats] = useState<EndpointStats | null>(null);
@@ -30,6 +33,7 @@ export function EndpointDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const canWrite = canEdit(myRole);
 
   const endpointId = Number(params.endpointId);
   const projectId = params.id;
@@ -142,19 +146,23 @@ export function EndpointDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className={`gap-2 ${isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : ''}`}
-            onClick={handleTest}
-            disabled={isTesting}
-          >
-            {isTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-            {t('actions.testNow')}
-          </Button>
-          <Button className="gap-2" onClick={() => router.push(`/projects/${projectId}/endpoints/${endpointId}/edit`)}>
-            <Edit className="h-4 w-4" />
-            {t('actions.edit')}
-          </Button>
+          {canWrite && (
+            <Button
+              variant="outline"
+              className={`gap-2 ${isDarkMode ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : ''}`}
+              onClick={handleTest}
+              disabled={isTesting}
+            >
+              {isTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {t('actions.testNow')}
+            </Button>
+          )}
+          {canWrite && (
+            <Button className="gap-2" onClick={() => router.push(`/projects/${projectId}/endpoints/${endpointId}/edit`)}>
+              <Edit className="h-4 w-4" />
+              {t('actions.edit')}
+            </Button>
+          )}
         </div>
       </div>
 
