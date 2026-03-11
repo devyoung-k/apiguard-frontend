@@ -278,7 +278,7 @@ export function MembersPage() {
                             defaultValue={member.role}
                             onChange={(e) =>
                               handleRoleChange(
-                                member.id,
+                                member.userId,
                                 e.target.value as WorkspaceRole,
                               )
                             }
@@ -337,7 +337,7 @@ export function MembersPage() {
                                   <button
                                     type="button"
                                     aria-label="멤버 삭제 확인"
-                                    onClick={() => handleRemove(member.id)}
+                                    onClick={() => handleRemove(member.userId)}
                                     disabled={isProcessing}
                                     className="px-3 py-1.5 text-xs rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
                                   >
