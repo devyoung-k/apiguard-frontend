@@ -26,7 +26,7 @@ interface PlanContextType {
   /** 로딩 상태 */
   isLoading: boolean;
   /** 구독 새로고침 */
-  refreshSubscription: () => Promise<void>;
+  refreshSubscription: (workspaceId?: number) => Promise<void>;
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
@@ -53,19 +53,20 @@ export function PlanProvider({ children }: { children: ReactNode }) {
   const isPro = currentPlan === 'PRO';
   const limits = getPlanLimits(currentPlan);
 
-  const refreshSubscription = useCallback(async () => {
+  const refreshSubscription = useCallback(async (workspaceId?: number) => {
     if (USE_MOCK_API) {
       setSubscription(MOCK_SUBSCRIPTION);
       return;
     }
-    if (!currentWorkspace) return;
+    const targetWorkspaceId = workspaceId ?? currentWorkspace?.id;
+    if (!targetWorkspaceId) return;
     try {
-      const data = await billingApi.getSubscription(currentWorkspace.id);
+      const data = await billingApi.getSubscription(targetWorkspaceId);
       setSubscription(data);
     } catch {
       setSubscription(MOCK_SUBSCRIPTION);
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace?.id]);
 
   useEffect(() => {
     const init = async () => {

@@ -14,7 +14,6 @@ import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import * as billingApi from '@/lib/api/billing';
 import type { PlanType } from '@/types/api';
-import { USE_MOCK_API } from '@/lib/runtime-config';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useState } from 'react';
 import { openTossCheckout } from '@/lib/toss-payments';
@@ -28,16 +27,12 @@ export function PricingPage() {
   const tBilling = useTranslations('billing');
   const tFeatures = useTranslations('features');
   const locale = useLocale();
+  const priceLocale = locale === 'ko' ? 'ko-KR' : 'en-US';
   const [loadingPlan, setLoadingPlan] = useState<PlanType | null>(null);
 
   const handleUpgrade = async (planType: PlanType) => {
     if (planType === currentPlan) return;
     if (planType !== 'PRO') return; // Free 다운그레이드 불가
-
-    if (USE_MOCK_API) {
-      toast.info(tBilling('toasts.checkoutMock'));
-      return;
-    }
 
     if (!currentWorkspace) {
       toast.error(tBilling('toasts.workspaceRequired'));
@@ -131,7 +126,9 @@ export function PricingPage() {
                     <span
                       className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                     >
-                      {plan.price === 0 ? t('free') : formatPrice(plan.price)}
+                      {plan.price === 0
+                        ? t('free')
+                        : formatPrice(plan.price, priceLocale)}
                     </span>
                     {plan.price > 0 && (
                       <span
