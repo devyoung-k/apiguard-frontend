@@ -12,6 +12,7 @@ import {
   BellRing,
   Shield,
   Plus,
+  Globe,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
@@ -64,6 +65,7 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
     ...(canManageMembers(myRole)
       ? [{ id: '/admin/members', label: t('menu.admin'), icon: Users }]
       : []),
+    { id: '/status-page', label: t('menu.statusPage'), icon: Globe },
     { id: '/settings', label: t('menu.settings'), icon: Settings },
     { id: '/billing', label: t('menu.billing'), icon: CreditCard },
   ];

@@ -18,6 +18,7 @@ import { EndpointCharts } from "@/components/endpoint-detail/EndpointCharts";
 import { RecentChecksTable } from "@/components/endpoint-detail/RecentChecksTable";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { canEdit } from "@/lib/permissions";
+import { useEndpointCheckStream } from "@/hooks/use-health-check-stream";
 
 export function EndpointDetailPage() {
   const router = useRouter();
@@ -62,6 +63,32 @@ export function EndpointDetailPage() {
   useEffect(() => {
     if (endpointId) fetchData();
   }, [endpointId, fetchData]);
+
+  // 실시간 헬스체크 결과 수신
+  const handleRealtimeCheck = useCallback((result: HealthCheckResult) => {
+    setChecks((prev) => [result, ...prev.slice(0, 19)]);
+
+    // 통계를 점진적으로 업데이트
+    setStats((prev) => {
+      if (!prev) return prev;
+      const newTotal = prev.totalChecks + 1;
+      const newSuccess = prev.successCount + (result.status === 'SUCCESS' ? 1 : 0);
+      return {
+        ...prev,
+        totalChecks: newTotal,
+        successCount: newSuccess,
+        successRate: newTotal > 0 ? (newSuccess / newTotal) * 100 : 0,
+        avgResponseTimeMs: result.responseTimeMs
+          ? (prev.avgResponseTimeMs * prev.totalChecks + result.responseTimeMs) / newTotal
+          : prev.avgResponseTimeMs,
+      };
+    });
+
+    // 엔드포인트의 lastCheckedAt 업데이트
+    setEndpoint((prev) => prev ? { ...prev, lastCheckedAt: result.checkedAt } : prev);
+  }, []);
+
+  useEndpointCheckStream(endpointId, handleRealtimeCheck);
 
   const handleTest = async () => {
     setIsTesting(true);

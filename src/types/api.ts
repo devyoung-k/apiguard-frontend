@@ -319,3 +319,46 @@ export interface SubscriptionResponse {
   maxMembers: number;
   dataRetentionDays: number;
 }
+
+// ============================================================
+// 상태 페이지
+// ============================================================
+
+export interface StatusPageResponse {
+  id: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  isPublic: boolean;
+  createdAt: string;
+}
+
+export interface CreateStatusPageRequest {
+  title: string;
+  description?: string;
+  slug: string;
+}
+
+export interface UpdateStatusPageRequest {
+  title?: string;
+  description?: string;
+  isPublic?: boolean;
+}
+
+export type OverallStatus = 'OPERATIONAL' | 'DEGRADED' | 'MAJOR_OUTAGE' | 'NO_DATA';
+
+export interface PublicEndpointStatus {
+  url: string;
+  httpMethod: string;
+  status: 'UP' | 'DOWN' | 'UNKNOWN';
+  uptimePercent: number;
+  avgResponseTimeMs: number;
+  lastCheckedAt: string | null;
+}
+
+export interface PublicStatusPageResponse {
+  title: string;
+  description: string | null;
+  overallStatus: OverallStatus;
+  endpoints: PublicEndpointStatus[];
+}

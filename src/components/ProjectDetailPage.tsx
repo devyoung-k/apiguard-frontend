@@ -20,6 +20,8 @@ import { useTranslations } from 'next-intl';
 import { PlanLimitBanner } from '@/components/PlanLimitBanner';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { canDelete, canEdit } from '@/lib/permissions';
+import { useProjectCheckStream } from '@/hooks/use-health-check-stream';
+import type { HealthCheckResult } from '@/types/api';
 
 export function ProjectDetailPage() {
   const router = useRouter();
@@ -56,6 +58,19 @@ export function ProjectDetailPage() {
   useEffect(() => {
     if (projectId) fetchData();
   }, [projectId, fetchData]);
+
+  // 실시간 헬스체크 결과 → 엔드포인트 lastCheckedAt 반영
+  const handleRealtimeCheck = useCallback((result: HealthCheckResult) => {
+    setEndpoints((prev) =>
+      prev.map((ep) =>
+        ep.id === result.endpointId
+          ? { ...ep, lastCheckedAt: result.checkedAt }
+          : ep,
+      ),
+    );
+  }, []);
+
+  useProjectCheckStream(projectId, handleRealtimeCheck);
 
   const getMethodColor = (method: string) => {
     const colors: Record<string, string> = {
