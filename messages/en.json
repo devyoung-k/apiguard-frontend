@@ -11,6 +11,7 @@
       "admin": "Admin",
       "systemAdminUsers": "System Users",
       "systemAdminNotices": "System Notices",
+      "statusPage": "Status Page",
       "settings": "Settings",
       "billing": "Billing",
       "notices": "Notices",
@@ -569,5 +570,43 @@
     "errors": {
       "loadFailed": "Failed to load notices."
     }
+  },
+  "statusPage": {
+    "title": "Status Page",
+    "subtitle": "Share a public page showing your service status",
+    "create": {
+      "title": "Create Status Page",
+      "titleLabel": "Page Title",
+      "titlePlaceholder": "My API Status",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Real-time status of our services",
+      "slugLabel": "URL Slug",
+      "slugPlaceholder": "my-api-status",
+      "slugHelp": "Your page will be available at: /status/{slug}",
+      "submit": "Create"
+    },
+    "manage": {
+      "publicLink": "Public Link",
+      "copyLink": "Copy Link",
+      "linkCopied": "Link copied!",
+      "visibility": "Visibility",
+      "public": "Public",
+      "private": "Private",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure you want to delete this status page?"
+    },
+    "toasts": {
+      "created": "Status page created.",
+      "updated": "Status page updated.",
+      "deleted": "Status page deleted."
+    },
+    "errors": {
+      "loadFailed": "Failed to load status page.",
+      "createFailed": "Failed to create status page.",
+      "updateFailed": "Failed to update status page.",
+      "deleteFailed": "Failed to delete status page."
+    },
+    "empty": "No status page configured yet."
   }
 }
