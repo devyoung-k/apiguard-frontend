@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { StatCard } from "./StatCard";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { motion } from "framer-motion";
 import type { ProjectWithStats } from "@/types/api";
@@ -24,29 +24,45 @@ export function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        if (!currentWorkspace) {
-          setProjects([]);
-          setError(null);
-          return;
-        }
-
-        const projectsWithStats = await getProjectsWithStats(currentWorkspace.id);
-
-        setProjects(projectsWithStats);
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      if (!currentWorkspace) {
+        setProjects([]);
         setError(null);
-      } catch {
-        setError(t('errors.loadData'));
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
 
-    fetchData();
+      const projectsWithStats = await getProjectsWithStats(currentWorkspace.id);
+
+      setProjects(projectsWithStats);
+      setError(null);
+    } catch {
+      setError(t('errors.loadData'));
+    } finally {
+      setIsLoading(false);
+    }
   }, [currentWorkspace, t]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // 60초마다 대시보드 통계 자동 새로고침
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (!currentWorkspace) return;
+
+    intervalRef.current = setInterval(() => {
+      getProjectsWithStats(currentWorkspace.id)
+        .then(setProjects)
+        .catch(() => {});
+    }, 60_000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [currentWorkspace]);
 
   const toggleTheme = () => {
     setTheme(isDarkMode ? 'light' : 'dark');

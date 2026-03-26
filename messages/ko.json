@@ -11,6 +11,7 @@
       "admin": "관리",
       "systemAdminUsers": "시스템 회원관리",
       "systemAdminNotices": "시스템 공지관리",
+      "statusPage": "상태 페이지",
       "settings": "설정",
       "billing": "결제",
       "notices": "공지사항",
@@ -597,5 +598,43 @@
     "errors": {
       "loadFailed": "공지사항을 불러오지 못했습니다."
     }
+  },
+  "statusPage": {
+    "title": "상태 페이지",
+    "subtitle": "서비스 상태를 공개 페이지로 공유하세요",
+    "create": {
+      "title": "상태 페이지 만들기",
+      "titleLabel": "페이지 제목",
+      "titlePlaceholder": "우리 API 상태",
+      "descriptionLabel": "설명",
+      "descriptionPlaceholder": "서비스 실시간 상태 현황",
+      "slugLabel": "URL 슬러그",
+      "slugPlaceholder": "my-api-status",
+      "slugHelp": "페이지 주소: /status/{slug}",
+      "submit": "만들기"
+    },
+    "manage": {
+      "publicLink": "공개 링크",
+      "copyLink": "링크 복사",
+      "linkCopied": "링크가 복사되었습니다!",
+      "visibility": "공개 설정",
+      "public": "공개",
+      "private": "비공개",
+      "edit": "수정",
+      "delete": "삭제",
+      "confirmDelete": "이 상태 페이지를 삭제하시겠습니까?"
+    },
+    "toasts": {
+      "created": "상태 페이지가 생성되었습니다.",
+      "updated": "상태 페이지가 수정되었습니다.",
+      "deleted": "상태 페이지가 삭제되었습니다."
+    },
+    "errors": {
+      "loadFailed": "상태 페이지를 불러오지 못했습니다.",
+      "createFailed": "상태 페이지 생성에 실패했습니다.",
+      "updateFailed": "상태 페이지 수정에 실패했습니다.",
+      "deleteFailed": "상태 페이지 삭제에 실패했습니다."
+    },
+    "empty": "아직 상태 페이지가 설정되지 않았습니다."
   }
 }

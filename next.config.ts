@@ -30,12 +30,24 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/ws',
+        destination: `${backendOrigin}/ws`,
+      },
+      {
+        source: '/ws/:path*',
+        destination: `${backendOrigin}/ws/:path*`,
+      },
+      {
         source: '/api/workspaces/:workspaceId/subscription',
         destination: `${backendOrigin}/api/workspaces/:workspaceId/subscription`,
       },
       {
         source: '/api/workspaces/:workspaceId/payment/:path*',
         destination: `${backendOrigin}/api/workspaces/:workspaceId/payment/:path*`,
+      },
+      {
+        source: '/api/status/:slug',
+        destination: `${backendOrigin}/status/:slug`,
       },
       {
         source: '/api/:path*',
