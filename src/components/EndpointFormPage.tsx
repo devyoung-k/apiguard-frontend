@@ -53,15 +53,12 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       setCheckInterval(String(ep.checkInterval));
       setBody(ep.body || "");
 
-      // Parse headers object
       if (ep.headers) {
-        try {
-          const parsed = typeof ep.headers === 'string' ? JSON.parse(ep.headers) : ep.headers;
-          const headerEntries = Object.entries(parsed).map(([k, v]) => ({ key: k, value: String(v) }));
-          setHeaders(headerEntries.length > 0 ? headerEntries : [{ key: '', value: '' }]);
-        } catch {
-          setHeaders([{ key: '', value: '' }]);
-        }
+        const headerEntries = Object.entries(ep.headers).map(([k, v]) => ({
+          key: k,
+          value: String(v),
+        }));
+        setHeaders(headerEntries.length > 0 ? headerEntries : [{ key: '', value: '' }]);
       }
     } catch {
       toast.error(t('errors.loadEndpoint'));
@@ -102,16 +99,15 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
       return;
     }
 
-    // headers is now expected to be stringified JSON by backend
     const validHeaders = headers.filter((h) => h.key.trim());
-    const headersStr = validHeaders.length > 0
-      ? JSON.stringify(Object.fromEntries(validHeaders.map((h) => [h.key, h.value])))
+    const headerMap = validHeaders.length > 0
+      ? Object.fromEntries(validHeaders.map((h) => [h.key, h.value]))
       : null;
 
     const payload = {
       url,
       httpMethod,
-      headers: headersStr,
+      headers: headerMap,
       body: body.trim() || null,
       expectedStatusCode: Number(expectedStatusCode) || 200,
       checkInterval: Number(checkInterval) || 60,

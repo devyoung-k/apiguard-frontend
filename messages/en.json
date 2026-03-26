@@ -471,6 +471,7 @@
   },
   "billing": {
     "title": "Billing",
+    "description": "Review your workspace subscription status and payment history.",
     "tabs": {
       "pricing": "Plans",
       "billing": "Billing"
@@ -504,6 +505,32 @@
       "maxEndpoints": "Endpoint Limit",
       "minInterval": "Min Check Interval"
     },
+    "history": {
+      "title": "Payment History",
+      "description": "Review Toss payment orders and processing status.",
+      "refresh": "Refresh",
+      "loading": "Loading payment history...",
+      "empty": "No payment history yet.",
+      "ownerOnly": "Only the workspace OWNER can view payment history.",
+      "latestPaidAt": "Most Recent Payment",
+      "latestAmount": "Most Recent Amount",
+      "columns": {
+        "orderId": "Order ID",
+        "plan": "Plan",
+        "status": "Status",
+        "amount": "Amount",
+        "paidAt": "Paid At"
+      },
+      "status": {
+        "PENDING": "Pending",
+        "SUCCESS": "Paid",
+        "FAILED": "Failed",
+        "CANCELLED": "Cancelled"
+      }
+    },
+    "notes": {
+      "ownerOnly": "Only the workspace OWNER can initiate payments and view billing history."
+    },
     "toasts": {
       "checkoutMock": "Payment processing is not available in demo mode.",
       "portalMock": "Subscription management is not available in demo mode.",
@@ -511,6 +538,7 @@
       "portalError": "Failed to open subscription portal.",
       "sdkNotLoaded": "Payment module could not be loaded. Please try again.",
       "upgradeError": "An error occurred during the upgrade request.",
+      "historyLoadError": "Failed to load payment history.",
       "workspaceRequired": "Please select a workspace first.",
       "ownerOnly": "Only the workspace OWNER can proceed with payment."
     }

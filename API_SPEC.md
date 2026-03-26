@@ -1,77 +1,113 @@
-# ApiGuard API 명세서
+# APIGuard Backend API Specification
 
-## 공통
+## 1. Overview
 
-### Base URL
+- Base URL: `http://localhost:8080`
+- Response envelope: 모든 API는 `ApiResponse<T>` 형태로 응답
+- Auth: JWT Bearer
+- Header: `Authorization: Bearer {accessToken}`
 
-```
-http://localhost:8080
-```
-
-### 인증
-
-JWT Bearer 토큰 방식. 로그인 후 발급받은 `accessToken`을 요청 헤더에 포함합니다.
-
-```
-Authorization: Bearer {accessToken}
-```
-
-> `/auth/**`, `/users/signup`, `/health` 엔드포인트는 인증 불필요.
-
-### 공통 응답 형식
+성공 응답 예시:
 
 ```json
 {
   "success": true,
-  "data": {},
-  "message": null
+  "data": {}
 }
 ```
 
-오류 시:
+실패 응답 예시:
 
 ```json
 {
   "success": false,
-  "data": null,
-  "message": "오류 메시지"
+  "message": "에러 메시지"
 }
 ```
 
-### HTTP 상태 코드
+## 2. Authentication & Authorization
 
-| 코드 | 의미                              |
-| ---- | --------------------------------- |
-| 200  | 성공                              |
-| 400  | 잘못된 요청 (유효성 검사 실패 등) |
-| 401  | 인증 실패 (토큰 없음 / 만료)      |
-| 403  | 권한 없음                         |
-| 404  | 리소스 없음                       |
-| 402  | 플랜 제한 초과                    |
-| 409  | 중복 (이메일 등)                  |
-| 502  | 외부 결제 API 오류                |
-| 500  | 서버 내부 오류                    |
+### Public endpoints
 
----
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+- `POST /users/signup`
+- `GET /health`
+- `GET /error`
+- `GET /swagger-ui/**` (dev)
+- `GET /v3/api-docs/**` (dev)
 
-## 1. 인증 (Auth)
+### Protected endpoints
 
-### 로그인
+- 위 화이트리스트 외 모든 API는 인증 필요
+- `/admin/**` 경로는 `ADMIN` 권한 필요
 
+### Authorization notes
+
+- Workspace API는 워크스페이스 멤버십/역할 기반 권한을 사용
+- Payment API는 워크스페이스 `OWNER`만 호출 가능
+- Project/Endpoint/Check/Alert API는 현재 구현 기준으로 리소스 소유자 중심 권한 검사를 사용
+  - 예: 엔드포인트 조회/수정은 프로젝트 소유자만 가능
+
+## 3. Common Error Status
+
+| Status | Meaning                                                      |
+| ------ | ------------------------------------------------------------ |
+| `400`  | validation 실패, 잘못된 요청, JSON 파싱 오류, 결제 검증 실패 |
+| `401`  | 인증 없음, 로그인 실패                                       |
+| `402`  | 플랜 제한 초과                                               |
+| `403`  | 권한 없음                                                    |
+| `404`  | 리소스 없음                                                  |
+| `409`  | 중복 이메일, 결제 상태 충돌                                  |
+| `502`  | 외부 결제 연동 실패                                          |
+| `500`  | 서버 내부 오류                                               |
+
+## 4. Enums
+
+- `Role`: `USER`, `ADMIN`
+- `WorkspaceRole`: `OWNER`, `ADMIN`, `MEMBER`, `VIEWER`
+- `HttpMethod`: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`
+- `CheckStatus`: `SUCCESS`, `FAILURE`, `TIMEOUT`, `ERROR`
+- `AlertType`: `EMAIL`, `SLACK`
+- `PlanType`: `FREE`, `PRO`
+- `PaymentStatus`: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`
+
+## 5. Health
+
+### `GET /health`
+
+- Auth: Public
+- Response `200`
+
+```json
+{
+  "success": true,
+  "data": "APIGuard 서버가 정상적으로 구동중입니다."
+}
 ```
-POST /auth/login
-```
 
-**Request Body**
+### `GET /test-error`
+
+- Auth: Required
+- 용도: 예외 핸들러 테스트용
+
+## 6. Auth
+
+### `POST /auth/login`
+
+- Auth: Public
+
+Request
 
 ```json
 {
   "email": "user@example.com",
-  "password": "password123"
+  "password": "Password1!"
 }
 ```
 
-**Response** `200`
+Response `200`
 
 ```json
 {
@@ -83,15 +119,11 @@ POST /auth/login
 }
 ```
 
----
+### `POST /auth/refresh`
 
-### 토큰 재발급
+- Auth: Public
 
-```
-POST /auth/refresh
-```
-
-**Request Body**
+Request
 
 ```json
 {
@@ -99,27 +131,11 @@ POST /auth/refresh
 }
 ```
 
-**Response** `200`
+### `POST /auth/logout`
 
-```json
-{
-  "success": true,
-  "data": {
-    "accessToken": "eyJ...",
-    "refreshToken": "eyJ..."
-  }
-}
-```
+- Auth: Public
 
----
-
-### 로그아웃
-
-```
-POST /auth/logout
-```
-
-**Request Body**
+Request
 
 ```json
 {
@@ -127,33 +143,38 @@ POST /auth/logout
 }
 ```
 
-**Response** `200`
+Response `200`
 
 ```json
-{ "success": true }
+{
+  "success": true
+}
 ```
 
----
+## 7. User
 
-## 2. 사용자 (User)
+### `POST /users/signup`
 
-### 회원가입
+- Auth: Public
+- Note: 가입 시 개인 워크스페이스와 FREE 구독이 함께 생성됨
 
-```
-POST /users/signup
-```
-
-**Request Body**
+Request
 
 ```json
 {
   "email": "user@example.com",
-  "password": "password123",
+  "password": "Password1!",
   "nickname": "홍길동"
 }
 ```
 
-**Response** `200`
+Validation
+
+- `email`: 이메일 형식
+- `password`: 8~20자, 대소문자, 숫자, 특수문자 포함
+- `nickname`: 2~20자
+
+Response `200`
 
 ```json
 {
@@ -162,19 +183,11 @@ POST /users/signup
 }
 ```
 
-> 회원가입 시 개인 워크스페이스와 FREE 구독이 자동 생성됩니다.
+### `GET /users/me`
 
----
+- Auth: Required
 
-### 내 정보 조회
-
-```
-GET /users/me
-```
-
-🔒 인증 필요
-
-**Response** `200`
+Response `200`
 
 ```json
 {
@@ -183,22 +196,16 @@ GET /users/me
     "id": 1,
     "email": "user@example.com",
     "nickname": "홍길동",
-    "createdAt": "2024-01-01T00:00:00"
+    "createdAt": "2026-03-09T12:00:00"
   }
 }
 ```
 
----
+### `PATCH /users/me`
 
-### 닉네임 변경
+- Auth: Required
 
-```
-PATCH /users/me
-```
-
-🔒 인증 필요
-
-**Request Body**
+Request
 
 ```json
 {
@@ -206,96 +213,31 @@ PATCH /users/me
 }
 ```
 
-**Response** `200`
+### `PATCH /users/me/password`
 
-```json
-{ "success": true }
-```
+- Auth: Required
 
----
-
-### 비밀번호 변경
-
-```
-PATCH /users/me/password
-```
-
-🔒 인증 필요
-
-**Request Body**
+Request
 
 ```json
 {
-  "currentPassword": "oldPassword",
-  "newPassword": "newPassword",
-  "newPasswordConfirm": "newPassword"
+  "currentPassword": "OldPassword1!",
+  "newPassword": "NewPassword1!",
+  "newPasswordConfirm": "NewPassword1!"
 }
 ```
 
-**Response** `200`
+### `DELETE /users/me`
 
-```json
-{ "success": true }
-```
+- Auth: Required
 
----
+## 8. Workspace
 
-### 회원 탈퇴
+### `POST /workspaces`
 
-```
-DELETE /users/me
-```
+- Auth: Required
 
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{ "success": true }
-```
-
----
-
-## 3. 워크스페이스 (Workspace)
-
-> 워크스페이스 역할: `OWNER` > `ADMIN` > `MEMBER` > `VIEWER`
-
-### 워크스페이스 목록 조회
-
-```
-GET /workspaces
-```
-
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "홍길동의 워크스페이스",
-      "slug": "홍길동-1",
-      "role": "OWNER",
-      "createdAt": "2024-01-01T00:00:00"
-    }
-  ]
-}
-```
-
----
-
-### 워크스페이스 생성
-
-```
-POST /workspaces
-```
-
-🔒 인증 필요
-
-**Request Body**
+Request
 
 ```json
 {
@@ -303,135 +245,69 @@ POST /workspaces
 }
 ```
 
-**Response** `200`
+Response item shape
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": 2,
-    "name": "팀 워크스페이스",
-    "slug": "팀-워크스페이스-1",
-    "role": "OWNER",
-    "createdAt": "2024-01-01T00:00:00"
-  }
+  "id": 1,
+  "name": "팀 워크스페이스",
+  "slug": "team-workspace",
+  "role": "OWNER",
+  "createdAt": "2026-03-09T12:00:00"
 }
 ```
 
----
+### `GET /workspaces`
 
-### 워크스페이스 상세 조회
+- Auth: Required
+- 내 워크스페이스 목록 조회
 
-```
-GET /workspaces/{workspaceId}
-```
+### `GET /workspaces/{id}`
 
-🔒 인증 필요 (멤버만 조회 가능)
+- Auth: Required
+- Permission: workspace member
 
-**Response** `200`
+### `DELETE /workspaces/{id}`
+
+- Auth: Required
+- Permission: `OWNER`
+
+### `POST /workspaces/{id}/members`
+
+- Auth: Required
+- Permission: `OWNER`, `ADMIN`
+
+Request
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": 1,
-    "name": "홍길동의 워크스페이스",
-    "slug": "홍길동-1",
-    "role": "OWNER",
-    "createdAt": "2024-01-01T00:00:00"
-  }
+  "email": "member@example.com"
 }
 ```
 
----
-
-### 워크스페이스 삭제
-
-```
-DELETE /workspaces/{workspaceId}
-```
-
-🔒 인증 필요 (OWNER만 가능)
-
-**Response** `200`
-
-```json
-{ "success": true }
-```
-
----
-
-### 멤버 목록 조회
-
-```
-GET /workspaces/{workspaceId}/members
-```
-
-🔒 인증 필요 (멤버만 조회 가능)
-
-**Response** `200`
+Response item shape
 
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "userId": 1,
-      "nickname": "홍길동",
-      "email": "user@example.com",
-      "role": "OWNER",
-      "joinedAt": "2024-01-01T00:00:00"
-    }
-  ]
+  "userId": 2,
+  "nickname": "member",
+  "email": "member@example.com",
+  "role": "MEMBER",
+  "joinedAt": "2026-03-09T12:10:00"
 }
 ```
 
----
+### `GET /workspaces/{id}/members`
 
-### 멤버 초대
+- Auth: Required
+- Permission: workspace member
 
-```
-POST /workspaces/{workspaceId}/members
-```
+### `PATCH /workspaces/{id}/members/{userId}/role`
 
-🔒 인증 필요 (ADMIN 이상만 가능)
+- Auth: Required
+- Permission: `OWNER`
 
-> FREE 플랜은 멤버 초대 불가 (402 응답)
-
-**Request Body**
-
-```json
-{
-  "email": "invite@example.com"
-}
-```
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "userId": 2,
-    "nickname": "김철수",
-    "email": "invite@example.com",
-    "role": "MEMBER",
-    "joinedAt": "2024-01-01T00:00:00"
-  }
-}
-```
-
----
-
-### 멤버 역할 변경
-
-```
-PATCH /workspaces/{workspaceId}/members/{userId}/role
-```
-
-🔒 인증 필요 (OWNER만 가능)
-
-**Request Body**
+Request
 
 ```json
 {
@@ -439,52 +315,309 @@ PATCH /workspaces/{workspaceId}/members/{userId}/role
 }
 ```
 
-> `role` 가능 값: `OWNER` | `ADMIN` | `MEMBER` | `VIEWER`
+### `DELETE /workspaces/{id}/members/{userId}`
 
-**Response** `200`
+- Auth: Required
+- Permission: `OWNER`
+- Note: `OWNER` 본인 제거 불가
+
+## 9. Project
+
+### `POST /workspaces/{workspaceId}/projects`
+
+- Auth: Required
+- Permission: workspace member, 단 `VIEWER` 불가
+
+Request
+
+```json
+{
+  "name": "API 서버",
+  "description": "운영 API 모니터링"
+}
+```
+
+Response item shape
+
+```json
+{
+  "id": 1,
+  "name": "API 서버",
+  "description": "운영 API 모니터링",
+  "createdAt": "2026-03-09T12:20:00"
+}
+```
+
+### `GET /workspaces/{workspaceId}/projects`
+
+- Auth: Required
+- Permission: workspace member
+
+### `GET /projects/{id}`
+
+- Auth: Required
+- Permission: project owner
+
+### `PATCH /projects/{id}`
+
+- Auth: Required
+- Permission:
+  - workspace project: project owner 또는 비-`VIEWER` 멤버
+  - personal project: project owner
+
+Request
+
+```json
+{
+  "name": "API 서버 v2",
+  "description": "설명 수정"
+}
+```
+
+### `DELETE /projects/{id}`
+
+- Auth: Required
+- Permission: project owner
+
+## 10. Endpoint
+
+### `POST /projects/{projectId}/endpoints`
+
+- Auth: Required
+- Permission: project owner
+
+Request
+
+```json
+{
+  "url": "https://api.example.com/health",
+  "httpMethod": "GET",
+  "headers": {
+    "Authorization": "Bearer xxx"
+  },
+  "body": null,
+  "expectedStatusCode": 200,
+  "checkInterval": 300
+}
+```
+
+Validation / defaults
+
+- `url`: URL 형식
+- `expectedStatusCode`: `100` ~ `599`
+- `checkInterval`: `1` 이상
+- `expectedStatusCode` 미입력 시 기본 `200`
+- `checkInterval` 미입력 시 기본 `60`
+
+Response item shape
+
+```json
+{
+  "id": 1,
+  "projectId": 1,
+  "url": "https://api.example.com/health",
+  "httpMethod": "GET",
+  "headers": {
+    "Authorization": "Bearer xxx"
+  },
+  "body": null,
+  "expectedStatusCode": 200,
+  "checkInterval": 300,
+  "active": true,
+  "lastCheckedAt": null,
+  "createdAt": "2026-03-09T12:30:00"
+}
+```
+
+### `GET /projects/{projectId}/endpoints`
+
+- Auth: Required
+- Permission: project owner
+
+### `GET /endpoints/{id}`
+
+- Auth: Required
+- Permission: endpoint owner
+
+### `PUT /endpoints/{id}`
+
+- Auth: Required
+- Permission: endpoint owner
+
+Request fields
+
+- `url`
+- `httpMethod`
+- `headers`
+- `body`
+- `expectedStatusCode`
+- `checkInterval`
+
+모든 필드는 선택이며 전달한 값만 반영됨
+
+### `DELETE /endpoints/{id}`
+
+- Auth: Required
+- Permission: endpoint owner
+
+### `PATCH /endpoints/{id}/toggle`
+
+- Auth: Required
+- Permission: endpoint owner
+
+## 11. Check
+
+### `POST /endpoints/{id}/test`
+
+- Auth: Required
+- Permission: endpoint owner
+- Description: 즉시 수동 점검 실행
+
+Response item shape
+
+```json
+{
+  "id": 1,
+  "endpointId": 1,
+  "status": "SUCCESS",
+  "statusCode": 200,
+  "responseTimeMs": 120,
+  "errorMessage": null,
+  "checkedAt": "2026-03-09T12:35:00"
+}
+```
+
+### `GET /endpoints/{id}/stats`
+
+- Auth: Required
+- Permission: endpoint owner
+
+Response
 
 ```json
 {
   "success": true,
   "data": {
-    "userId": 2,
-    "nickname": "김철수",
-    "email": "invite@example.com",
-    "role": "ADMIN",
-    "joinedAt": "2024-01-01T00:00:00"
+    "totalChecks": 24,
+    "successCount": 23,
+    "successRate": 95.8,
+    "avgResponseTimeMs": 143.2,
+    "since": "2026-03-08T12:35:00"
   }
 }
 ```
 
----
+### `GET /endpoints/{id}/stats/hourly`
 
-### 멤버 제거
+- Auth: Required
+- Permission: endpoint owner
 
-```
-DELETE /workspaces/{workspaceId}/members/{userId}
-```
-
-🔒 인증 필요 (OWNER만 가능)
-
-**Response** `200`
+Response item shape
 
 ```json
-{ "success": true }
+{
+  "hour": "2026-03-09T11:00:00",
+  "checkCount": 6,
+  "successCount": 5,
+  "avgResponseTimeMs": 140.3
+}
 ```
 
----
+### `GET /endpoints/{id}/checks?limit=20`
 
-## 4. 구독 & 결제 (Subscription & Payment)
+- Auth: Required
+- Permission: endpoint owner
+- Query:
+  - `limit`: 기본값 `20`
 
-### 구독 상태 조회
+### `GET /projects/{id}/stats`
 
+- Auth: Required
+- Permission: project owner
+
+Response item shape
+
+```json
+{
+  "totalEndpoints": 5,
+  "upCount": 4,
+  "downCount": 1,
+  "avgResponseTimeMs": 128.4
+}
 ```
-GET /api/workspaces/{workspaceId}/subscription
+
+## 12. Alert
+
+### `POST /endpoints/{endpointId}/alerts`
+
+- Auth: Required
+- Permission: endpoint owner
+
+Request
+
+```json
+{
+  "alertType": "EMAIL",
+  "target": "ops@example.com",
+  "threshold": 3
+}
 ```
 
-🔒 인증 필요 (멤버 전체)
+Validation / defaults
 
-**Response** `200`
+- `threshold`: `1` 이상
+- `threshold` 미입력 시 기본 `3`
+
+Response item shape
+
+```json
+{
+  "id": 1,
+  "endpointId": 1,
+  "alertType": "EMAIL",
+  "target": "ops@example.com",
+  "threshold": 3,
+  "active": true,
+  "createdAt": "2026-03-09T12:40:00"
+}
+```
+
+### `GET /endpoints/{endpointId}/alerts`
+
+- Auth: Required
+- Permission: endpoint owner
+
+### `PUT /alerts/{id}`
+
+- Auth: Required
+- Permission: endpoint owner
+
+Request fields
+
+- `alertType`
+- `target`
+- `threshold`
+
+### `DELETE /alerts/{id}`
+
+- Auth: Required
+- Permission: endpoint owner
+
+### `PATCH /alerts/{id}/toggle`
+
+- Auth: Required
+- Permission: endpoint owner
+
+## 13. Subscription & Payment
+
+모든 결제 API는 `/api/workspaces/{workspaceId}` 하위에 있고, 워크스페이스 `OWNER`만 호출할 수 있습니다.
+
+### `GET /api/workspaces/{workspaceId}/subscription`
+
+- Auth: Required
+- Permission: workspace `OWNER`
+
+Response
 
 ```json
 {
@@ -496,690 +629,180 @@ GET /api/workspaces/{workspaceId}/subscription
     "maxEndpointsPerProject": 5,
     "minCheckIntervalSeconds": 300,
     "maxAlertChannels": 1,
-    "maxMembers": -1,
+    "maxMembers": 1,
     "dataRetentionDays": 7
   }
 }
 ```
 
-> `maxAlertChannels`, `maxMembers`가 `-1`이면 무제한입니다.
+`maxAlertChannels`, `maxMembers`가 `-1`이면 사실상 제한 없음
 
-| 항목                  | FREE            | PRO        |
-| --------------------- | --------------- | ---------- |
-| 프로젝트당 엔드포인트 | 5개             | 50개       |
-| 최소 점검 주기        | 300초 (5분)     | 60초 (1분) |
-| 알림 채널             | 1개             | 무제한     |
-| 멤버 수               | 1명 (초대 불가) | 무제한     |
-| 데이터 보관           | 7일             | 90일       |
+### `POST /api/workspaces/{workspaceId}/payment/prepare`
 
----
+- Auth: Required
+- Permission: workspace `OWNER`
+- Description:
+  - 기존 `PENDING` 주문이 있으면 `CANCELLED` 처리
+  - 이미 `PRO` active 상태면 `409`
 
-### 결제 준비
-
-```
-POST /api/workspaces/{workspaceId}/payment/prepare
-```
-
-🔒 인증 필요 (OWNER만 가능)
-
-> 이미 PRO 플랜 구독 중이면 400 응답
-
-**Response** `200`
+Response
 
 ```json
 {
   "success": true,
   "data": {
-    "orderId": "apiguard-1-a1b2c3d4e5f6",
+    "orderId": "apiguard-1-abcdef123456",
     "amount": 19900,
-    "orderName": "ApiGuard PRO 플랜 (1개월)",
-    "clientKey": "test_ck_docs_Ovk5rk1EwkEbP0W43n07xlzm"
+    "orderName": "APIGuard PRO 1개월 이용권",
+    "clientKey": "test_ck_xxx"
   }
 }
 ```
 
-**프론트엔드 결제 플로우**
+### `POST /api/workspaces/{workspaceId}/payment/confirm`
 
-1. `POST /payment/prepare` 호출 → `orderId`, `clientKey`, `amount` 수신
-2. 토스페이먼츠 SDK로 결제창 표시 (`clientKey`, `orderId`, `amount`, `orderName` 전달)
-3. 결제 완료 후 토스가 `successUrl`로 리다이렉트 (`paymentKey`, `orderId`, `amount` 쿼리스트링)
-4. `POST /payment/confirm` 호출하여 승인 처리
+- Auth: Required
+- Permission: workspace `OWNER`
 
----
-
-### 결제 승인
-
-```
-POST /api/workspaces/{workspaceId}/payment/confirm
-```
-
-🔒 인증 필요 (OWNER만 가능)
-
-**Request Body**
+Request
 
 ```json
 {
-  "paymentKey": "토스에서_받은_paymentKey",
-  "orderId": "apiguard-1-a1b2c3d4e5f6",
+  "paymentKey": "pay_xxx",
+  "orderId": "apiguard-1-abcdef123456",
   "amount": 19900
 }
 ```
 
-**Response** `200`
+Validation
+
+- 로컬 주문 존재 여부 확인
+- 주문의 워크스페이스 일치 여부 확인
+- 주문 상태가 `PENDING`인지 확인
+- 요청 금액과 주문 금액 일치 여부 확인
+- Toss 응답의 `paymentKey`, `orderId`, `totalAmount` 검증
+
+Response item shape
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": 1,
-    "orderId": "apiguard-1-a1b2c3d4e5f6",
-    "paymentKey": "토스에서_받은_paymentKey",
-    "planType": "PRO",
-    "amount": 19900,
-    "status": "SUCCESS",
-    "paidAt": "2024-01-01T00:00:00"
-  }
+  "id": 1,
+  "orderId": "apiguard-1-abcdef123456",
+  "paymentKey": "pay_xxx",
+  "planType": "PRO",
+  "amount": 19900,
+  "status": "SUCCESS",
+  "paidAt": "2026-03-09T12:50:00"
 }
 ```
 
----
+### `GET /api/workspaces/{workspaceId}/payment/history`
 
-### 결제 이력 조회
+- Auth: Required
+- Permission: workspace `OWNER`
 
-```
-GET /api/workspaces/{workspaceId}/payment/history
-```
+Response item shape
 
-🔒 인증 필요 (멤버 전체)
+- `PaymentResponse[]`
+- `status`: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`
 
-**Response** `200`
+## 14. Notice
+
+### `GET /notices`
+
+- Auth: Required
+- Description: 공지사항 목록 조회
+
+### `GET /notices/{noticeId}`
+
+- Auth: Required
+
+Response item shape
 
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "orderId": "apiguard-1-a1b2c3d4e5f6",
-      "paymentKey": "...",
-      "planType": "PRO",
-      "amount": 19900,
-      "status": "SUCCESS",
-      "paidAt": "2024-01-01T00:00:00"
-    }
-  ]
+  "id": 1,
+  "title": "점검 안내",
+  "content": "2026-03-10 점검 예정입니다.",
+  "pinned": true,
+  "createdAt": "2026-03-09T09:00:00",
+  "updatedAt": "2026-03-09T09:30:00"
 }
 ```
 
-> `status` 가능 값: `PENDING` | `SUCCESS` | `FAILED`
+## 15. Admin
 
----
+모든 `/admin/**` API는 `ADMIN` 권한이 필요합니다.
 
-## 5. 프로젝트 (Project)
+### Users
 
-### 프로젝트 목록 조회
+#### `GET /admin/users`
 
-```
-GET /workspaces/{workspaceId}/projects
-```
+- Auth: Required
+- Permission: `ADMIN`
 
-🔒 인증 필요 (멤버만 조회 가능)
-
-**Response** `200`
+Response item shape
 
 ```json
 {
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "프로덕션",
-      "description": "메인 서비스",
-      "createdAt": "2024-01-01T00:00:00"
-    }
-  ]
+  "id": 1,
+  "email": "user@example.com",
+  "nickname": "홍길동",
+  "role": "USER",
+  "createdAt": "2026-03-09T09:00:00",
+  "deletedAt": null
 }
 ```
 
----
+#### `GET /admin/users/{userId}`
 
-### 프로젝트 생성
+- Auth: Required
+- Permission: `ADMIN`
 
-```
-POST /workspaces/{workspaceId}/projects
-```
+#### `PATCH /admin/users/{userId}/role`
 
-🔒 인증 필요 (VIEWER 제외)
+- Auth: Required
+- Permission: `ADMIN`
 
-**Request Body**
+Request
 
 ```json
 {
-  "name": "프로덕션",
-  "description": "메인 서비스"
+  "role": "ADMIN"
 }
 ```
 
-**Response** `200`
+허용 값: `USER`, `ADMIN`
+
+#### `DELETE /admin/users/{userId}`
+
+- Auth: Required
+- Permission: `ADMIN`
+
+### Notices
+
+#### `POST /admin/notices`
+
+- Auth: Required
+- Permission: `ADMIN`
+- Response status: `201`
+
+Request
 
 ```json
 {
-  "success": true,
-  "data": {
-    "id": 1,
-    "name": "프로덕션",
-    "description": "메인 서비스",
-    "createdAt": "2024-01-01T00:00:00"
-  }
+  "title": "점검 안내",
+  "content": "오늘 22시에 점검합니다.",
+  "pinned": true
 }
 ```
 
----
+#### `PUT /admin/notices/{noticeId}`
 
-### 프로젝트 상세 조회
+- Auth: Required
+- Permission: `ADMIN`
 
-```
-GET /projects/{id}
-```
+#### `DELETE /admin/notices/{noticeId}`
 
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "name": "프로덕션",
-    "description": "메인 서비스",
-    "createdAt": "2024-01-01T00:00:00"
-  }
-}
-```
-
----
-
-### 프로젝트 수정
-
-```
-PATCH /projects/{id}
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Request Body**
-
-```json
-{
-  "name": "수정된 이름",
-  "description": "수정된 설명"
-}
-```
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "name": "수정된 이름",
-    "description": "수정된 설명",
-    "createdAt": "..."
-  }
-}
-```
-
----
-
-### 프로젝트 삭제
-
-```
-DELETE /projects/{id}
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Response** `200`
-
-```json
-{ "success": true }
-```
-
----
-
-## 6. 엔드포인트 (Endpoint)
-
-### 엔드포인트 목록 조회
-
-```
-GET /projects/{projectId}/endpoints
-```
-
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "projectId": 1,
-      "url": "https://api.example.com/health",
-      "httpMethod": "GET",
-      "headers": { "Authorization": "Bearer token" },
-      "body": null,
-      "expectedStatusCode": 200,
-      "checkInterval": 300,
-      "isActive": true,
-      "lastCheckedAt": "2024-01-01T00:00:00",
-      "createdAt": "2024-01-01T00:00:00"
-    }
-  ]
-}
-```
-
----
-
-### 엔드포인트 생성
-
-```
-POST /projects/{projectId}/endpoints
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-> FREE 플랜 5개, PRO 플랜 50개 제한. 초과 시 402 응답.
-
-**Request Body**
-
-```json
-{
-  "url": "https://api.example.com/health",
-  "httpMethod": "GET",
-  "headers": { "Authorization": "Bearer token" },
-  "body": null,
-  "expectedStatusCode": 200,
-  "checkInterval": 300
-}
-```
-
-> `httpMethod` 가능 값: `GET` | `POST` | `PUT` | `PATCH` | `DELETE` | `HEAD` | `OPTIONS`
-> `checkInterval` 단위: 초 (FREE 최소 300, PRO 최소 60)
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "projectId": 1,
-    "url": "https://api.example.com/health",
-    "httpMethod": "GET",
-    "headers": { "Authorization": "Bearer token" },
-    "body": null,
-    "expectedStatusCode": 200,
-    "checkInterval": 300,
-    "isActive": true,
-    "lastCheckedAt": null,
-    "createdAt": "2024-01-01T00:00:00"
-  }
-}
-```
-
----
-
-### 엔드포인트 상세 조회
-
-```
-GET /endpoints/{id}
-```
-
-🔒 인증 필요
-
-**Response** `200` — 엔드포인트 생성 응답과 동일한 형식
-
----
-
-### 엔드포인트 수정
-
-```
-PUT /endpoints/{id}
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Request Body** — 생성 요청과 동일한 형식 (전체 필드 전송)
-
-**Response** `200` — 수정된 엔드포인트 정보
-
----
-
-### 엔드포인트 삭제
-
-```
-DELETE /endpoints/{id}
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Response** `200`
-
-```json
-{ "success": true }
-```
-
----
-
-### 엔드포인트 활성화/비활성화 토글
-
-```
-PATCH /endpoints/{id}/toggle
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Response** `200` — 변경된 엔드포인트 정보 (`isActive` 값 반전)
-
----
-
-## 7. 알림 설정 (Alert)
-
-### 알림 목록 조회
-
-```
-GET /endpoints/{endpointId}/alerts
-```
-
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "endpointId": 1,
-      "alertType": "EMAIL",
-      "target": "alert@example.com",
-      "threshold": 3,
-      "isActive": true,
-      "createdAt": "2024-01-01T00:00:00"
-    }
-  ]
-}
-```
-
----
-
-### 알림 생성
-
-```
-POST /endpoints/{endpointId}/alerts
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-> FREE 플랜 1개, PRO 무제한. 초과 시 402 응답.
-
-**Request Body**
-
-```json
-{
-  "alertType": "EMAIL",
-  "target": "alert@example.com",
-  "threshold": 3
-}
-```
-
-> `alertType` 가능 값: `EMAIL` | `SLACK`
-> `target`: EMAIL이면 이메일 주소, SLACK이면 Webhook URL
-> `threshold`: 연속 실패 횟수 (이 횟수 이상 실패 시 알림 발송)
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "endpointId": 1,
-    "alertType": "EMAIL",
-    "target": "alert@example.com",
-    "threshold": 3,
-    "isActive": true,
-    "createdAt": "2024-01-01T00:00:00"
-  }
-}
-```
-
----
-
-### 알림 수정
-
-```
-PUT /alerts/{id}
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Request Body**
-
-```json
-{
-  "alertType": "SLACK",
-  "target": "https://hooks.slack.com/...",
-  "threshold": 5
-}
-```
-
-**Response** `200` — 수정된 알림 정보
-
----
-
-### 알림 삭제
-
-```
-DELETE /alerts/{id}
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Response** `200`
-
-```json
-{ "success": true }
-```
-
----
-
-### 알림 활성화/비활성화 토글
-
-```
-PATCH /alerts/{id}/toggle
-```
-
-🔒 인증 필요 (VIEWER 제외)
-
-**Response** `200` — 변경된 알림 정보 (`isActive` 값 반전)
-
----
-
-## 8. 점검 결과 & 통계 (Check)
-
-### 엔드포인트 즉시 테스트
-
-```
-POST /endpoints/{id}/test
-```
-
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "endpointId": 1,
-    "status": "SUCCESS",
-    "statusCode": 200,
-    "responseTimeMs": 142,
-    "errorMessage": null,
-    "checkedAt": "2024-01-01T00:00:00"
-  }
-}
-```
-
-> `status` 가능 값: `SUCCESS` | `FAILURE` | `TIMEOUT` | `ERROR`
-
----
-
-### 엔드포인트 통계 조회
-
-```
-GET /endpoints/{id}/stats
-```
-
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "totalChecks": 1440,
-    "successCount": 1435,
-    "successRate": 99.65,
-    "avgResponseTimeMs": 135.2,
-    "since": "2024-01-01T00:00:00"
-  }
-}
-```
-
----
-
-### 시간대별 통계 조회 (최근 24시간)
-
-```
-GET /endpoints/{id}/stats/hourly
-```
-
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "hour": "2024-01-01T00:00:00",
-      "checkCount": 12,
-      "successCount": 12,
-      "avgResponseTimeMs": 130.5
-    }
-  ]
-}
-```
-
----
-
-### 최근 점검 이력 조회
-
-```
-GET /endpoints/{id}/checks?limit=20
-```
-
-🔒 인증 필요
-
-| 파라미터 | 타입    | 기본값 | 설명             |
-| -------- | ------- | ------ | ---------------- |
-| `limit`  | integer | 20     | 조회할 최대 건수 |
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "endpointId": 1,
-      "status": "SUCCESS",
-      "statusCode": 200,
-      "responseTimeMs": 142,
-      "errorMessage": null,
-      "checkedAt": "2024-01-01T00:00:00"
-    }
-  ]
-}
-```
-
----
-
-### 프로젝트 전체 통계 조회
-
-```
-GET /projects/{id}/stats
-```
-
-🔒 인증 필요
-
-**Response** `200`
-
-```json
-{
-  "success": true,
-  "data": {
-    "totalEndpoints": 5,
-    "upCount": 4,
-    "downCount": 1,
-    "avgResponseTimeMs": 150.3
-  }
-}
-```
-
----
-
-## 부록
-
-### 리소스 계층 구조
-
-```
-Workspace
-└── Project
-    └── Endpoint
-        ├── AlertConfig (알림 설정)
-        └── CheckResult (점검 결과)
-
-Workspace
-├── WorkspaceMember (역할: OWNER / ADMIN / MEMBER / VIEWER)
-└── Subscription (FREE / PRO)
-    └── Payment (결제 이력)
-```
-
-### 자동 점검 스케줄러
-
-- 각 엔드포인트의 `checkInterval`(초) 주기마다 자동 점검 실행
-- 점검 실패 시 `threshold` 이상 연속 실패하면 알림 발송
-- 매일 새벽 3시: 플랜 보관 기간 초과 점검 결과 자동 삭제
-
-### 플랜별 제한 요약
-
-| 항목                  | FREE  | PRO         |
-| --------------------- | ----- | ----------- |
-| 프로젝트당 엔드포인트 | 5개   | 50개        |
-| 최소 점검 주기        | 300초 | 60초        |
-| 알림 채널             | 1개   | 무제한      |
-| 워크스페이스 멤버     | 1명   | 무제한      |
-| 점검 결과 보관        | 7일   | 90일        |
-| 가격                  | 무료  | 19,900원/월 |
+- Auth: Required
+- Permission: `ADMIN`
