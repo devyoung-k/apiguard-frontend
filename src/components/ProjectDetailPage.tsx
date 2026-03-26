@@ -18,18 +18,25 @@ import { toast } from 'sonner';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { useTranslations } from 'next-intl';
 import { PlanLimitBanner } from '@/components/PlanLimitBanner';
+import { useWorkspace } from '@/contexts/workspace-context';
+import { canDelete, canEdit } from '@/lib/permissions';
+import { useProjectCheckStream } from '@/hooks/use-health-check-stream';
+import type { HealthCheckResult } from '@/types/api';
 
 export function ProjectDetailPage() {
   const router = useRouter();
   const params = useParams();
   const isDarkMode = useDarkMode();
   const t = useTranslations('projectDetail');
+  const { myRole } = useWorkspace();
   const [project, setProject] = useState<ProjectResponse | null>(null);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const projectId = Number(params.id);
+  const canWrite = canEdit(myRole);
+  const canRemove = canDelete(myRole);
 
   const fetchData = useCallback(async () => {
     try {
@@ -51,6 +58,19 @@ export function ProjectDetailPage() {
   useEffect(() => {
     if (projectId) fetchData();
   }, [projectId, fetchData]);
+
+  // 실시간 헬스체크 결과 → 엔드포인트 lastCheckedAt 반영
+  const handleRealtimeCheck = useCallback((result: HealthCheckResult) => {
+    setEndpoints((prev) =>
+      prev.map((ep) =>
+        ep.id === result.endpointId
+          ? { ...ep, lastCheckedAt: result.checkedAt }
+          : ep,
+      ),
+    );
+  }, []);
+
+  useProjectCheckStream(projectId, handleRealtimeCheck);
 
   const getMethodColor = (method: string) => {
     const colors: Record<string, string> = {
@@ -150,13 +170,15 @@ export function ProjectDetailPage() {
             </p>
           </div>
         </div>
-        <Button
-          className="gap-2"
-          onClick={() => router.push(`/projects/${projectId}/endpoints/new`)}
-        >
-          <Plus className="h-4 w-4" />
-          {t('addEndpoint')}
-        </Button>
+        {canWrite && (
+          <Button
+            className="gap-2"
+            onClick={() => router.push(`/projects/${projectId}/endpoints/new`)}
+          >
+            <Plus className="h-4 w-4" />
+            {t('addEndpoint')}
+          </Button>
+        )}
       </div>
 
       {/* Plan Limit Banner */}
@@ -229,36 +251,44 @@ export function ProjectDetailPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTest(endpoint.id)}
-                        title={t('runCheckNow')}
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          router.push(
-                            `/projects/${projectId}/endpoints/${endpoint.id}/edit`,
-                          )
-                        }
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(endpoint.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                      <Switch
-                        checked={endpoint.isActive}
-                        onCheckedChange={() => handleToggle(endpoint.id)}
-                      />
+                      {canWrite && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTest(endpoint.id)}
+                          title={t('runCheckNow')}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canWrite && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            router.push(
+                              `/projects/${projectId}/endpoints/${endpoint.id}/edit`,
+                            )
+                          }
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canRemove && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(endpoint.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                      {canWrite && (
+                        <Switch
+                          checked={endpoint.isActive}
+                          onCheckedChange={() => handleToggle(endpoint.id)}
+                        />
+                      )}
                     </div>
                   </div>
                 </CardContent>
