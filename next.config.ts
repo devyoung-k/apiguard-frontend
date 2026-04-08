@@ -23,6 +23,7 @@ function getBackendOrigin(value: string | undefined): string {
 const backendOrigin = getBackendOrigin(process.env.NEXT_PUBLIC_API_URL);
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   reactCompiler: true,
   turbopack: {
     root: __dirname,
