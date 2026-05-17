@@ -31,6 +31,17 @@ export type HttpMethod =
   | 'OPTIONS';
 export type CheckStatus = 'SUCCESS' | 'FAILURE' | 'TIMEOUT' | 'ERROR';
 export type AlertType = 'EMAIL' | 'SLACK';
+export type IncidentStatus = 'OPEN' | 'RESOLVED';
+export type IncidentType = 'AVAILABILITY' | 'PERFORMANCE' | 'CONTRACT_CHANGE';
+export type IncidentSeverity = 'WARNING' | 'CRITICAL';
+export type BreakingChangeRule =
+  | 'PATH_REMOVED'
+  | 'METHOD_REMOVED'
+  | 'REQUIRED_PARAMETER_ADDED'
+  | 'REQUIRED_REQUEST_BODY_ADDED'
+  | 'REQUEST_BODY_REQUIRED_FIELD_ADDED'
+  | 'RESPONSE_FIELD_REMOVED'
+  | 'RESPONSE_FIELD_TYPE_CHANGED';
 
 // ============================================================
 // 인증
@@ -194,6 +205,67 @@ export interface ProjectStats {
   upCount: number;
   downCount: number;
   avgResponseTimeMs: number;
+}
+
+// ============================================================
+// OpenAPI Spec Changes
+// ============================================================
+
+export interface ApiSpecSourceResponse {
+  id: number;
+  projectId: number;
+  name: string;
+  specUrl: string;
+  active: boolean;
+  lastCheckedAt: string | null;
+  createdAt: string;
+}
+
+export interface CreateApiSpecSourceRequest {
+  name: string;
+  specUrl: string;
+}
+
+export interface ApiSpecDiffResponse {
+  id: number;
+  specSourceId: number;
+  baseSnapshotId: number | null;
+  headSnapshotId: number;
+  breaking: boolean;
+  breakingChangeCount: number;
+  summary: string;
+  checkedAt: string;
+}
+
+export interface BreakingChangeResponse {
+  id: number | null;
+  rule: BreakingChangeRule;
+  location: string;
+  description: string;
+}
+
+export interface ApiSpecDiffDetailResponse extends ApiSpecDiffResponse {
+  changes: BreakingChangeResponse[];
+}
+
+// ============================================================
+// Incidents
+// ============================================================
+
+export interface IncidentResponse {
+  id: number;
+  endpointId: number | null;
+  projectId: number;
+  endpointUrl: string | null;
+  type: IncidentType;
+  status: IncidentStatus;
+  severity: IncidentSeverity;
+  title: string;
+  description: string | null;
+  detectedCount: number;
+  startedAt: string;
+  lastDetectedAt: string;
+  resolvedAt: string | null;
 }
 
 // ============================================================

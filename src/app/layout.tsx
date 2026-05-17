@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'APIGuard',
-  description: 'API Monitoring Dashboard',
+  description: 'API Reliability and Contract Change Detection SaaS',
 };
 
 export default function RootLayout({

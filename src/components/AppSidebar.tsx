@@ -13,6 +13,7 @@ import {
   Shield,
   Plus,
   Globe,
+  GitCompareArrows,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
@@ -60,6 +61,7 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
   const normalMenuItems = [
     { id: '/dashboard', label: t('menu.dashboard'), icon: LayoutDashboard },
     { id: '/projects', label: t('menu.projects'), icon: FolderKanban },
+    { id: '/spec-changes', label: t('menu.specChanges'), icon: GitCompareArrows },
     { id: '/alerts', label: t('menu.alerts'), icon: Bell },
     { id: '/notices', label: t('menu.notices'), icon: BellRing },
     ...(canManageMembers(myRole)

@@ -24,7 +24,10 @@ test.describe('workspace member flows', () => {
     await page.getByRole('combobox', { name: /role/i }).selectOption('MEMBER');
 
     // Submit invite (second "멤버 초대" button — the one inside the form)
-    await page.getByRole('button', { name: '멤버 초대' }).last().click();
+    await page
+      .getByRole('button', { name: '멤버 초대', exact: true })
+      .last()
+      .click();
 
     // Verify new member in list
     await expect(page.getByText('newbie@example.com')).toBeVisible();

@@ -39,15 +39,15 @@ test.describe('alert flows', () => {
     await page.getByRole('button', { name: '새 알림' }).click();
 
     // Select project
-    await page.getByText('프로젝트 선택').click();
+    await page.getByRole('combobox', { name: '프로젝트' }).click();
     await page.getByRole('option', { name: PROJECT.name }).click();
 
     // Select endpoint (option shows "GET https://..." format)
-    await page.getByText('엔드포인트 선택').click();
+    await page.getByRole('combobox', { name: '엔드포인트' }).click();
     await page.getByRole('option', { name: /api\.example\.com\/health/ }).click();
 
     // Select alert type
-    await page.getByText('유형 선택').click();
+    await page.getByRole('combobox', { name: '알림 유형' }).click();
     await page.getByRole('option', { name: /이메일/ }).click();
 
     // Fill target
