@@ -218,7 +218,10 @@ export function AlertsPage() {
                   <div className="space-y-2">
                     <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.project')}</Label>
                     <Select value={selectedProjectId} onValueChange={(v) => { setSelectedProjectId(v); setSelectedEndpointId(""); }}>
-                      <SelectTrigger className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
+                      <SelectTrigger
+                        aria-label={t('form.project')}
+                        className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}
+                      >
                         <SelectValue placeholder={t('form.selectProject')} />
                       </SelectTrigger>
                       <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
@@ -232,7 +235,10 @@ export function AlertsPage() {
                   <div className="space-y-2">
                     <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.endpoint')}</Label>
                     <Select value={selectedEndpointId} onValueChange={setSelectedEndpointId} disabled={!selectedProjectId}>
-                      <SelectTrigger className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
+                      <SelectTrigger
+                        aria-label={t('form.endpoint')}
+                        className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}
+                      >
                         <SelectValue placeholder={t('form.selectEndpoint')} />
                       </SelectTrigger>
                       <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
@@ -250,7 +256,10 @@ export function AlertsPage() {
                   <div className="space-y-2">
                     <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('form.alertType')}</Label>
                     <Select value={newAlertType} onValueChange={(v) => setNewAlertType(v as AlertType)}>
-                      <SelectTrigger className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}>
+                      <SelectTrigger
+                        aria-label={t('form.alertType')}
+                        className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}
+                      >
                         <SelectValue placeholder={t('form.selectType')} />
                       </SelectTrigger>
                       <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>

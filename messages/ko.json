@@ -3,10 +3,11 @@
     "name": "APIGuard"
   },
   "sidebar": {
-    "brandTagline": "API 모니터링",
+    "brandTagline": "API Reliability",
     "menu": {
       "dashboard": "대시보드",
       "projects": "프로젝트",
+      "specChanges": "스펙 변경",
       "alerts": "알림",
       "admin": "관리",
       "systemAdminUsers": "시스템 회원관리",
@@ -32,7 +33,7 @@
   "auth": {
     "login": {
       "title": "APIGuard에 오신 것을 환영합니다",
-      "description": "안정적으로 API를 모니터링하세요",
+      "description": "외부 API 장애와 계약 변경을 조기에 감지하세요",
       "email": "이메일",
       "emailPlaceholder": "you@example.com",
       "password": "비밀번호",
@@ -47,7 +48,7 @@
     },
     "register": {
       "title": "계정 만들기",
-      "description": "몇 분 안에 API 모니터링을 시작하세요",
+      "description": "API Reliability 워크스페이스를 시작하세요",
       "nickname": "닉네임",
       "nicknamePlaceholder": "홍길동",
       "email": "이메일",
@@ -66,7 +67,7 @@
     },
     "registerSuccess": {
       "title": "회원가입 완료",
-      "description": "계정이 준비되었습니다. 로그인하고 API 모니터링을 시작하세요.",
+      "description": "계정이 준비되었습니다. 로그인하고 API 장애와 변경 이력을 추적하세요.",
       "signIn": "로그인"
     }
   },
@@ -125,7 +126,7 @@
   },
   "dashboard": {
     "title": "대시보드",
-    "subtitle": "API 엔드포인트를 실시간으로 모니터링하세요",
+    "subtitle": "외부 API 상태와 응답 지연을 실시간으로 추적하세요",
     "errors": {
       "loadData": "데이터를 불러오지 못했습니다."
     },
@@ -143,9 +144,67 @@
       "downCount": "장애 {count}개"
     }
   },
+  "specChanges": {
+    "title": "API Spec Changes",
+    "subtitle": "OpenAPI 스냅샷을 비교해 API 계약 변경과 breaking change를 확인하세요",
+    "runCheck": "스펙 검사",
+    "retry": "다시 시도",
+    "breaking": "Breaking",
+    "compatible": "Compatible",
+    "source": {
+      "title": "스펙 소스",
+      "project": "프로젝트",
+      "selectProject": "프로젝트 선택",
+      "specSource": "OpenAPI 소스",
+      "selectSource": "소스 선택",
+      "lastChecked": "최근 검사"
+    },
+    "create": {
+      "title": "새 OpenAPI 소스",
+      "name": "이름",
+      "namePlaceholder": "Payments API",
+      "url": "OpenAPI JSON URL",
+      "submit": "소스 추가"
+    },
+    "diffs": {
+      "title": "변경 이력"
+    },
+    "detail": {
+      "title": "변경 상세",
+      "changeCount": "변경 {count}개"
+    },
+    "empty": {
+      "noProjects": "프로젝트가 없습니다.",
+      "noSources": "등록된 OpenAPI 소스가 없습니다.",
+      "noDiffs": "아직 검사 이력이 없습니다.",
+      "selectDiff": "변경 이력을 선택하세요.",
+      "noChanges": "감지된 breaking change가 없습니다."
+    },
+    "rules": {
+      "PATH_REMOVED": "Path 삭제",
+      "METHOD_REMOVED": "Method 삭제",
+      "REQUIRED_PARAMETER_ADDED": "필수 파라미터 추가",
+      "REQUIRED_REQUEST_BODY_ADDED": "필수 Body 추가",
+      "REQUEST_BODY_REQUIRED_FIELD_ADDED": "필수 Body 필드 추가",
+      "RESPONSE_FIELD_REMOVED": "응답 필드 삭제",
+      "RESPONSE_FIELD_TYPE_CHANGED": "응답 타입 변경"
+    },
+    "errors": {
+      "load": "스펙 변경 데이터를 불러오지 못했습니다.",
+      "selectProject": "프로젝트를 선택해 주세요.",
+      "selectSource": "OpenAPI 소스를 선택해 주세요.",
+      "fillSource": "이름과 URL을 입력해 주세요.",
+      "create": "OpenAPI 소스 생성에 실패했습니다.",
+      "check": "OpenAPI 스펙 검사에 실패했습니다."
+    },
+    "toasts": {
+      "created": "OpenAPI 소스가 생성되었습니다.",
+      "checked": "OpenAPI 스펙 검사가 완료되었습니다."
+    }
+  },
   "projects": {
     "title": "프로젝트",
-    "subtitle": "API 모니터링 프로젝트를 관리하세요",
+    "subtitle": "외부 API 의존성과 Reliability 체크를 프로젝트 단위로 관리하세요",
     "newProject": "새 프로젝트",
     "retry": "다시 시도",
     "empty": "아직 프로젝트가 없습니다. 첫 프로젝트를 만들어보세요.",
@@ -297,12 +356,12 @@
       "edit": "엔드포인트 수정",
       "new": "새 엔드포인트"
     },
-    "subtitle": "모니터링할 API 엔드포인트를 설정하세요",
+    "subtitle": "장애 감지에 사용할 API 엔드포인트와 점검 조건을 설정하세요",
     "sections": {
       "basicInfo": "기본 정보",
       "headers": "헤더",
       "requestBody": "요청 본문",
-      "monitoringSettings": "모니터링 설정"
+      "monitoringSettings": "점검 설정"
     },
     "fields": {
       "url": "URL",

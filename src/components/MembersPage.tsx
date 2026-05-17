@@ -42,7 +42,8 @@ const ROLE_COLORS: Record<WorkspaceRole, string> = {
 };
 
 export function MembersPage() {
-  const { members, currentWorkspace, myRole, refreshMembers } = useWorkspace();
+  const { members, currentWorkspace, myRole, refreshMembers, addMember } =
+    useWorkspace();
   const { user } = useAuth();
   const t = useTranslations('admin.members');
   const tp = useTranslations('permissions');
@@ -70,21 +71,21 @@ export function MembersPage() {
 
     setIsInviting(true);
     try {
-      await workspacesApi.inviteMember(currentWorkspace.id, {
+      const invitedMember = await workspacesApi.inviteMember(currentWorkspace.id, {
         email: inviteEmail.trim(),
         role: inviteRole,
       });
+      addMember(invitedMember);
       toast.success(t('toasts.invited'));
       setInviteEmail('');
       setInviteRole('MEMBER');
       setIsInviteOpen(false);
-      await refreshMembers();
     } catch {
       toast.error(t('errors.inviteFailed'));
     } finally {
       setIsInviting(false);
     }
-  }, [inviteEmail, inviteRole, currentWorkspace, refreshMembers, t]);
+  }, [inviteEmail, inviteRole, currentWorkspace, addMember, t]);
 
   const handleRoleChange = useCallback(
     async (memberId: number, newRole: WorkspaceRole) => {

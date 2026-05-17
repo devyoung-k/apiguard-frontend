@@ -3,10 +3,11 @@
     "name": "APIGuard"
   },
   "sidebar": {
-    "brandTagline": "API Monitoring",
+    "brandTagline": "API Reliability",
     "menu": {
       "dashboard": "Dashboard",
       "projects": "Projects",
+      "specChanges": "Spec Changes",
       "alerts": "Alerts",
       "admin": "Admin",
       "systemAdminUsers": "System Users",
@@ -32,7 +33,7 @@
   "auth": {
     "login": {
       "title": "Welcome to APIGuard",
-      "description": "Monitor your APIs with confidence",
+      "description": "Detect external API outages and contract changes early",
       "email": "Email",
       "emailPlaceholder": "you@example.com",
       "password": "Password",
@@ -47,7 +48,7 @@
     },
     "register": {
       "title": "Create your account",
-      "description": "Start monitoring your APIs in minutes",
+      "description": "Start an API Reliability workspace in minutes",
       "nickname": "Nickname",
       "nicknamePlaceholder": "John Doe",
       "email": "Email",
@@ -66,7 +67,7 @@
     },
     "registerSuccess": {
       "title": "Sign up successful",
-      "description": "Your account is ready. Sign in to start monitoring your APIs.",
+      "description": "Your account is ready. Sign in to track API incidents and changes.",
       "signIn": "Sign In"
     }
   },
@@ -125,7 +126,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Monitor your API endpoints in real-time",
+    "subtitle": "Track external API availability and latency in real time",
     "errors": {
       "loadData": "Failed to load data."
     },
@@ -143,9 +144,67 @@
       "downCount": "{count} down"
     }
   },
+  "specChanges": {
+    "title": "API Spec Changes",
+    "subtitle": "Compare OpenAPI snapshots to review API contract changes and breaking changes",
+    "runCheck": "Check spec",
+    "retry": "Retry",
+    "breaking": "Breaking",
+    "compatible": "Compatible",
+    "source": {
+      "title": "Spec Source",
+      "project": "Project",
+      "selectProject": "Select project",
+      "specSource": "OpenAPI Source",
+      "selectSource": "Select source",
+      "lastChecked": "Last checked"
+    },
+    "create": {
+      "title": "New OpenAPI Source",
+      "name": "Name",
+      "namePlaceholder": "Payments API",
+      "url": "OpenAPI JSON URL",
+      "submit": "Add source"
+    },
+    "diffs": {
+      "title": "Change History"
+    },
+    "detail": {
+      "title": "Change Detail",
+      "changeCount": "{count} change(s)"
+    },
+    "empty": {
+      "noProjects": "No projects found.",
+      "noSources": "No OpenAPI sources yet.",
+      "noDiffs": "No checks have been recorded yet.",
+      "selectDiff": "Select a change history item.",
+      "noChanges": "No breaking changes detected."
+    },
+    "rules": {
+      "PATH_REMOVED": "Path removed",
+      "METHOD_REMOVED": "Method removed",
+      "REQUIRED_PARAMETER_ADDED": "Required parameter added",
+      "REQUIRED_REQUEST_BODY_ADDED": "Required body added",
+      "REQUEST_BODY_REQUIRED_FIELD_ADDED": "Required body field added",
+      "RESPONSE_FIELD_REMOVED": "Response field removed",
+      "RESPONSE_FIELD_TYPE_CHANGED": "Response type changed"
+    },
+    "errors": {
+      "load": "Failed to load spec change data.",
+      "selectProject": "Please select a project.",
+      "selectSource": "Please select an OpenAPI source.",
+      "fillSource": "Please enter a name and URL.",
+      "create": "Failed to create OpenAPI source.",
+      "check": "Failed to check OpenAPI spec."
+    },
+    "toasts": {
+      "created": "OpenAPI source created.",
+      "checked": "OpenAPI spec check completed."
+    }
+  },
   "projects": {
     "title": "Projects",
-    "subtitle": "Manage your API monitoring projects",
+    "subtitle": "Manage external API dependencies and reliability checks by project",
     "newProject": "New Project",
     "retry": "Retry",
     "empty": "No projects yet. Create your first project.",
@@ -297,12 +356,12 @@
       "edit": "Edit Endpoint",
       "new": "New Endpoint"
     },
-    "subtitle": "Configure your API endpoint for monitoring",
+    "subtitle": "Configure the API endpoint and check conditions used for outage detection",
     "sections": {
       "basicInfo": "Basic Information",
       "headers": "Headers",
       "requestBody": "Request Body",
-      "monitoringSettings": "Monitoring Settings"
+      "monitoringSettings": "Check Settings"
     },
     "fields": {
       "url": "URL",

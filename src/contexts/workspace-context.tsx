@@ -32,7 +32,9 @@ interface WorkspaceContextType {
   /** 워크스페이스 목록 새로고침 */
   refreshWorkspaces: () => Promise<void>;
   /** 멤버 목록 새로고침 */
-  refreshMembers: () => Promise<void>;
+  refreshMembers: (workspaceId?: number) => Promise<void>;
+  /** 멤버 목록에 새 멤버 반영 */
+  addMember: (member: WorkspaceMember) => void;
   /** 워크스페이스 생성 */
   createWorkspace: (name: string) => Promise<WorkspaceResponse>;
 }
@@ -67,15 +69,25 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const refreshMembers = useCallback(async () => {
-    if (!currentWorkspace) return;
+  const refreshMembers = useCallback(async (workspaceId?: number) => {
+    const targetWorkspaceId = workspaceId ?? currentWorkspace?.id;
+    if (!targetWorkspaceId) return;
     try {
-      const data = await workspacesApi.getMembers(currentWorkspace.id);
+      const data = await workspacesApi.getMembers(targetWorkspaceId);
       setMembers(data);
     } catch {
       // ignore
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace?.id]);
+
+  const addMember = useCallback((member: WorkspaceMember) => {
+    setMembers((prev) => {
+      const exists = prev.some((item) => item.id === member.id);
+      return exists
+        ? prev.map((item) => (item.id === member.id ? member : item))
+        : [...prev, member];
+    });
+  }, []);
 
   const switchWorkspace = useCallback(
     (id: number) => {
@@ -162,6 +174,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         switchWorkspace,
         refreshWorkspaces,
         refreshMembers,
+        addMember,
         createWorkspace,
       }}
     >

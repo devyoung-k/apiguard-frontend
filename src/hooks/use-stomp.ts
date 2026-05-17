@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { Client, type IMessage } from '@stomp/stompjs';
 import { useAuth } from '@/contexts/auth-context';
 
@@ -31,6 +31,7 @@ export function useStomp(options: UseStompOptions = {}) {
   const { isAuthenticated } = useAuth();
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef<Map<string, { id: string; unsubscribe: () => void }>>(new Map());
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     if (!enabled || !isAuthenticated || typeof window === 'undefined') return;
@@ -51,15 +52,26 @@ export function useStomp(options: UseStompOptions = {}) {
     client.onStompError = (frame) => {
       console.error('STOMP error:', frame.headers.message);
     };
+    client.onConnect = () => {
+      setConnected(true);
+    };
+    client.onDisconnect = () => {
+      setConnected(false);
+    };
+    client.onWebSocketClose = () => {
+      setConnected(false);
+    };
 
     client.activate();
     clientRef.current = client;
+    const subscriptions = subscriptionsRef.current;
 
     return () => {
-      subscriptionsRef.current.forEach((sub) => sub.unsubscribe());
-      subscriptionsRef.current.clear();
+      subscriptions.forEach((sub) => sub.unsubscribe());
+      subscriptions.clear();
       client.deactivate();
       clientRef.current = null;
+      setConnected(false);
     };
   }, [enabled, isAuthenticated]);
 
@@ -108,5 +120,5 @@ export function useStomp(options: UseStompOptions = {}) {
     [],
   );
 
-  return { subscribe, connected: clientRef.current?.connected ?? false };
+  return { subscribe, connected };
 }

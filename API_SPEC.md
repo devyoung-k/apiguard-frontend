@@ -70,6 +70,9 @@
 - `HttpMethod`: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`
 - `CheckStatus`: `SUCCESS`, `FAILURE`, `TIMEOUT`, `ERROR`
 - `AlertType`: `EMAIL`, `SLACK`
+- `IncidentStatus`: `OPEN`, `RESOLVED`
+- `IncidentType`: `AVAILABILITY`, `PERFORMANCE`, `CONTRACT_CHANGE`
+- `BreakingChangeRule`: `PATH_REMOVED`, `METHOD_REMOVED`, `REQUIRED_PARAMETER_ADDED`, `REQUIRED_REQUEST_BODY_ADDED`, `REQUEST_BODY_REQUIRED_FIELD_ADDED`, `RESPONSE_FIELD_REMOVED`, `RESPONSE_FIELD_TYPE_CHANGED`
 - `PlanType`: `FREE`, `PRO`
 - `PaymentStatus`: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`
 
@@ -257,6 +260,8 @@ Response item shape
 }
 ```
 
+For `CONTRACT_CHANGE` incidents, `endpointId` and `endpointUrl` are `null` because the event belongs to the OpenAPI spec source and project.
+
 ### `GET /workspaces`
 
 - Auth: Required
@@ -333,7 +338,7 @@ Request
 ```json
 {
   "name": "API 서버",
-  "description": "운영 API 모니터링"
+  "description": "외부 API Reliability 체크"
 }
 ```
 
@@ -343,7 +348,7 @@ Response item shape
 {
   "id": 1,
   "name": "API 서버",
-  "description": "운영 API 모니터링",
+  "description": "외부 API Reliability 체크",
   "createdAt": "2026-03-09T12:20:00"
 }
 ```
@@ -806,3 +811,88 @@ Request
 
 - Auth: Required
 - Permission: `ADMIN`
+
+## 16. Incidents
+
+### `GET /projects/{projectId}/incidents`
+
+- Auth: Required
+- Query: `status=OPEN|RESOLVED` optional
+
+### `GET /endpoints/{endpointId}/incidents`
+
+- Auth: Required
+
+Response item shape
+
+```json
+{
+  "id": 1,
+  "endpointId": 1,
+  "projectId": 1,
+  "endpointUrl": "https://api.example.com/health",
+  "type": "AVAILABILITY",
+  "status": "OPEN",
+  "severity": "CRITICAL",
+  "title": "Endpoint availability incident",
+  "description": "최근 3회 연속 상태 체크가 실패했습니다.",
+  "detectedCount": 3,
+  "startedAt": "2026-05-13T10:00:00",
+  "lastDetectedAt": "2026-05-13T10:02:00",
+  "resolvedAt": null
+}
+```
+
+## 17. OpenAPI Spec Changes
+
+### `POST /projects/{projectId}/spec-sources`
+
+- Auth: Required
+
+```json
+{
+  "name": "Payments API",
+  "specUrl": "https://api.example.com/openapi.json"
+}
+```
+
+### `GET /projects/{projectId}/spec-sources`
+
+- Auth: Required
+
+### `POST /spec-sources/{sourceId}/check`
+
+- Auth: Required
+- Stores a snapshot and compares it with the previous snapshot.
+- Creates or updates an open `CONTRACT_CHANGE` incident when breaking changes are detected.
+
+### `GET /spec-sources/{sourceId}/diffs`
+
+- Auth: Required
+
+### `GET /spec-diffs/{diffId}`
+
+- Auth: Required
+
+Response shape
+
+```json
+{
+  "id": 1,
+  "specSourceId": 1,
+  "baseSnapshotId": 1,
+  "headSnapshotId": 2,
+  "breaking": true,
+  "breakingChangeCount": 1,
+  "summary": "Detected 1 breaking change(s).",
+  "checkedAt": "2026-05-13T10:00:00",
+  "changes": [
+    {
+      "id": 1,
+      "rule": "METHOD_REMOVED",
+      "location": "/users DELETE",
+      "description": "기존 method가 삭제되었습니다."
+    }
+  ]
+}
+```
