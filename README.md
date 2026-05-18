@@ -1,11 +1,32 @@
 # APIGuard
 
-APIGuard는 외부 API 의존성이 있는 서비스 팀을 위한 **API Reliability & Change Detection SaaS**입니다.
+APIGuard는 외부 API 의존성이 있는 서비스 팀을 위한 **API Reliability & Contract Change Detection SaaS**입니다.
 
 프론트엔드는 Endpoint 상태, 응답 시간, Incident, 알림 정책, OpenAPI breaking change 이력을 확인하는 운영 콘솔입니다.  
 워크스페이스 기반 멀티테넌시와 RBAC, 플랜 사용량 화면까지 포함해 실제 SaaS 관리 경험에 맞춰 설계했습니다.
 
 > **Backend repo**: [apiguard-backend](../apiguard-backend)
+
+---
+
+## Problem
+
+서비스는 점점 더 많은 외부 API에 의존합니다. 하지만 외부 API 장애, 응답 지연, 계약 변경은 내부 배포 없이도 서비스 장애로 이어질 수 있습니다.
+
+APIGuard는 이러한 문제를 해결하기 위해 API 상태를 주기적으로 검사하고, 장애 이력과 OpenAPI 계약 변경 이력을 함께 관리하는 개발팀용 API Reliability SaaS입니다.
+
+## Key Scenarios
+
+1. 외부 API Endpoint 등록
+2. 주기적 상태 체크와 응답 시간 기록
+3. 연속 실패 발생 시 Incident 생성
+4. Redis cooldown 기반 중복 알림 방지
+5. OpenAPI snapshot 비교
+6. Breaking Change 감지와 계약 변경 이력 확인
+
+## Positioning
+
+APIGuard는 보안 스캐너나 단순 상태 체크 앱이 아닙니다. 외부 API 의존성이 있는 개발팀이 장애, 응답 지연, 계약 변경을 한 화면에서 추적하도록 만든 **Reliability & Contract Change Detection 도구**입니다.
 
 ---
 

@@ -3,7 +3,7 @@
     "name": "APIGuard"
   },
   "sidebar": {
-    "brandTagline": "API Reliability",
+    "brandTagline": "Reliability & Contracts",
     "menu": {
       "dashboard": "대시보드",
       "projects": "프로젝트",
@@ -48,7 +48,7 @@
     },
     "register": {
       "title": "계정 만들기",
-      "description": "API Reliability 워크스페이스를 시작하세요",
+      "description": "장애·계약 변경 감지 워크스페이스를 시작하세요",
       "nickname": "닉네임",
       "nicknamePlaceholder": "홍길동",
       "email": "이메일",
@@ -126,7 +126,7 @@
   },
   "dashboard": {
     "title": "대시보드",
-    "subtitle": "외부 API 상태와 응답 지연을 실시간으로 추적하세요",
+    "subtitle": "외부 API 장애, 응답 지연, 계약 변경 신호를 추적하세요",
     "errors": {
       "loadData": "데이터를 불러오지 못했습니다."
     },
@@ -145,7 +145,7 @@
     }
   },
   "specChanges": {
-    "title": "API Spec Changes",
+    "title": "API Contract Changes",
     "subtitle": "OpenAPI 스냅샷을 비교해 API 계약 변경과 breaking change를 확인하세요",
     "runCheck": "스펙 검사",
     "retry": "다시 시도",
@@ -204,7 +204,7 @@
   },
   "projects": {
     "title": "프로젝트",
-    "subtitle": "외부 API 의존성과 Reliability 체크를 프로젝트 단위로 관리하세요",
+    "subtitle": "외부 API 의존성, 장애 감지, 계약 변경 추적을 프로젝트 단위로 관리하세요",
     "newProject": "새 프로젝트",
     "retry": "다시 시도",
     "empty": "아직 프로젝트가 없습니다. 첫 프로젝트를 만들어보세요.",
@@ -241,7 +241,7 @@
   },
   "alerts": {
     "title": "알림 설정",
-    "subtitle": "엔드포인트 알림 설정을 관리하세요",
+    "subtitle": "연속 실패 기반 알림과 중복 알림 제어를 관리하세요",
     "newAlert": "새 알림",
     "cancel": "취소",
     "retry": "다시 시도",
@@ -276,7 +276,7 @@
       "typeEmail": "이메일",
       "typeSlack": "슬랙",
       "failureThreshold": "실패 임계치",
-      "failureHelp": "연속 N회 실패 시 알림",
+      "failureHelp": "연속 N회 실패 시 알림을 보내고 cooldown 동안 중복 발송을 억제합니다.",
       "target": "대상 (이메일 또는 슬랙 웹훅 URL)",
       "targetPlaceholder": "admin@example.com 또는 https://hooks.slack.com/services/...",
       "create": "알림 생성"
@@ -361,7 +361,7 @@
       "basicInfo": "기본 정보",
       "headers": "헤더",
       "requestBody": "요청 본문",
-      "monitoringSettings": "점검 설정"
+      "monitoringSettings": "Reliability 점검 설정"
     },
     "fields": {
       "url": "URL",
@@ -635,10 +635,10 @@
     "fiveEndpoints": "프로젝트당 5개 엔드포인트",
     "fiveMinInterval": "5분 체크 주기",
     "emailAlerts": "이메일 알림",
-    "twentyFourHourHistory": "24시간 기록",
+    "sevenDayHistory": "7일 기록",
     "fiftyProjects": "최대 50개 프로젝트",
-    "hundredEndpoints": "프로젝트당 100개 엔드포인트",
-    "thirtySecondInterval": "30초 체크 주기",
+    "fiftyEndpoints": "프로젝트당 50개 엔드포인트",
+    "oneMinuteInterval": "1분 체크 주기",
     "emailSlackAlerts": "이메일 + 슬랙 알림",
     "ninetyDayHistory": "90일 기록",
     "prioritySupport": "우선 지원",
@@ -660,13 +660,13 @@
   },
   "statusPage": {
     "title": "상태 페이지",
-    "subtitle": "서비스 상태를 공개 페이지로 공유하세요",
+    "subtitle": "외부 API 상태를 공개 페이지로 공유하세요",
     "create": {
       "title": "상태 페이지 만들기",
       "titleLabel": "페이지 제목",
       "titlePlaceholder": "우리 API 상태",
       "descriptionLabel": "설명",
-      "descriptionPlaceholder": "서비스 실시간 상태 현황",
+      "descriptionPlaceholder": "외부 API 상태와 장애 이력",
       "slugLabel": "URL 슬러그",
       "slugPlaceholder": "my-api-status",
       "slugHelp": "페이지 주소: /status/{slug}",

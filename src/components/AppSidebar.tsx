@@ -14,6 +14,7 @@ import {
   Plus,
   Globe,
   GitCompareArrows,
+  Activity,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
@@ -140,7 +141,7 @@ export function AppSidebar({ onMobileClose }: AppSidebarProps) {
       <div className="border-b border-gray-200 p-6 dark:border-gray-800">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-lg">🛡️</span>
+            <Activity className="h-5 w-5 text-white" />
           </div>
           <h1 className="text-xl text-gray-900 dark:text-white">APIGuard</h1>
         </div>

@@ -12,7 +12,7 @@ import {
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Shield, Loader2 } from 'lucide-react';
+import { Activity, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
@@ -80,7 +80,7 @@ export function LoginPage() {
               transition={{ delay: 0.2, duration: 0.4 }}
               className="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20"
             >
-              <Shield className="h-8 w-8 text-white" />
+              <Activity className="h-8 w-8 text-white" />
             </motion.div>
             <CardTitle
               className={`text-2xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
