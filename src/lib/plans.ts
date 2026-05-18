@@ -16,7 +16,7 @@ export const FREE_PLAN: PlanInfo = {
     'features.fiveEndpoints',
     'features.fiveMinInterval',
     'features.emailAlerts',
-    'features.twentyFourHourHistory',
+    'features.sevenDayHistory',
   ],
 };
 
@@ -26,13 +26,13 @@ export const PRO_PLAN: PlanInfo = {
   price: 19900, // KRW 19,900
   limits: {
     maxProjects: 50,
-    maxEndpointsPerProject: 100,
-    minCheckInterval: 30, // 30초
+    maxEndpointsPerProject: 50,
+    minCheckInterval: 60, // 1분
   },
   features: [
     'features.fiftyProjects',
-    'features.hundredEndpoints',
-    'features.thirtySecondInterval',
+    'features.fiftyEndpoints',
+    'features.oneMinuteInterval',
     'features.emailSlackAlerts',
     'features.ninetyDayHistory',
     'features.prioritySupport',

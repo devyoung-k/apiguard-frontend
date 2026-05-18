@@ -2,6 +2,9 @@
 
 ## 1. Overview
 
+APIGuard는 외부 API 의존성이 있는 개발팀을 위한 **API Reliability & Contract Change Detection SaaS**입니다.
+이 API는 외부 API 장애/응답 지연 감지, 연속 실패 기반 Incident 관리, Redis cooldown 기반 알림 제어, OpenAPI snapshot 비교를 통한 breaking change 감지를 지원합니다.
+
 - Base URL: `http://localhost:8080`
 - Response envelope: 모든 API는 `ApiResponse<T>` 형태로 응답
 - Auth: JWT Bearer
@@ -259,8 +262,6 @@ Response item shape
   "createdAt": "2026-03-09T12:00:00"
 }
 ```
-
-For `CONTRACT_CHANGE` incidents, `endpointId` and `endpointUrl` are `null` because the event belongs to the OpenAPI spec source and project.
 
 ### `GET /workspaces`
 
@@ -842,6 +843,8 @@ Response item shape
   "resolvedAt": null
 }
 ```
+
+For `CONTRACT_CHANGE` incidents, `endpointId` and `endpointUrl` are `null` because the event belongs to the OpenAPI spec source and project, not to a single endpoint.
 
 ## 17. OpenAPI Spec Changes
 

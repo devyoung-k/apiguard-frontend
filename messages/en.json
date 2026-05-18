@@ -3,7 +3,7 @@
     "name": "APIGuard"
   },
   "sidebar": {
-    "brandTagline": "API Reliability",
+    "brandTagline": "Reliability & Contracts",
     "menu": {
       "dashboard": "Dashboard",
       "projects": "Projects",
@@ -48,7 +48,7 @@
     },
     "register": {
       "title": "Create your account",
-      "description": "Start an API Reliability workspace in minutes",
+      "description": "Start an outage and contract change detection workspace",
       "nickname": "Nickname",
       "nicknamePlaceholder": "John Doe",
       "email": "Email",
@@ -126,7 +126,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Track external API availability and latency in real time",
+    "subtitle": "Track external API outages, latency, and contract change signals",
     "errors": {
       "loadData": "Failed to load data."
     },
@@ -145,7 +145,7 @@
     }
   },
   "specChanges": {
-    "title": "API Spec Changes",
+    "title": "API Contract Changes",
     "subtitle": "Compare OpenAPI snapshots to review API contract changes and breaking changes",
     "runCheck": "Check spec",
     "retry": "Retry",
@@ -204,7 +204,7 @@
   },
   "projects": {
     "title": "Projects",
-    "subtitle": "Manage external API dependencies and reliability checks by project",
+    "subtitle": "Manage external API dependencies, outage detection, and contract change tracking by project",
     "newProject": "New Project",
     "retry": "Retry",
     "empty": "No projects yet. Create your first project.",
@@ -241,7 +241,7 @@
   },
   "alerts": {
     "title": "Alert Configuration",
-    "subtitle": "Manage notification settings for your endpoints",
+    "subtitle": "Manage consecutive-failure alerts and duplicate notification control",
     "newAlert": "New Alert",
     "cancel": "Cancel",
     "retry": "Retry",
@@ -276,7 +276,7 @@
       "typeEmail": "Email",
       "typeSlack": "Slack",
       "failureThreshold": "Failure Threshold",
-      "failureHelp": "Alert after N consecutive failures",
+      "failureHelp": "Alert after N consecutive failures and suppress duplicates during cooldown.",
       "target": "Target (Email or Slack Webhook URL)",
       "targetPlaceholder": "admin@example.com or https://hooks.slack.com/services/...",
       "create": "Create Alert"
@@ -361,7 +361,7 @@
       "basicInfo": "Basic Information",
       "headers": "Headers",
       "requestBody": "Request Body",
-      "monitoringSettings": "Check Settings"
+      "monitoringSettings": "Reliability Check Settings"
     },
     "fields": {
       "url": "URL",
@@ -635,10 +635,10 @@
     "fiveEndpoints": "5 endpoints per project",
     "fiveMinInterval": "5-minute check interval",
     "emailAlerts": "Email alerts",
-    "twentyFourHourHistory": "24-hour history",
+    "sevenDayHistory": "7-day history",
     "fiftyProjects": "Up to 50 projects",
-    "hundredEndpoints": "100 endpoints per project",
-    "thirtySecondInterval": "30-second check interval",
+    "fiftyEndpoints": "50 endpoints per project",
+    "oneMinuteInterval": "1-minute check interval",
     "emailSlackAlerts": "Email + Slack alerts",
     "ninetyDayHistory": "90-day history",
     "prioritySupport": "Priority support",
@@ -660,13 +660,13 @@
   },
   "statusPage": {
     "title": "Status Page",
-    "subtitle": "Share a public page showing your service status",
+    "subtitle": "Share a public page showing external API status",
     "create": {
       "title": "Create Status Page",
       "titleLabel": "Page Title",
       "titlePlaceholder": "My API Status",
       "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Real-time status of our services",
+      "descriptionPlaceholder": "External API status and incident history",
       "slugLabel": "URL Slug",
       "slugPlaceholder": "my-api-status",
       "slugHelp": "Your page will be available at: /status/{slug}",

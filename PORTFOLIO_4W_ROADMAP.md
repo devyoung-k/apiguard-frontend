@@ -1,12 +1,14 @@
 # APIGuard Portfolio 4-Week Roadmap
 
 ## Goal
-현재 프로젝트를 단순 CRUD 대시보드에서, 실무형 SaaS 포트폴리오 수준으로 끌어올린다.
+현재 프로젝트를 단순 CRUD/상태 체크 대시보드가 아니라, 외부 API 장애와 계약 변경을 감지하는 실무형 SaaS 포트폴리오로 끌어올린다.
 
 핵심 강화 축:
 - 멀티테넌시/권한
 - 결제/플랜
-- 비동기 모니터링 로직
+- Reliability 체크와 Incident lifecycle
+- OpenAPI Contract Change Detection
+- Redis cooldown 기반 알림 피로도 제어
 - 테스트/운영 신뢰성
 
 ---
@@ -35,17 +37,17 @@
 ## Week 2: Billing + Subscription Plans
 
 ### Scope
-- Stripe 구독 연동
+- Toss Payments 결제 연동
 - 플랜 모델 추가 (예: Free/Pro)
 - 플랜 제한 로직
   - 프로젝트 수 제한
   - 엔드포인트 수 제한
   - 체크 주기 제한
 - 결제 상태 화면 및 업그레이드 UX
-- Stripe Webhook 처리
-  - `checkout.session.completed`
-  - `invoice.paid`
-  - `customer.subscription.updated`
+- 결제 성공/실패 콜백 처리
+  - 결제 준비 주문 생성
+  - 결제 승인 검증
+  - 구독 상태 반영
 
 ### Deliverables
 - 결제 연동 및 구독 상태 동기화
@@ -59,26 +61,33 @@
 
 ---
 
-## Week 3: Monitoring Core Complexity
+## Week 3: Reliability & Contract Change Detection Core
 
 ### Scope
-- Health Check 비동기 작업 큐 도입
+- Health Check 병렬 실행 안정화
 - 재시도/백오프 정책 구현
 - Timeout/실패 처리 고도화
+- Incident open/resolved lifecycle 검증
 - 알림 규칙 엔진 개선
   - 연속 실패 N회
   - 쿨다운(cooldown)
   - 중복 알림 억제
+- OpenAPI breaking change rule 보강
+  - path/method 삭제
+  - required parameter/body 추가
+  - response field 삭제/type 변경
 - 감사 로그(audit log) 기록
 
 ### Deliverables
 - 백그라운드 체크 실행 안정화
 - 노이즈 줄인 알림 정책
+- 계약 변경 감지 이력과 Incident 연결
 - 주요 액션 감사 로그
 
 ### Done Criteria
 - 장애 상황에서 알림 과다 발송 방지
 - 동일 장애에 대해 중복 알림 억제 확인
+- API가 살아 있어도 breaking change가 있으면 별도 이력으로 확인 가능
 - 관리자 액션 로그 추적 가능
 
 ---
@@ -92,6 +101,7 @@
   - 권한 시나리오
   - 결제 플로우
   - 엔드포인트 CRUD
+  - OpenAPI breaking change 감지 플로우
 - 통합 테스트
   - RBAC 가드
   - 플랜 제한
@@ -134,6 +144,26 @@
 1. Week 1 (RBAC)  
 2. Week 2 (Billing/Plans)  
 3. Week 4 (Tests/CI)  
-4. Week 3 (Advanced monitoring)
+4. Week 3 (Reliability/Contract core)
 
 > 이유: 채용 임팩트 기준으로 권한/결제/검증 자동화가 가장 빠르게 신뢰도를 올린다.
+
+---
+
+## Progress Log
+
+### 2026-05-18
+
+- 제품 메시지를 `API Reliability & Contract Change Detection SaaS`로 통일했습니다.
+- README에 Problem, Key Scenarios, Positioning 섹션을 추가해 외부 API 장애·응답 지연·계약 변경 감지 SaaS임을 먼저 설명하도록 바꿨습니다.
+- 화면 문구를 보강했습니다.
+  - Sidebar tagline: `Reliability & Contracts`
+  - Dashboard: 외부 API 장애, 응답 지연, 계약 변경 신호 추적
+  - Spec Changes: `API Contract Changes`
+  - Alerts: 연속 실패 기반 알림과 cooldown 중복 알림 제어
+- 로그인/회원가입/사이드바의 방패 아이콘을 `Activity` 아이콘으로 교체해 보안 제품처럼 보이는 인상을 줄였습니다.
+- 프론트 플랜 표시를 백엔드 정책과 맞췄습니다.
+  - Free: 7-day history
+  - Pro: 50 endpoints per project, 1-minute check interval
+- API Spec에서 제품 목적을 추가하고 `CONTRACT_CHANGE` incident 설명 위치를 Incidents 섹션으로 옮겼습니다.
+- 검증: `pnpm lint`, `pnpm exec tsc --noEmit`, `pnpm build` 통과.
