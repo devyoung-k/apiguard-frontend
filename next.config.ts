@@ -43,6 +43,10 @@ const nextConfig: NextConfig = {
         destination: `${backendOrigin}/api/workspaces/:workspaceId/subscription`,
       },
       {
+        source: '/api/workspaces/:workspaceId/subscription/cancel',
+        destination: `${backendOrigin}/api/workspaces/:workspaceId/subscription/cancel`,
+      },
+      {
         source: '/api/workspaces/:workspaceId/payment/:path*',
         destination: `${backendOrigin}/api/workspaces/:workspaceId/payment/:path*`,
       },

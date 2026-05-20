@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useTranslations } from "next-intl";
+import { usePlan } from "@/contexts/plan-context";
 
 interface EndpointFormPageProps {
   isEdit?: boolean;
@@ -27,12 +28,14 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
   const params = useParams();
   const isDarkMode = useDarkMode();
   const t = useTranslations("endpointForm");
+  const { limits } = usePlan();
+  const defaultCheckInterval = String(limits.minCheckInterval);
 
   // Form state
   const [url, setUrl] = useState("");
   const [httpMethod, setHttpMethod] = useState<HttpMethod>("GET");
   const [expectedStatusCode, setExpectedStatusCode] = useState("200");
-  const [checkInterval, setCheckInterval] = useState("60");
+  const [checkInterval, setCheckInterval] = useState(defaultCheckInterval);
   const [headers, setHeaders] = useState([{ key: '', value: '' }]);
   const [body, setBody] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +73,12 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
   useEffect(() => {
     loadEndpoint();
   }, [loadEndpoint]);
+
+  useEffect(() => {
+    if (!isEdit) {
+      setCheckInterval(defaultCheckInterval);
+    }
+  }, [defaultCheckInterval, isEdit]);
 
   const addHeader = () => {
     setHeaders([...headers, { key: '', value: '' }]);
@@ -293,7 +302,8 @@ export function EndpointFormPage({ isEdit = false }: EndpointFormPageProps) {
               <Input
                 id="interval"
                 type="number"
-                placeholder={t('placeholders.checkInterval')}
+                min={limits.minCheckInterval}
+                placeholder={defaultCheckInterval}
                 value={checkInterval}
                 onChange={(e) => setCheckInterval(e.target.value)}
                 className={inputStyles}

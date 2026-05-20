@@ -152,6 +152,21 @@
 
 ## Progress Log
 
+### 2026-05-20
+
+- 기능 보강을 진행했습니다.
+  - 워크스페이스 초대 시 `MEMBER`, `VIEWER`, 조건부 `ADMIN` 역할 선택 지원
+  - 알림 채널에 `WEBHOOK` 추가, 테스트 발송과 발송 성공/실패 이력 화면 추가
+  - OpenAPI 스펙 소스 수정, 삭제, 활성화 토글 지원
+  - Status Page에 공개 엔드포인트 선택 기능 추가
+  - Billing 화면에서 PRO 구독 해지 지원
+- API 문서를 최신화했습니다.
+  - 알림 발송 이력, 스펙 소스 관리, Status Page 엔드포인트 선택, 구독 해지, 초대 역할 계약 반영
+- 검증: 백엔드 `./gradlew test`, `./gradlew bootJar`, 프론트 `pnpm lint`, `pnpm exec tsc --noEmit`, `pnpm build`, `pnpm exec playwright test` 통과.
+- 프론트 운영 환경을 Node 24 + pnpm 11.1.3으로 맞추고, Next.js 16 production build는 Node 24에서 안정적인 Webpack 모드로 고정했습니다.
+- Pretendard variable font를 로컬 self-host로 적용해 빌드와 런타임이 외부 폰트 네트워크에 의존하지 않도록 정리했습니다.
+- Oracle 서버에 프론트 standalone Docker 배포를 추가하고, Caddy에서 기존 API 도메인을 프론트/백엔드 경로별로 라우팅하도록 구성했습니다.
+
 ### 2026-05-18
 
 - 제품 메시지를 `API Reliability & Contract Change Detection SaaS`로 통일했습니다.

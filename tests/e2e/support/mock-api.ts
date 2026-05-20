@@ -59,7 +59,9 @@ interface MockEndpoint {
 interface MockSubscription {
   planType: 'FREE' | 'PRO';
   active: boolean;
+  cancelAtPeriodEnd: boolean;
   expiredAt: string | null;
+  maxProjects: number;
   maxEndpointsPerProject: number;
   minCheckIntervalSeconds: number;
   maxAlertChannels: number;
@@ -79,11 +81,50 @@ interface MockAdminUser {
 interface MockAlert {
   id: number;
   endpointId: number;
-  alertType: 'EMAIL' | 'SLACK';
+  alertType: 'EMAIL' | 'SLACK' | 'WEBHOOK';
   target: string;
   threshold: number;
   isActive: boolean;
   createdAt: string;
+}
+
+interface MockAlertDelivery {
+  id: number;
+  alertId: number;
+  endpointId: number;
+  alertType: MockAlert['alertType'];
+  target: string;
+  status: 'SUCCESS' | 'FAILED';
+  testDelivery: boolean;
+  errorMessage: string | null;
+  triggeredAt: string;
+}
+
+interface MockIncident {
+  id: number;
+  endpointId: number | null;
+  projectId: number;
+  endpointUrl: string | null;
+  type: 'AVAILABILITY' | 'PERFORMANCE' | 'CONTRACT_CHANGE';
+  status: 'OPEN' | 'RESOLVED';
+  severity: 'WARNING' | 'CRITICAL';
+  title: string;
+  description: string | null;
+  detectedCount: number;
+  startedAt: string;
+  lastDetectedAt: string;
+  resolvedAt: string | null;
+}
+
+interface MockStatusPage {
+  id: number;
+  slug: string;
+  title: string;
+  description: string | null;
+  isPublic: boolean;
+  createdAt: string;
+  allEndpoints: boolean;
+  endpointIds: number[];
 }
 
 interface MockHealthCheck {
@@ -102,6 +143,10 @@ interface MockApiOptions {
   projects?: MockProject[];
   endpointsByProjectId?: Record<number, MockEndpoint[]>;
   alertsByEndpointId?: Record<number, MockAlert[]>;
+  alertDeliveriesByAlertId?: Record<number, MockAlertDelivery[]>;
+  incidentsByProjectId?: Record<number, MockIncident[]>;
+  incidentsByEndpointId?: Record<number, MockIncident[]>;
+  statusPage?: MockStatusPage | null;
 }
 
 interface MockState {
@@ -113,6 +158,10 @@ interface MockState {
   endpointsByProjectId: Record<number, MockEndpoint[]>;
   projectStatsById: Record<number, MockProjectStats>;
   alertsByEndpointId: Record<number, MockAlert[]>;
+  alertDeliveriesByAlertId: Record<number, MockAlertDelivery[]>;
+  incidentsByProjectId: Record<number, MockIncident[]>;
+  incidentsByEndpointId: Record<number, MockIncident[]>;
+  statusPage: MockStatusPage | null;
   checksByEndpointId: Record<number, MockHealthCheck[]>;
   adminUsers: MockAdminUser[];
 }
@@ -181,17 +230,23 @@ function createState(options: MockApiOptions = {}): MockState {
     members,
     subscription: {
       planType: 'FREE',
-      active: false,
+      active: true,
+      cancelAtPeriodEnd: false,
       expiredAt: null,
+      maxProjects: 3,
       maxEndpointsPerProject: 5,
       minCheckIntervalSeconds: 300,
-      maxAlertChannels: 2,
-      maxMembers: 3,
-      dataRetentionDays: 1,
+      maxAlertChannels: 1,
+      maxMembers: 1,
+      dataRetentionDays: 7,
     },
     projects,
     endpointsByProjectId: { ...(options.endpointsByProjectId ?? {}) },
     alertsByEndpointId: { ...(options.alertsByEndpointId ?? {}) },
+    alertDeliveriesByAlertId: { ...(options.alertDeliveriesByAlertId ?? {}) },
+    incidentsByProjectId: { ...(options.incidentsByProjectId ?? {}) },
+    incidentsByEndpointId: { ...(options.incidentsByEndpointId ?? {}) },
+    statusPage: options.statusPage ?? null,
     checksByEndpointId: {},
     projectStatsById: Object.fromEntries(
       projects.map((project) => [
@@ -232,6 +287,8 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
   let nextEndpointId = 1000;
   let nextAlertId = 2000;
   let nextCheckId = 3000;
+  let nextAlertDeliveryId = 4000;
+  let nextStatusPageId = 5000;
   let nextMemberId =
     Math.max(10, ...state.members.map((m) => m.id)) + 1;
 
@@ -298,6 +355,105 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
       return json(route, { success: true, data: state.subscription });
     }
 
+    const cancelSubscriptionMatch = pathname.match(
+      /^\/api\/workspaces\/(\d+)\/subscription\/cancel$/,
+    );
+    if (cancelSubscriptionMatch && method === 'POST') {
+      state.subscription = {
+        ...state.subscription,
+        cancelAtPeriodEnd: true,
+      };
+      return json(route, { success: true, data: state.subscription });
+    }
+
+    const statusPageMatch = pathname.match(/^\/api\/workspaces\/(\d+)\/status-page$/);
+    if (statusPageMatch && method === 'GET') {
+      if (!state.statusPage) {
+        return json(route, { success: false, message: 'Status page not found.' }, 404);
+      }
+      return json(route, { success: true, data: state.statusPage });
+    }
+
+    if (statusPageMatch && method === 'POST') {
+      const body = (request.postDataJSON() ?? {}) as {
+        title?: string;
+        description?: string;
+        slug?: string;
+        allEndpoints?: boolean;
+        endpointIds?: number[];
+      };
+      const allEndpoints = body.allEndpoints ?? true;
+      state.statusPage = {
+        id: nextStatusPageId++,
+        slug: body.slug ?? 'status',
+        title: body.title ?? 'Status',
+        description: body.description ?? null,
+        isPublic: true,
+        createdAt: NOW,
+        allEndpoints,
+        endpointIds: allEndpoints ? [] : body.endpointIds ?? [],
+      };
+      return json(route, { success: true, data: state.statusPage }, 201);
+    }
+
+    if (statusPageMatch && method === 'PUT') {
+      if (!state.statusPage) {
+        return json(route, { success: false, message: 'Status page not found.' }, 404);
+      }
+      const body = (request.postDataJSON() ?? {}) as {
+        title?: string;
+        description?: string;
+        isPublic?: boolean;
+        allEndpoints?: boolean;
+        endpointIds?: number[];
+      };
+      if (body.title !== undefined) state.statusPage.title = body.title;
+      if (body.description !== undefined) state.statusPage.description = body.description;
+      if (body.isPublic !== undefined) state.statusPage.isPublic = body.isPublic;
+      if (body.allEndpoints !== undefined || body.endpointIds !== undefined) {
+        const allEndpoints = body.allEndpoints ?? false;
+        state.statusPage.allEndpoints = allEndpoints;
+        state.statusPage.endpointIds = allEndpoints ? [] : body.endpointIds ?? [];
+      }
+      return json(route, { success: true, data: state.statusPage });
+    }
+
+    if (statusPageMatch && method === 'DELETE') {
+      state.statusPage = null;
+      return json(route, { success: true });
+    }
+
+    const publicStatusPageMatch = pathname.match(/^\/api\/status\/([^/]+)$/);
+    if (publicStatusPageMatch && method === 'GET') {
+      const slug = publicStatusPageMatch[1];
+      if (!state.statusPage || state.statusPage.slug !== slug || !state.statusPage.isPublic) {
+        return json(route, { success: false, message: 'Status page not found.' }, 404);
+      }
+
+      const publicEndpoints = Object.values(state.endpointsByProjectId)
+        .flat()
+        .filter((endpoint) => endpoint.isActive)
+        .filter((endpoint) =>
+          state.statusPage?.allEndpoints || state.statusPage?.endpointIds.includes(endpoint.id),
+        );
+      return json(route, {
+        success: true,
+        data: {
+          title: state.statusPage.title,
+          description: state.statusPage.description,
+          overallStatus: publicEndpoints.length > 0 ? 'OPERATIONAL' : 'NO_DATA',
+          endpoints: publicEndpoints.map((endpoint) => ({
+            url: endpoint.url,
+            httpMethod: endpoint.httpMethod,
+            status: 'UNKNOWN',
+            uptimePercent: 100,
+            avgResponseTimeMs: 0,
+            lastCheckedAt: endpoint.lastCheckedAt,
+          })),
+        },
+      });
+    }
+
     const projectsMatch = pathname.match(/^\/api\/workspaces\/(\d+)\/projects$/);
     if (projectsMatch && method === 'GET') {
       return json(route, { success: true, data: state.projects });
@@ -340,6 +496,38 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
       return json(route, { success: true, data: project });
     }
 
+    if (projectDetailMatch && method === 'PATCH') {
+      const projectId = Number(projectDetailMatch[1]);
+      const project = state.projects.find((item) => item.id === projectId);
+      if (!project) {
+        return json(route, { success: false, message: 'Project not found.' }, 404);
+      }
+
+      const body = (request.postDataJSON() ?? {}) as {
+        name?: string;
+        description?: string;
+      };
+      if (body.name !== undefined) {
+        project.name = body.name;
+      }
+      if (body.description !== undefined) {
+        project.description = body.description;
+      }
+      return json(route, { success: true, data: project });
+    }
+
+    if (projectDetailMatch && method === 'DELETE') {
+      const projectId = Number(projectDetailMatch[1]);
+      const index = state.projects.findIndex((item) => item.id === projectId);
+      if (index === -1) {
+        return json(route, { success: false, message: 'Project not found.' }, 404);
+      }
+      state.projects.splice(index, 1);
+      delete state.endpointsByProjectId[projectId];
+      delete state.projectStatsById[projectId];
+      return json(route, { success: true });
+    }
+
     const projectStatsMatch = pathname.match(/^\/api\/projects\/(\d+)\/stats$/);
     if (projectStatsMatch && method === 'GET') {
       const projectId = Number(projectStatsMatch[1]);
@@ -351,6 +539,15 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
       };
 
       return json(route, { success: true, data: stats });
+    }
+
+    const projectIncidentsMatch = pathname.match(/^\/api\/projects\/(\d+)\/incidents$/);
+    if (projectIncidentsMatch && method === 'GET') {
+      const projectId = Number(projectIncidentsMatch[1]);
+      return json(route, {
+        success: true,
+        data: state.incidentsByProjectId[projectId] ?? [],
+      });
     }
 
     const projectEndpointsMatch = pathname.match(
@@ -393,6 +590,7 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
       state.endpointsByProjectId[projectId].push(created);
       state.alertsByEndpointId[created.id] = [];
       state.checksByEndpointId[created.id] = [];
+      state.incidentsByEndpointId[created.id] = [];
       nextEndpointId += 1;
       return json(route, { success: true, data: created });
     }
@@ -408,6 +606,65 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
         return json(route, { success: false, message: 'Endpoint not found.' }, 404);
       }
       return json(route, { success: true, data: endpoint });
+    }
+
+    if (endpointDetailMatch && method === 'PUT') {
+      const endpointId = Number(endpointDetailMatch[1]);
+      const endpoint = Object.values(state.endpointsByProjectId)
+        .flat()
+        .find((e) => e.id === endpointId);
+      if (!endpoint) {
+        return json(route, { success: false, message: 'Endpoint not found.' }, 404);
+      }
+
+      const body = (request.postDataJSON() ?? {}) as Partial<MockEndpoint>;
+      Object.assign(endpoint, {
+        url: body.url ?? endpoint.url,
+        httpMethod: body.httpMethod ?? endpoint.httpMethod,
+        headers: body.headers ?? null,
+        body: body.body ?? null,
+        expectedStatusCode: body.expectedStatusCode ?? endpoint.expectedStatusCode,
+        checkInterval: body.checkInterval ?? endpoint.checkInterval,
+      });
+      return json(route, { success: true, data: endpoint });
+    }
+
+    if (endpointDetailMatch && method === 'DELETE') {
+      const endpointId = Number(endpointDetailMatch[1]);
+      for (const [projectId, endpoints] of Object.entries(state.endpointsByProjectId)) {
+        const index = endpoints.findIndex((e) => e.id === endpointId);
+        if (index !== -1) {
+          endpoints.splice(index, 1);
+          state.endpointsByProjectId[Number(projectId)] = endpoints;
+          delete state.alertsByEndpointId[endpointId];
+          delete state.checksByEndpointId[endpointId];
+          delete state.incidentsByEndpointId[endpointId];
+          return json(route, { success: true });
+        }
+      }
+      return json(route, { success: false, message: 'Endpoint not found.' }, 404);
+    }
+
+    const endpointToggleMatch = pathname.match(/^\/api\/endpoints\/(\d+)\/toggle$/);
+    if (endpointToggleMatch && method === 'PATCH') {
+      const endpointId = Number(endpointToggleMatch[1]);
+      const endpoint = Object.values(state.endpointsByProjectId)
+        .flat()
+        .find((e) => e.id === endpointId);
+      if (!endpoint) {
+        return json(route, { success: false, message: 'Endpoint not found.' }, 404);
+      }
+      endpoint.isActive = !endpoint.isActive;
+      return json(route, { success: true, data: endpoint });
+    }
+
+    const endpointIncidentsMatch = pathname.match(/^\/api\/endpoints\/(\d+)\/incidents$/);
+    if (endpointIncidentsMatch && method === 'GET') {
+      const endpointId = Number(endpointIncidentsMatch[1]);
+      return json(route, {
+        success: true,
+        data: state.incidentsByEndpointId[endpointId] ?? [],
+      });
     }
 
     // --- Manual health check (Test Now) ---
@@ -500,7 +757,44 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
         state.alertsByEndpointId[endpointId] = [];
       }
       state.alertsByEndpointId[endpointId].push(alert);
+      state.alertDeliveriesByAlertId[alert.id] = [];
       return json(route, { success: true, data: alert });
+    }
+
+    const alertDeliveriesMatch = pathname.match(/^\/api\/alerts\/(\d+)\/deliveries$/);
+    if (alertDeliveriesMatch && method === 'GET') {
+      const alertId = Number(alertDeliveriesMatch[1]);
+      return json(route, {
+        success: true,
+        data: state.alertDeliveriesByAlertId[alertId] ?? [],
+      });
+    }
+
+    const testAlertMatch = pathname.match(/^\/api\/alerts\/(\d+)\/test$/);
+    if (testAlertMatch && method === 'POST') {
+      const alertId = Number(testAlertMatch[1]);
+      const alert = Object.values(state.alertsByEndpointId)
+        .flat()
+        .find((item) => item.id === alertId);
+      if (!alert) {
+        return json(route, { success: false, message: 'Alert not found.' }, 404);
+      }
+      const delivery: MockAlertDelivery = {
+        id: nextAlertDeliveryId++,
+        alertId,
+        endpointId: alert.endpointId,
+        alertType: alert.alertType,
+        target: alert.target,
+        status: 'SUCCESS',
+        testDelivery: true,
+        errorMessage: null,
+        triggeredAt: NOW,
+      };
+      state.alertDeliveriesByAlertId[alertId] = [
+        delivery,
+        ...(state.alertDeliveriesByAlertId[alertId] ?? []),
+      ];
+      return json(route, { success: true, data: delivery });
     }
 
     // --- Toggle alert ---
@@ -511,6 +805,26 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
         const alert = alerts.find((a) => a.id === alertId);
         if (alert) {
           alert.isActive = !alert.isActive;
+          return json(route, { success: true, data: alert });
+        }
+      }
+      return json(route, { success: false, message: 'Alert not found.' }, 404);
+    }
+
+    const updateAlertMatch = pathname.match(/^\/api\/alerts\/(\d+)$/);
+    if (updateAlertMatch && method === 'PUT') {
+      const alertId = Number(updateAlertMatch[1]);
+      const body = (request.postDataJSON() ?? {}) as {
+        alertType?: MockAlert['alertType'];
+        target?: string;
+        threshold?: number;
+      };
+      for (const alerts of Object.values(state.alertsByEndpointId)) {
+        const alert = alerts.find((a) => a.id === alertId);
+        if (alert) {
+          alert.alertType = body.alertType ?? alert.alertType;
+          alert.target = body.target ?? alert.target;
+          alert.threshold = body.threshold ?? alert.threshold;
           return json(route, { success: true, data: alert });
         }
       }

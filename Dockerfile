@@ -1,5 +1,6 @@
-FROM node:22-alpine AS base
-RUN corepack enable pnpm
+FROM node:24-alpine AS base
+ARG PNPM_VERSION=11.1.3
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 # --- deps ---
 FROM base AS deps
@@ -20,7 +21,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
 # --- runtime ---
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

@@ -157,7 +157,14 @@
       "selectProject": "Select project",
       "specSource": "OpenAPI Source",
       "selectSource": "Select source",
-      "lastChecked": "Last checked"
+      "lastChecked": "Last checked",
+      "active": "Active",
+      "inactive": "Inactive",
+      "save": "Save",
+      "enable": "Enable",
+      "disable": "Disable",
+      "delete": "Delete",
+      "confirmDelete": "Delete this OpenAPI source?"
     },
     "create": {
       "title": "New OpenAPI Source",
@@ -195,10 +202,16 @@
       "selectSource": "Please select an OpenAPI source.",
       "fillSource": "Please enter a name and URL.",
       "create": "Failed to create OpenAPI source.",
+      "update": "Failed to update OpenAPI source.",
+      "delete": "Failed to delete OpenAPI source.",
       "check": "Failed to check OpenAPI spec."
     },
     "toasts": {
       "created": "OpenAPI source created.",
+      "updated": "OpenAPI source updated.",
+      "deleted": "OpenAPI source deleted.",
+      "enabled": "OpenAPI source enabled.",
+      "disabled": "OpenAPI source disabled.",
       "checked": "OpenAPI spec check completed."
     }
   },
@@ -243,6 +256,8 @@
     "title": "Alert Configuration",
     "subtitle": "Manage consecutive-failure alerts and duplicate notification control",
     "newAlert": "New Alert",
+    "editAlert": "Edit Alert",
+    "save": "Save",
     "cancel": "Cancel",
     "retry": "Retry",
     "empty": "No alert settings yet. Add your first alert.",
@@ -251,19 +266,24 @@
     "confirmDelete": "Delete this alert?",
     "alertTitle": "{type} Alert",
     "failureAfter": "Alert after {count} consecutive failures",
+    "testAlert": "Send test alert",
     "errors": {
       "loadSettings": "Failed to load alert settings.",
       "selectEndpoint": "Please select an endpoint.",
       "enterTarget": "Please enter a target.",
       "createFailed": "Failed to create alert.",
+      "updateFailed": "Failed to update alert.",
       "deleteFailed": "Failed to delete alert.",
-      "toggleFailed": "Failed to update alert status."
+      "toggleFailed": "Failed to update alert status.",
+      "testFailed": "Failed to send test alert."
     },
     "toasts": {
       "created": "Alert created.",
+      "updated": "Alert updated.",
       "deleted": "Alert deleted.",
       "enabled": "Alert enabled.",
-      "disabled": "Alert disabled."
+      "disabled": "Alert disabled.",
+      "testSent": "Test alert sent."
     },
     "form": {
       "title": "Create New Alert",
@@ -275,25 +295,59 @@
       "selectType": "Select type",
       "typeEmail": "Email",
       "typeSlack": "Slack",
+      "typeWebhook": "Webhook",
       "failureThreshold": "Failure Threshold",
       "failureHelp": "Alert after N consecutive failures and suppress duplicates during cooldown.",
-      "target": "Target (Email or Slack Webhook URL)",
+      "target": "Target (Email or Webhook URL)",
       "targetPlaceholder": "admin@example.com or https://hooks.slack.com/services/...",
       "create": "Create Alert"
+    },
+    "deliveries": {
+      "title": "Recent deliveries",
+      "test": "Test",
+      "status": {
+        "SUCCESS": "Success",
+        "FAILED": "Failed"
+      }
     }
   },
   "projectDetail": {
     "notFound": "Project not found.",
     "backToProjects": "Back to projects",
     "noDescription": "No description",
+    "editProject": "Edit Project",
+    "deleteProject": "Delete Project",
     "addEndpoint": "Add Endpoint",
     "empty": "No endpoints yet. Add your first endpoint.",
+    "cancel": "Cancel",
+    "confirmDeleteProject": "Delete this project?",
     "confirmDeleteEndpoint": "Delete this endpoint?",
     "endpointMeta": "Expected: {expectedStatusCode} · Interval: {checkInterval}s",
     "lastChecked": "Last checked",
     "runCheckNow": "Run check now",
+    "projectForm": {
+      "name": "Project name",
+      "description": "Description",
+      "save": "Save"
+    },
+    "incidents": {
+      "title": "Recent Incidents",
+      "empty": "No incidents detected.",
+      "status": {
+        "OPEN": "Open",
+        "RESOLVED": "Resolved"
+      },
+      "type": {
+        "AVAILABILITY": "Availability",
+        "PERFORMANCE": "Performance",
+        "CONTRACT_CHANGE": "Contract Change"
+      }
+    },
     "errors": {
       "loadData": "Failed to load data.",
+      "enterProjectName": "Please enter a project name.",
+      "updateProjectFailed": "Failed to update project.",
+      "deleteProjectFailed": "Failed to delete project.",
       "toggleFailed": "Failed to change endpoint status.",
       "deleteFailed": "Failed to delete endpoint.",
       "checkFailed": "Failed to run the check."
@@ -301,6 +355,8 @@
     "toasts": {
       "endpointEnabled": "Endpoint enabled.",
       "endpointDisabled": "Endpoint disabled.",
+      "projectUpdated": "Project updated.",
+      "projectDeleted": "Project deleted.",
       "endpointDeleted": "Endpoint deleted.",
       "checkSucceeded": "Check succeeded: {statusCode} - {responseTimeMs}ms",
       "checkFailed": "Check failed: {status} - {detail}"
@@ -315,6 +371,19 @@
     },
     "endpointMeta": "Expected: {expectedStatusCode} · Interval: {checkInterval}s",
     "lastChecked": "Last checked",
+    "incidents": {
+      "title": "Recent Incidents",
+      "empty": "No incidents detected.",
+      "status": {
+        "OPEN": "Open",
+        "RESOLVED": "Resolved"
+      },
+      "type": {
+        "AVAILABILITY": "Availability",
+        "PERFORMANCE": "Performance",
+        "CONTRACT_CHANGE": "Contract Change"
+      }
+    },
     "actions": {
       "testNow": "Test Now",
       "edit": "Edit"
@@ -542,6 +611,7 @@
       "freeLabel": "Free",
       "status": "Status",
       "nextBilling": "Next Billing Date",
+      "endsAt": "PRO Ends At",
       "noBillingDate": "No scheduled billing",
       "cancelScheduled": "Cancels at period end"
     },
@@ -557,6 +627,8 @@
       "changePlan": "Change Plan",
       "upgrade": "Upgrade to Pro",
       "upgradeToPro": "Upgrade to Pro",
+      "cancelSubscription": "Cancel Subscription",
+      "confirmCancel": "Cancel PRO at the end of the current billing period?",
       "currentPlan": "Current Plan",
       "contactSales": "Contact Sales"
     },
@@ -599,7 +671,10 @@
       "upgradeError": "An error occurred during the upgrade request.",
       "historyLoadError": "Failed to load payment history.",
       "workspaceRequired": "Please select a workspace first.",
-      "ownerOnly": "Only the workspace OWNER can proceed with payment."
+      "ownerOnly": "Only the workspace OWNER can proceed with payment.",
+      "cancelled": "Subscription cancelled.",
+      "cancelScheduled": "Subscription cancellation scheduled for period end.",
+      "cancelError": "Failed to cancel subscription."
     }
   },
   "pricing": {
@@ -679,6 +754,13 @@
       "visibility": "Visibility",
       "public": "Public",
       "private": "Private",
+      "endpoints": "Public Endpoints",
+      "allEndpoints": "When none are selected, all active endpoints are public.",
+      "allEndpointsOption": "All endpoints",
+      "selectedEndpoints": "{count} endpoint(s) are public.",
+      "noEndpointsSelected": "Publish none",
+      "noEndpoints": "No endpoints available.",
+      "saveEndpoints": "Save Endpoints",
       "edit": "Edit",
       "delete": "Delete",
       "confirmDelete": "Are you sure you want to delete this status page?"

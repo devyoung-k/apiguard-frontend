@@ -1,0 +1,126 @@
+name: Deploy To Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT != '' && vars.DEPLOY_PORT || '22' }}
+      DEPLOY_PATH: ${{ vars.FRONTEND_DEPLOY_PATH != '' && vars.FRONTEND_DEPLOY_PATH || format('/home/{0}/apps/apiguard-frontend', secrets.DEPLOY_USER) }}
+      NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL != '' && vars.NEXT_PUBLIC_API_URL || 'https://apiguard-api.devyoung.dev' }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+        run: pnpm build
+
+      - name: Prepare deploy bundle
+        run: |
+          mkdir -p dist
+          tar \
+            --exclude=.git \
+            --exclude=.next \
+            --exclude=dist \
+            --exclude=node_modules \
+            --exclude=playwright-report \
+            --exclude=test-results \
+            -czf dist/apiguard-frontend.tar.gz .
+
+      - name: Ensure remote deploy path exists
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ env.DEPLOY_PORT }}
+          envs: DEPLOY_PATH
+          script: |
+            mkdir -p "${DEPLOY_PATH}"
+
+      - name: Upload deploy bundle to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ env.DEPLOY_PORT }}
+          source: "dist/apiguard-frontend.tar.gz"
+          target: ${{ env.DEPLOY_PATH }}
+
+      - name: Deploy with Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ env.DEPLOY_PORT }}
+          envs: DEPLOY_PATH,NEXT_PUBLIC_API_URL
+          script: |
+            cd "${DEPLOY_PATH}"
+
+            rm -rf .deploy-next
+            mkdir -p .deploy-next
+            tar -xzf dist/apiguard-frontend.tar.gz -C .deploy-next
+            find . -mindepth 1 -maxdepth 1 ! -name ".env" ! -name ".deploy-next" -exec rm -rf {} +
+            cp -a .deploy-next/. .
+            rm -rf .deploy-next
+
+            dump_logs() {
+              docker compose -f docker-compose.server.yml ps || true
+              docker compose -f docker-compose.server.yml logs frontend --tail=200 || true
+            }
+
+            if ! NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL}" docker compose -f docker-compose.server.yml up -d --build; then
+              dump_logs
+              exit 1
+            fi
+
+            set -a
+            [ -f .env ] && . ./.env
+            set +a
+
+            for i in $(seq 1 12); do
+              if curl -fsS "http://127.0.0.1:${FRONTEND_PORT:-3000}/ko/login" >/dev/null; then
+                exit 0
+              fi
+              sleep 5
+            done
+
+            dump_logs
+            exit 1

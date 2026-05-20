@@ -54,7 +54,7 @@ const PAYMENT_BADGE_CLASSNAME: Record<billingApi.PaymentStatus, string> = {
 };
 
 export function BillingPage() {
-  const { currentPlan, subscription, isPro, limits } = usePlan();
+  const { currentPlan, subscription, isPro, limits, refreshSubscription } = usePlan();
   const { currentWorkspace, myRole } = useWorkspace();
   const isDarkMode = useDarkMode();
   const t = useTranslations('billing');
@@ -62,12 +62,19 @@ export function BillingPage() {
   const localeTag = locale === 'ko' ? 'ko-KR' : 'en-US';
   const billingPeriodLabel = locale === 'ko' ? '/월' : '/month';
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [payments, setPayments] = useState<billingApi.PaymentResponse[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const planInfo = getPlanInfo(currentPlan);
   const canManageBilling = Boolean(currentWorkspace && myRole === 'OWNER');
+  const cancelAtPeriodEnd = Boolean(subscription?.cancelAtPeriodEnd);
+  const subscriptionStatusLabel = cancelAtPeriodEnd
+    ? t('planInfo.cancelScheduled')
+    : subscription?.active
+      ? t('status.ACTIVE')
+      : t('status.NONE');
   const latestSuccessfulPayment = useMemo(
     () =>
       payments
@@ -136,6 +143,32 @@ export function BillingPage() {
       toast.error(getApiErrorMessage(error, t('toasts.upgradeError')));
     } finally {
       setIsUpgrading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!currentWorkspace) {
+      toast.error(t('toasts.workspaceRequired'));
+      return;
+    }
+    if (myRole !== 'OWNER') {
+      toast.error(t('toasts.ownerOnly'));
+      return;
+    }
+    if (!confirm(t('actions.confirmCancel'))) {
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      await billingApi.cancelSubscription(currentWorkspace.id);
+      await refreshSubscription(currentWorkspace.id);
+      await loadPaymentHistory();
+      toast.success(t('toasts.cancelScheduled'));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t('toasts.cancelError')));
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -212,12 +245,14 @@ export function BillingPage() {
               <Badge
                 variant={subscription?.active ? 'default' : 'outline'}
                 className={
-                  subscription?.active
-                    ? 'border-green-500/20 bg-green-500/10 text-green-500'
-                    : 'border-gray-500/20 bg-gray-500/10 text-gray-500'
+                  cancelAtPeriodEnd
+                    ? 'border-amber-500/20 bg-amber-500/10 text-amber-600'
+                    : subscription?.active
+                      ? 'border-green-500/20 bg-green-500/10 text-green-500'
+                      : 'border-gray-500/20 bg-gray-500/10 text-gray-500'
                 }
               >
-                {subscription?.active ? t('status.ACTIVE') : t('status.NONE')}
+                {subscriptionStatusLabel}
               </Badge>
             </div>
 
@@ -225,7 +260,7 @@ export function BillingPage() {
               <span
                 className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}
               >
-                {t('planInfo.nextBilling')}
+                {cancelAtPeriodEnd ? t('planInfo.endsAt') : t('planInfo.nextBilling')}
               </span>
               <div className="flex items-center gap-2">
                 <Calendar
@@ -303,6 +338,35 @@ export function BillingPage() {
                   >
                     {t('notes.ownerOnly')}
                   </p>
+                )}
+              </div>
+            )}
+
+            {isPro && canManageBilling && (
+              <div
+                className={`space-y-3 border-t pt-4 ${
+                  isDarkMode ? 'border-gray-800' : 'border-gray-200'
+                }`}
+              >
+                {cancelAtPeriodEnd ? (
+                  <p
+                    className={`text-sm ${
+                      isDarkMode ? 'text-amber-300' : 'text-amber-700'
+                    }`}
+                  >
+                    {t('planInfo.cancelScheduled')}
+                  </p>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelSubscription}
+                    disabled={isCancelling}
+                    className="flex w-full gap-2 border-red-500/30 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  >
+                    {isCancelling && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {t('actions.cancelSubscription')}
+                  </Button>
                 )}
               </div>
             )}

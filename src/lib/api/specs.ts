@@ -1,9 +1,10 @@
-import { apiGet, apiPost } from '@/lib/api-client';
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/lib/api-client';
 import type {
   ApiSpecDiffDetailResponse,
   ApiSpecDiffResponse,
   ApiSpecSourceResponse,
   CreateApiSpecSourceRequest,
+  UpdateApiSpecSourceRequest,
 } from '@/types/api';
 
 export async function createSpecSource(
@@ -20,6 +21,26 @@ export async function getSpecSources(
   projectId: number,
 ): Promise<ApiSpecSourceResponse[]> {
   return apiGet<ApiSpecSourceResponse[]>(`/projects/${projectId}/spec-sources`);
+}
+
+export async function updateSpecSource(
+  sourceId: number,
+  data: UpdateApiSpecSourceRequest,
+): Promise<ApiSpecSourceResponse> {
+  return apiPut<ApiSpecSourceResponse, UpdateApiSpecSourceRequest>(
+    `/spec-sources/${sourceId}`,
+    data,
+  );
+}
+
+export async function deleteSpecSource(sourceId: number): Promise<void> {
+  await apiDelete(`/spec-sources/${sourceId}`);
+}
+
+export async function toggleSpecSource(
+  sourceId: number,
+): Promise<ApiSpecSourceResponse> {
+  return apiPatch<ApiSpecSourceResponse>(`/spec-sources/${sourceId}/toggle`);
 }
 
 export async function checkSpecSource(

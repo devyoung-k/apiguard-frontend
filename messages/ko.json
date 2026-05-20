@@ -157,7 +157,14 @@
       "selectProject": "프로젝트 선택",
       "specSource": "OpenAPI 소스",
       "selectSource": "소스 선택",
-      "lastChecked": "최근 검사"
+      "lastChecked": "최근 검사",
+      "active": "활성",
+      "inactive": "비활성",
+      "save": "저장",
+      "enable": "활성화",
+      "disable": "비활성화",
+      "delete": "삭제",
+      "confirmDelete": "이 OpenAPI 소스를 삭제하시겠습니까?"
     },
     "create": {
       "title": "새 OpenAPI 소스",
@@ -195,10 +202,16 @@
       "selectSource": "OpenAPI 소스를 선택해 주세요.",
       "fillSource": "이름과 URL을 입력해 주세요.",
       "create": "OpenAPI 소스 생성에 실패했습니다.",
+      "update": "OpenAPI 소스 수정에 실패했습니다.",
+      "delete": "OpenAPI 소스 삭제에 실패했습니다.",
       "check": "OpenAPI 스펙 검사에 실패했습니다."
     },
     "toasts": {
       "created": "OpenAPI 소스가 생성되었습니다.",
+      "updated": "OpenAPI 소스가 수정되었습니다.",
+      "deleted": "OpenAPI 소스가 삭제되었습니다.",
+      "enabled": "OpenAPI 소스가 활성화되었습니다.",
+      "disabled": "OpenAPI 소스가 비활성화되었습니다.",
       "checked": "OpenAPI 스펙 검사가 완료되었습니다."
     }
   },
@@ -243,6 +256,8 @@
     "title": "알림 설정",
     "subtitle": "연속 실패 기반 알림과 중복 알림 제어를 관리하세요",
     "newAlert": "새 알림",
+    "editAlert": "알림 수정",
+    "save": "저장",
     "cancel": "취소",
     "retry": "다시 시도",
     "empty": "아직 알림 설정이 없습니다. 첫 알림을 추가해 보세요.",
@@ -251,19 +266,24 @@
     "confirmDelete": "이 알림을 삭제하시겠습니까?",
     "alertTitle": "{type} 알림",
     "failureAfter": "{count}회 연속 실패 시 알림",
+    "testAlert": "테스트 알림 발송",
     "errors": {
       "loadSettings": "알림 설정을 불러오지 못했습니다.",
       "selectEndpoint": "엔드포인트를 선택해 주세요.",
       "enterTarget": "대상 값을 입력해 주세요.",
       "createFailed": "알림 생성에 실패했습니다.",
+      "updateFailed": "알림 수정에 실패했습니다.",
       "deleteFailed": "알림 삭제에 실패했습니다.",
-      "toggleFailed": "알림 상태 변경에 실패했습니다."
+      "toggleFailed": "알림 상태 변경에 실패했습니다.",
+      "testFailed": "테스트 알림 발송에 실패했습니다."
     },
     "toasts": {
       "created": "알림이 생성되었습니다.",
+      "updated": "알림이 수정되었습니다.",
       "deleted": "알림이 삭제되었습니다.",
       "enabled": "알림이 활성화되었습니다.",
-      "disabled": "알림이 비활성화되었습니다."
+      "disabled": "알림이 비활성화되었습니다.",
+      "testSent": "테스트 알림을 발송했습니다."
     },
     "form": {
       "title": "새 알림 만들기",
@@ -275,25 +295,59 @@
       "selectType": "유형 선택",
       "typeEmail": "이메일",
       "typeSlack": "슬랙",
+      "typeWebhook": "웹훅",
       "failureThreshold": "실패 임계치",
       "failureHelp": "연속 N회 실패 시 알림을 보내고 cooldown 동안 중복 발송을 억제합니다.",
-      "target": "대상 (이메일 또는 슬랙 웹훅 URL)",
+      "target": "대상 (이메일 또는 웹훅 URL)",
       "targetPlaceholder": "admin@example.com 또는 https://hooks.slack.com/services/...",
       "create": "알림 생성"
+    },
+    "deliveries": {
+      "title": "최근 발송 이력",
+      "test": "테스트",
+      "status": {
+        "SUCCESS": "성공",
+        "FAILED": "실패"
+      }
     }
   },
   "projectDetail": {
     "notFound": "프로젝트를 찾을 수 없습니다.",
     "backToProjects": "프로젝트 목록으로",
     "noDescription": "설명 없음",
+    "editProject": "프로젝트 수정",
+    "deleteProject": "프로젝트 삭제",
     "addEndpoint": "엔드포인트 추가",
     "empty": "아직 엔드포인트가 없습니다. 첫 엔드포인트를 추가하세요.",
+    "cancel": "취소",
+    "confirmDeleteProject": "이 프로젝트를 삭제하시겠습니까?",
     "confirmDeleteEndpoint": "이 엔드포인트를 삭제하시겠습니까?",
     "endpointMeta": "예상 상태코드: {expectedStatusCode} · 간격: {checkInterval}초",
     "lastChecked": "최근 점검",
     "runCheckNow": "지금 점검 실행",
+    "projectForm": {
+      "name": "프로젝트 이름",
+      "description": "설명",
+      "save": "저장"
+    },
+    "incidents": {
+      "title": "최근 장애",
+      "empty": "감지된 장애가 없습니다.",
+      "status": {
+        "OPEN": "진행 중",
+        "RESOLVED": "해결됨"
+      },
+      "type": {
+        "AVAILABILITY": "가용성",
+        "PERFORMANCE": "성능",
+        "CONTRACT_CHANGE": "계약 변경"
+      }
+    },
     "errors": {
       "loadData": "데이터를 불러오지 못했습니다.",
+      "enterProjectName": "프로젝트 이름을 입력해 주세요.",
+      "updateProjectFailed": "프로젝트 수정에 실패했습니다.",
+      "deleteProjectFailed": "프로젝트 삭제에 실패했습니다.",
       "toggleFailed": "엔드포인트 상태 변경에 실패했습니다.",
       "deleteFailed": "엔드포인트 삭제에 실패했습니다.",
       "checkFailed": "점검 실행에 실패했습니다."
@@ -301,6 +355,8 @@
     "toasts": {
       "endpointEnabled": "엔드포인트가 활성화되었습니다.",
       "endpointDisabled": "엔드포인트가 비활성화되었습니다.",
+      "projectUpdated": "프로젝트가 수정되었습니다.",
+      "projectDeleted": "프로젝트가 삭제되었습니다.",
       "endpointDeleted": "엔드포인트가 삭제되었습니다.",
       "checkSucceeded": "점검 성공: {statusCode} - {responseTimeMs}ms",
       "checkFailed": "점검 실패: {status} - {detail}"
@@ -315,6 +371,19 @@
     },
     "endpointMeta": "예상 상태코드: {expectedStatusCode} · 간격: {checkInterval}초",
     "lastChecked": "최근 점검",
+    "incidents": {
+      "title": "최근 장애",
+      "empty": "감지된 장애가 없습니다.",
+      "status": {
+        "OPEN": "진행 중",
+        "RESOLVED": "해결됨"
+      },
+      "type": {
+        "AVAILABILITY": "가용성",
+        "PERFORMANCE": "성능",
+        "CONTRACT_CHANGE": "계약 변경"
+      }
+    },
     "actions": {
       "testNow": "지금 점검",
       "edit": "수정"
@@ -542,6 +611,7 @@
       "freeLabel": "무료",
       "status": "상태",
       "nextBilling": "다음 결제일",
+      "endsAt": "PRO 종료일",
       "noBillingDate": "예정된 결제 없음",
       "cancelScheduled": "기간 종료 시 취소 예정"
     },
@@ -557,6 +627,8 @@
       "changePlan": "플랜 변경",
       "upgrade": "Pro로 업그레이드",
       "upgradeToPro": "Pro로 업그레이드",
+      "cancelSubscription": "구독 취소",
+      "confirmCancel": "PRO 구독을 현재 결제 기간 종료 시점에 취소하시겠습니까?",
       "currentPlan": "현재 플랜",
       "contactSales": "영업팀 문의"
     },
@@ -599,7 +671,10 @@
       "upgradeError": "업그레이드 요청 중 오류가 발생했습니다.",
       "historyLoadError": "결제 이력을 불러오지 못했습니다.",
       "workspaceRequired": "워크스페이스를 먼저 선택해 주세요.",
-      "ownerOnly": "결제는 워크스페이스 OWNER만 진행할 수 있습니다."
+      "ownerOnly": "결제는 워크스페이스 OWNER만 진행할 수 있습니다.",
+      "cancelled": "구독이 취소되었습니다.",
+      "cancelScheduled": "구독 취소가 기간 종료 시점으로 예약되었습니다.",
+      "cancelError": "구독 취소에 실패했습니다."
     }
   },
   "pricing": {
@@ -679,6 +754,13 @@
       "visibility": "공개 설정",
       "public": "공개",
       "private": "비공개",
+      "endpoints": "공개 엔드포인트",
+      "allEndpoints": "선택하지 않으면 모든 활성 엔드포인트를 공개합니다.",
+      "allEndpointsOption": "전체 공개",
+      "selectedEndpoints": "{count}개 엔드포인트를 공개합니다.",
+      "noEndpointsSelected": "공개 안 함",
+      "noEndpoints": "등록된 엔드포인트가 없습니다.",
+      "saveEndpoints": "엔드포인트 저장",
       "edit": "수정",
       "delete": "삭제",
       "confirmDelete": "이 상태 페이지를 삭제하시겠습니까?"

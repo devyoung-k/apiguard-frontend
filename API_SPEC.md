@@ -37,6 +37,7 @@ APIGuard는 외부 API 의존성이 있는 개발팀을 위한 **API Reliability
 - `POST /auth/logout`
 - `POST /users/signup`
 - `GET /health`
+- `GET /status/{slug}`
 - `GET /error`
 - `GET /swagger-ui/**` (dev)
 - `GET /v3/api-docs/**` (dev)
@@ -50,8 +51,9 @@ APIGuard는 외부 API 의존성이 있는 개발팀을 위한 **API Reliability
 
 - Workspace API는 워크스페이스 멤버십/역할 기반 권한을 사용
 - Payment API는 워크스페이스 `OWNER`만 호출 가능
-- Project/Endpoint/Check/Alert API는 현재 구현 기준으로 리소스 소유자 중심 권한 검사를 사용
-  - 예: 엔드포인트 조회/수정은 프로젝트 소유자만 가능
+- Project/Endpoint/Check/Alert/OpenAPI/Status Page API는 워크스페이스 멤버십과 역할 권한을 기준으로 검사
+  - `VIEWER`는 조회 중심, 쓰기 작업은 `MEMBER` 이상
+  - 삭제성 작업은 도메인별로 `ADMIN` 이상 또는 소유자 권한을 요구
 
 ## 3. Common Error Status
 
@@ -72,7 +74,8 @@ APIGuard는 외부 API 의존성이 있는 개발팀을 위한 **API Reliability
 - `WorkspaceRole`: `OWNER`, `ADMIN`, `MEMBER`, `VIEWER`
 - `HttpMethod`: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`
 - `CheckStatus`: `SUCCESS`, `FAILURE`, `TIMEOUT`, `ERROR`
-- `AlertType`: `EMAIL`, `SLACK`
+- `AlertType`: `EMAIL`, `SLACK`, `WEBHOOK`
+- `AlertDeliveryStatus`: `SUCCESS`, `FAILED`
 - `IncidentStatus`: `OPEN`, `RESOLVED`
 - `IncidentType`: `AVAILABILITY`, `PERFORMANCE`, `CONTRACT_CHANGE`
 - `BreakingChangeRule`: `PATH_REMOVED`, `METHOD_REMOVED`, `REQUIRED_PARAMETER_ADDED`, `REQUIRED_REQUEST_BODY_ADDED`, `REQUEST_BODY_REQUIRED_FIELD_ADDED`, `RESPONSE_FIELD_REMOVED`, `RESPONSE_FIELD_TYPE_CHANGED`
@@ -287,9 +290,16 @@ Request
 
 ```json
 {
-  "email": "member@example.com"
+  "email": "member@example.com",
+  "role": "MEMBER"
 }
 ```
+
+Notes
+
+- `role` 생략 시 `MEMBER`로 초대됩니다.
+- 초대 요청으로 `OWNER`는 지정할 수 없습니다.
+- `ADMIN`은 `MEMBER` 또는 `VIEWER`만 초대할 수 있고, `OWNER`만 `ADMIN` 초대가 가능합니다.
 
 Response item shape
 
@@ -362,13 +372,13 @@ Response item shape
 ### `GET /projects/{id}`
 
 - Auth: Required
-- Permission: project owner
+- Permission: workspace member or personal project owner
 
 ### `PATCH /projects/{id}`
 
 - Auth: Required
 - Permission:
-  - workspace project: project owner 또는 비-`VIEWER` 멤버
+  - workspace project: `MEMBER` 이상
   - personal project: project owner
 
 Request
@@ -383,14 +393,14 @@ Request
 ### `DELETE /projects/{id}`
 
 - Auth: Required
-- Permission: project owner
+- Permission: workspace `ADMIN` or above, or personal project owner
 
 ## 10. Endpoint
 
 ### `POST /projects/{projectId}/endpoints`
 
 - Auth: Required
-- Permission: project owner
+- Permission: workspace `MEMBER` or above, or personal project owner
 
 Request
 
@@ -429,7 +439,7 @@ Response item shape
   "body": null,
   "expectedStatusCode": 200,
   "checkInterval": 300,
-  "active": true,
+  "isActive": true,
   "lastCheckedAt": null,
   "createdAt": "2026-03-09T12:30:00"
 }
@@ -438,17 +448,17 @@ Response item shape
 ### `GET /projects/{projectId}/endpoints`
 
 - Auth: Required
-- Permission: project owner
+- Permission: workspace member or personal project owner
 
 ### `GET /endpoints/{id}`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace member or personal project owner
 
 ### `PUT /endpoints/{id}`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `MEMBER` or above, or personal project owner
 
 Request fields
 
@@ -464,19 +474,19 @@ Request fields
 ### `DELETE /endpoints/{id}`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `ADMIN` or above, or personal project owner
 
 ### `PATCH /endpoints/{id}/toggle`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `MEMBER` or above, or personal project owner
 
 ## 11. Check
 
 ### `POST /endpoints/{id}/test`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `MEMBER` or above, or personal project owner
 - Description: 즉시 수동 점검 실행
 
 Response item shape
@@ -496,7 +506,7 @@ Response item shape
 ### `GET /endpoints/{id}/stats`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace member or personal project owner
 
 Response
 
@@ -516,7 +526,7 @@ Response
 ### `GET /endpoints/{id}/stats/hourly`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace member or personal project owner
 
 Response item shape
 
@@ -532,14 +542,14 @@ Response item shape
 ### `GET /endpoints/{id}/checks?limit=20`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace member or personal project owner
 - Query:
   - `limit`: 기본값 `20`
 
 ### `GET /projects/{id}/stats`
 
 - Auth: Required
-- Permission: project owner
+- Permission: workspace member or personal project owner
 
 Response item shape
 
@@ -557,7 +567,7 @@ Response item shape
 ### `POST /endpoints/{endpointId}/alerts`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `MEMBER` or above, or personal project owner
 
 Request
 
@@ -573,6 +583,8 @@ Validation / defaults
 
 - `threshold`: `1` 이상
 - `threshold` 미입력 시 기본 `3`
+- `alertType`: `EMAIL`, `SLACK`, `WEBHOOK`
+- 성공 발송은 Redis cooldown으로 중복 발송을 억제하고, 성공/실패 이력은 별도 저장됩니다.
 
 Response item shape
 
@@ -583,7 +595,7 @@ Response item shape
   "alertType": "EMAIL",
   "target": "ops@example.com",
   "threshold": 3,
-  "active": true,
+  "isActive": true,
   "createdAt": "2026-03-09T12:40:00"
 }
 ```
@@ -591,12 +603,12 @@ Response item shape
 ### `GET /endpoints/{endpointId}/alerts`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace member or personal project owner
 
 ### `PUT /alerts/{id}`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `MEMBER` or above, or personal project owner
 
 Request fields
 
@@ -607,16 +619,45 @@ Request fields
 ### `DELETE /alerts/{id}`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `MEMBER` or above, or personal project owner
 
 ### `PATCH /alerts/{id}/toggle`
 
 - Auth: Required
-- Permission: endpoint owner
+- Permission: workspace `MEMBER` or above, or personal project owner
+
+### `POST /alerts/{id}/test`
+
+- Auth: Required
+- Permission: workspace `MEMBER` or above, or personal project owner
+- Description: 알림 대상 채널로 테스트 메시지를 보내고 `testDelivery=true` 발송 이력을 저장합니다.
+
+### `GET /alerts/{id}/deliveries?limit=20`
+
+- Auth: Required
+- Permission: workspace member or personal project owner
+- Query:
+  - `limit`: 기본값 `20`, 최대 `100`
+
+Response item shape
+
+```json
+{
+  "id": 10,
+  "alertId": 1,
+  "endpointId": 1,
+  "alertType": "WEBHOOK",
+  "target": "https://hooks.example.com/apiguard",
+  "status": "SUCCESS",
+  "testDelivery": true,
+  "errorMessage": null,
+  "triggeredAt": "2026-05-20T10:00:00"
+}
+```
 
 ## 13. Subscription & Payment
 
-모든 결제 API는 `/api/workspaces/{workspaceId}` 하위에 있고, 워크스페이스 `OWNER`만 호출할 수 있습니다.
+결제 API는 `/api/workspaces/{workspaceId}` 하위에 있습니다. 조회성 API는 워크스페이스 멤버가 호출할 수 있고, 결제 준비/승인/구독 해지는 워크스페이스 `OWNER`만 호출할 수 있습니다.
 
 ### `GET /api/workspaces/{workspaceId}/subscription`
 
@@ -632,6 +673,7 @@ Response
     "planType": "FREE",
     "active": true,
     "expiredAt": null,
+    "maxProjects": 3,
     "maxEndpointsPerProject": 5,
     "minCheckIntervalSeconds": 300,
     "maxAlertChannels": 1,
@@ -705,12 +747,37 @@ Response item shape
 ### `GET /api/workspaces/{workspaceId}/payment/history`
 
 - Auth: Required
-- Permission: workspace `OWNER`
+- Permission: workspace member
 
 Response item shape
 
 - `PaymentResponse[]`
 - `status`: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`
+
+### `POST /api/workspaces/{workspaceId}/subscription/cancel`
+
+- Auth: Required
+- Permission: workspace member
+- Description: 활성 PRO 구독을 해지하고 FREE 플랜 상태를 반환합니다. 활성 PRO 구독이 없으면 `409`를 반환합니다.
+
+Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "planType": "FREE",
+    "active": true,
+    "expiredAt": null,
+    "maxProjects": 3,
+    "maxEndpointsPerProject": 5,
+    "minCheckIntervalSeconds": 300,
+    "maxAlertChannels": 1,
+    "maxMembers": 1,
+    "dataRetentionDays": 7
+  }
+}
+```
 
 ## 14. Notice
 
@@ -863,11 +930,50 @@ For `CONTRACT_CHANGE` incidents, `endpointId` and `endpointUrl` are `null` becau
 
 - Auth: Required
 
+Response item shape
+
+```json
+{
+  "id": 1,
+  "projectId": 1,
+  "name": "Payments API",
+  "specUrl": "https://api.example.com/openapi.json",
+  "active": true,
+  "lastCheckedAt": "2026-05-20T10:00:00",
+  "createdAt": "2026-05-13T10:00:00"
+}
+```
+
+### `PUT /spec-sources/{sourceId}`
+
+- Auth: Required
+
+Request
+
+```json
+{
+  "name": "Payments API v2",
+  "specUrl": "https://api.example.com/openapi-v2.json",
+  "active": true
+}
+```
+
+모든 필드는 선택이며 전달한 값만 반영됩니다.
+
+### `DELETE /spec-sources/{sourceId}`
+
+- Auth: Required
+
+### `PATCH /spec-sources/{sourceId}/toggle`
+
+- Auth: Required
+
 ### `POST /spec-sources/{sourceId}/check`
 
 - Auth: Required
 - Stores a snapshot and compares it with the previous snapshot.
 - Creates or updates an open `CONTRACT_CHANGE` incident when breaking changes are detected.
+- 비활성 스펙 소스는 체크할 수 없습니다.
 
 ### `GET /spec-sources/{sourceId}/diffs`
 
@@ -897,5 +1003,95 @@ Response shape
       "description": "기존 method가 삭제되었습니다."
     }
   ]
+}
+```
+
+## 18. Status Page
+
+### `GET /status/{slug}`
+
+- Auth: Public
+- Description: 공개 상태 페이지 조회
+- `allEndpoints=true`이면 워크스페이스의 모든 활성 엔드포인트를 노출합니다.
+- `allEndpoints=false`이면 `endpointIds`에 포함된 활성 엔드포인트만 노출합니다.
+- `allEndpoints=false`와 `endpointIds=[]`를 함께 사용하면 엔드포인트를 노출하지 않습니다.
+
+Response shape
+
+```json
+{
+  "title": "APIGuard Status",
+  "description": "External API dependency status",
+  "overallStatus": "OPERATIONAL",
+  "endpoints": [
+    {
+      "url": "https://api.example.com/health",
+      "httpMethod": "GET",
+      "status": "UP",
+      "uptimePercent": 99.9,
+      "avgResponseTimeMs": 120.5,
+      "lastCheckedAt": "2026-05-20T10:00:00"
+    }
+  ]
+}
+```
+
+### `POST /workspaces/{workspaceId}/status-page`
+
+- Auth: Required
+- Permission: workspace member, 단 `VIEWER` 불가
+- Response status: `201`
+
+Request
+
+```json
+{
+  "title": "APIGuard Status",
+  "description": "External API dependency status",
+  "slug": "apiguard-status",
+  "allEndpoints": false,
+  "endpointIds": [1, 2]
+}
+```
+
+### `GET /workspaces/{workspaceId}/status-page`
+
+- Auth: Required
+- Permission: workspace member
+
+### `PUT /workspaces/{workspaceId}/status-page`
+
+- Auth: Required
+- Permission: workspace member, 단 `VIEWER` 불가
+
+Request
+
+```json
+{
+  "title": "APIGuard Public Status",
+  "description": "Selected external API status",
+  "isPublic": true,
+  "allEndpoints": false,
+  "endpointIds": [1]
+}
+```
+
+### `DELETE /workspaces/{workspaceId}/status-page`
+
+- Auth: Required
+- Permission: workspace member, 단 `VIEWER` 불가
+
+Response item shape
+
+```json
+{
+  "id": 1,
+  "slug": "apiguard-status",
+  "title": "APIGuard Status",
+  "description": "External API dependency status",
+  "isPublic": true,
+  "createdAt": "2026-05-20T10:00:00",
+  "allEndpoints": false,
+  "endpointIds": [1, 2]
 }
 ```
