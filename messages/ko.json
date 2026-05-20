@@ -142,6 +142,13 @@
       "noDescription": "설명 없음",
       "upCount": "정상 {count}개",
       "downCount": "장애 {count}개"
+    },
+    "notices": {
+      "title": "공지사항",
+      "viewAll": "전체 보기",
+      "empty": "등록된 공지사항이 없습니다.",
+      "pinned": "고정",
+      "loadFailed": "공지사항을 불러오지 못했습니다."
     }
   },
   "specChanges": {

@@ -1,18 +1,19 @@
 "use client"
 
-import { Activity, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, AlertCircle, Sun, Moon, Loader2 } from "lucide-react";
+import { Activity, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, AlertCircle, Sun, Moon, Loader2, BellRing, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { StatCard } from "./StatCard";
 import { useTheme } from "next-themes";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { motion } from "framer-motion";
-import type { ProjectWithStats } from "@/types/api";
+import type { NoticeResponse, ProjectWithStats } from "@/types/api";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useTranslations } from "next-intl";
 import { getProjectsWithStats } from "@/lib/project-stats";
 import { useWorkspace } from "@/contexts/workspace-context";
+import * as noticesApi from "@/lib/api/notices";
 
 export function DashboardPage() {
   const router = useRouter();
@@ -21,12 +22,24 @@ export function DashboardPage() {
   const t = useTranslations("dashboard");
   const { currentWorkspace } = useWorkspace();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
+  const [notices, setNotices] = useState<NoticeResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [noticeError, setNoticeError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      try {
+        const noticeData = await noticesApi.getNotices();
+        setNotices(noticeData);
+        setNoticeError(null);
+      } catch {
+        setNotices([]);
+        setNoticeError(t('notices.loadFailed'));
+      }
+
       if (!currentWorkspace) {
         setProjects([]);
         setError(null);
@@ -75,6 +88,19 @@ export function DashboardPage() {
   const avgResponseTime = projects.length > 0
     ? projects.reduce((sum, p) => sum + (p.stats?.avgResponseTimeMs || 0), 0) / projects.filter(p => p.stats).length || 0
     : 0;
+
+  const dashboardNotices = useMemo(
+    () =>
+      [...notices]
+        .sort((a, b) => {
+          if (a.pinned !== b.pinned) {
+            return a.pinned ? -1 : 1;
+          }
+          return Number(new Date(b.createdAt)) - Number(new Date(a.createdAt));
+        })
+        .slice(0, 3),
+    [notices],
+  );
 
   if (isLoading) {
     return (
@@ -150,6 +176,59 @@ export function DashboardPage() {
           />
         </motion.div>
       </div>
+
+      {/* Notices */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+        <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle className={`flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              <BellRing className="h-5 w-5 text-blue-500" />
+              {t('notices.title')}
+            </CardTitle>
+            <button
+              type="button"
+              onClick={() => router.push('/notices')}
+              className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                isDarkMode ? 'text-blue-300 hover:text-blue-200' : 'text-blue-600 hover:text-blue-700'
+              }`}
+            >
+              {t('notices.viewAll')}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </CardHeader>
+          <CardContent>
+            {noticeError ? (
+              <p className={isDarkMode ? 'text-sm text-red-300' : 'text-sm text-red-600'}>{noticeError}</p>
+            ) : dashboardNotices.length === 0 ? (
+              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('notices.empty')}</p>
+            ) : (
+              <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                {dashboardNotices.map((notice) => (
+                  <button
+                    key={notice.id}
+                    type="button"
+                    onClick={() => router.push('/notices')}
+                    className="block w-full py-3 text-left first:pt-0 last:pb-0"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {notice.title}
+                      </span>
+                      {notice.pinned && <Badge>{t('notices.pinned')}</Badge>}
+                      <span className={isDarkMode ? 'text-xs text-gray-500' : 'text-xs text-gray-500'}>
+                        {new Date(notice.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className={`mt-1 line-clamp-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {notice.content}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Projects Overview */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>

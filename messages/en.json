@@ -142,6 +142,13 @@
       "noDescription": "No description",
       "upCount": "{count} up",
       "downCount": "{count} down"
+    },
+    "notices": {
+      "title": "Notices",
+      "viewAll": "View all",
+      "empty": "No notices available.",
+      "pinned": "Pinned",
+      "loadFailed": "Failed to load notices."
     }
   },
   "specChanges": {
