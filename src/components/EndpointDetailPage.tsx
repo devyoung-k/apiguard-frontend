@@ -4,12 +4,14 @@ import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "./ui/button";
-import { ArrowLeft, Play, Edit, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, Edit, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { PageLoadingState, PageErrorState } from "./ui/page-states";
 import * as endpointsApi from "@/lib/api/endpoints";
 import * as healthChecksApi from "@/lib/api/health-checks";
-import type { EndpointResponse, HealthCheckResult, EndpointStats, HourlyStats } from "@/types/api";
+import * as incidentsApi from "@/lib/api/incidents";
+import type { EndpointResponse, HealthCheckResult, EndpointStats, HourlyStats, IncidentResponse } from "@/types/api";
 import { toast } from "sonner";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useLocale, useTranslations } from "next-intl";
@@ -31,6 +33,7 @@ export function EndpointDetailPage() {
   const [checks, setChecks] = useState<HealthCheckResult[]>([]);
   const [stats, setStats] = useState<EndpointStats | null>(null);
   const [hourlyStats, setHourlyStats] = useState<HourlyStats[]>([]);
+  const [incidents, setIncidents] = useState<IncidentResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
@@ -42,16 +45,18 @@ export function EndpointDetailPage() {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [ep, checkList, statsData, hourly] = await Promise.all([
+      const [ep, checkList, statsData, hourly, incidentList] = await Promise.all([
         endpointsApi.getEndpoint(endpointId),
         healthChecksApi.getChecks(endpointId, 20),
         healthChecksApi.getStats(endpointId),
         healthChecksApi.getHourlyStats(endpointId),
+        incidentsApi.getEndpointIncidents(endpointId),
       ]);
       setEndpoint(ep);
       setChecks(checkList);
       setStats(statsData);
       setHourlyStats(hourly);
+      setIncidents(incidentList);
       setError(null);
     } catch {
       setError(t('errors.loadData'));
@@ -205,6 +210,47 @@ export function EndpointDetailPage() {
         uptimeData={uptimeData}
         hasChecks={Boolean(stats && stats.totalChecks > 0)}
       />
+
+      <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
+        <CardHeader>
+          <CardTitle className={`flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            {t('incidents.title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {incidents.length === 0 ? (
+            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('incidents.empty')}</p>
+          ) : (
+            <div className="space-y-3">
+              {incidents.slice(0, 5).map((incident) => (
+                <div
+                  key={incident.id}
+                  className={`rounded-lg border p-3 ${
+                    isDarkMode ? 'border-gray-800 bg-gray-950' : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={incident.status === 'OPEN' ? 'destructive' : 'outline'}>
+                      {t(`incidents.status.${incident.status}`)}
+                    </Badge>
+                    <Badge variant="outline">{t(`incidents.type.${incident.type}`)}</Badge>
+                    {incident.status === 'RESOLVED' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                    <span className={isDarkMode ? 'text-sm text-gray-300' : 'text-sm text-gray-700'}>
+                      {incident.title}
+                    </span>
+                  </div>
+                  {incident.description && (
+                    <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                      {incident.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <RecentChecksTable checks={checks} />
     </div>

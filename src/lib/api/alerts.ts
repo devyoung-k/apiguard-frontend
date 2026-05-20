@@ -1,5 +1,10 @@
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/lib/api-client';
-import type { AlertResponse, CreateAlertRequest, UpdateAlertRequest } from '@/types/api';
+import type {
+  AlertDeliveryResponse,
+  AlertResponse,
+  CreateAlertRequest,
+  UpdateAlertRequest,
+} from '@/types/api';
 
 export async function createAlert(
   endpointId: number,
@@ -25,4 +30,18 @@ export async function deleteAlert(id: number): Promise<void> {
 
 export async function toggleAlert(id: number): Promise<AlertResponse> {
   return apiPatch<AlertResponse>(`/alerts/${id}/toggle`);
+}
+
+export async function sendTestAlert(id: number): Promise<AlertDeliveryResponse> {
+  return apiPost<AlertDeliveryResponse>(`/alerts/${id}/test`);
+}
+
+export async function getAlertDeliveries(
+  id: number,
+  limit: number = 5,
+): Promise<AlertDeliveryResponse[]> {
+  return apiGet<AlertDeliveryResponse[]>(
+    `/alerts/${id}/deliveries`,
+    { params: { limit } },
+  );
 }

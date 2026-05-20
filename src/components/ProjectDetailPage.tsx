@@ -3,18 +3,23 @@
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Plus, ArrowLeft, Play, Edit, Trash2 } from 'lucide-react';
+import { Plus, ArrowLeft, Play, Edit, Trash2, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 import { motion } from 'framer-motion';
 import { PageLoadingState, PageErrorState } from './ui/page-states';
 import * as projectsApi from '@/lib/api/projects';
 import * as endpointsApi from '@/lib/api/endpoints';
 import * as healthChecksApi from '@/lib/api/health-checks';
-import type { ProjectResponse, EndpointResponse } from '@/types/api';
+import * as incidentsApi from '@/lib/api/incidents';
+import type { ProjectResponse, EndpointResponse, IncidentResponse } from '@/types/api';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/utils';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { useTranslations } from 'next-intl';
 import { PlanLimitBanner } from '@/components/PlanLimitBanner';
@@ -31,8 +36,14 @@ export function ProjectDetailPage() {
   const { myRole } = useWorkspace();
   const [project, setProject] = useState<ProjectResponse | null>(null);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
+  const [incidents, setIncidents] = useState<IncidentResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditingProject, setIsEditingProject] = useState(false);
+  const [editProjectName, setEditProjectName] = useState('');
+  const [editProjectDescription, setEditProjectDescription] = useState('');
+  const [isSavingProject, setIsSavingProject] = useState(false);
+  const [isDeletingProject, setIsDeletingProject] = useState(false);
 
   const projectId = Number(params.id);
   const canWrite = canEdit(myRole);
@@ -41,12 +52,16 @@ export function ProjectDetailPage() {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [projectData, endpointList] = await Promise.all([
+      const [projectData, endpointList, incidentList] = await Promise.all([
         projectsApi.getProject(projectId),
         endpointsApi.getEndpoints(projectId),
+        incidentsApi.getProjectIncidents(projectId),
       ]);
       setProject(projectData);
+      setEditProjectName(projectData.name);
+      setEditProjectDescription(projectData.description ?? '');
       setEndpoints(endpointList);
+      setIncidents(incidentList);
       setError(null);
     } catch {
       setError(t('errors.loadData'));
@@ -85,6 +100,43 @@ export function ProjectDetailPage() {
 
   const handleBack = () => {
     router.push('/projects');
+  };
+
+  const handleSaveProject = async () => {
+    if (!project || !editProjectName.trim()) {
+      toast.error(t('errors.enterProjectName'));
+      return;
+    }
+
+    setIsSavingProject(true);
+    try {
+      const updated = await projectsApi.updateProject(project.id, {
+        name: editProjectName.trim(),
+        description: editProjectDescription.trim(),
+      });
+      setProject(updated);
+      setIsEditingProject(false);
+      toast.success(t('toasts.projectUpdated'));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t('errors.updateProjectFailed')));
+    } finally {
+      setIsSavingProject(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!project || !confirm(t('confirmDeleteProject'))) return;
+
+    setIsDeletingProject(true);
+    try {
+      await projectsApi.deleteProject(project.id);
+      toast.success(t('toasts.projectDeleted'));
+      router.push('/projects');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t('errors.deleteProjectFailed')));
+    } finally {
+      setIsDeletingProject(false);
+    }
   };
 
   const handleToggle = async (endpointId: number) => {
@@ -170,19 +222,109 @@ export function ProjectDetailPage() {
             </p>
           </div>
         </div>
-        {canWrite && (
-          <Button
-            className="gap-2"
-            onClick={() => router.push(`/projects/${projectId}/endpoints/new`)}
-          >
-            <Plus className="h-4 w-4" />
-            {t('addEndpoint')}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {canWrite && (
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => setIsEditingProject((prev) => !prev)}
+            >
+              {isEditingProject ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+              {isEditingProject ? t('cancel') : t('editProject')}
+            </Button>
+          )}
+          {canRemove && (
+            <Button
+              variant="outline"
+              className="gap-2 border-red-500/30 text-red-600"
+              onClick={handleDeleteProject}
+              disabled={isDeletingProject}
+            >
+              {isDeletingProject ? <Trash2 className="h-4 w-4 animate-pulse" /> : <Trash2 className="h-4 w-4" />}
+              {t('deleteProject')}
+            </Button>
+          )}
+          {canWrite && (
+            <Button
+              className="gap-2"
+              onClick={() => router.push(`/projects/${projectId}/endpoints/new`)}
+            >
+              <Plus className="h-4 w-4" />
+              {t('addEndpoint')}
+            </Button>
+          )}
+        </div>
       </div>
+
+      {isEditingProject && (
+        <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
+          <CardContent className="space-y-4 pt-6">
+            <div className="space-y-2">
+              <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('projectForm.name')}</Label>
+              <Input
+                value={editProjectName}
+                onChange={(event) => setEditProjectName(event.target.value)}
+                className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className={isDarkMode ? 'text-gray-300' : ''}>{t('projectForm.description')}</Label>
+              <Textarea
+                value={editProjectDescription}
+                onChange={(event) => setEditProjectDescription(event.target.value)}
+                className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}
+              />
+            </div>
+            <Button onClick={handleSaveProject} disabled={isSavingProject || !editProjectName.trim()}>
+              {t('projectForm.save')}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Plan Limit Banner */}
       <PlanLimitBanner type="endpoint" current={endpoints.length} />
+
+      <Card className={isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-300 shadow-sm'}>
+        <CardHeader>
+          <CardTitle className={`flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            {t('incidents.title')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {incidents.length === 0 ? (
+            <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>{t('incidents.empty')}</p>
+          ) : (
+            <div className="space-y-3">
+              {incidents.slice(0, 5).map((incident) => (
+                <div
+                  key={incident.id}
+                  className={`rounded-lg border p-3 ${
+                    isDarkMode ? 'border-gray-800 bg-gray-950' : 'border-gray-200 bg-gray-50'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={incident.status === 'OPEN' ? 'destructive' : 'outline'}>
+                      {t(`incidents.status.${incident.status}`)}
+                    </Badge>
+                    <Badge variant="outline">{t(`incidents.type.${incident.type}`)}</Badge>
+                    {incident.status === 'RESOLVED' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                    <span className={isDarkMode ? 'text-sm text-gray-300' : 'text-sm text-gray-700'}>
+                      {incident.title}
+                    </span>
+                  </div>
+                  {incident.description && (
+                    <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                      {incident.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Endpoints List */}
       <div className="space-y-4">

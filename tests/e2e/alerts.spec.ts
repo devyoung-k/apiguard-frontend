@@ -62,5 +62,9 @@ test.describe('alert flows', () => {
 
     // Verify alert appears in list
     await expect(page.getByText('alert@example.com')).toBeVisible();
+
+    await page.getByRole('button', { name: '테스트 알림 발송' }).click();
+    await expect(page.getByText('최근 발송 이력')).toBeVisible();
+    await expect(page.getByText('성공')).toBeVisible();
   });
 });

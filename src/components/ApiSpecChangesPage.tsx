@@ -7,7 +7,10 @@ import {
   GitCompareArrows,
   Loader2,
   Plus,
+  Power,
   RefreshCw,
+  Save,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -50,9 +53,14 @@ export function ApiSpecChangesPage() {
     useState<ApiSpecDiffDetailResponse | null>(null);
   const [newSourceName, setNewSourceName] = useState("");
   const [newSourceUrl, setNewSourceUrl] = useState("");
+  const [editSourceName, setEditSourceName] = useState("");
+  const [editSourceUrl, setEditSourceUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [isUpdatingSource, setIsUpdatingSource] = useState(false);
+  const [isDeletingSource, setIsDeletingSource] = useState(false);
+  const [isTogglingSource, setIsTogglingSource] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const canManageSpecs = canEdit(myRole);
 
@@ -172,6 +180,11 @@ export function ApiSpecChangesPage() {
     });
   }, [fetchDiffs, selectedSourceId, t]);
 
+  useEffect(() => {
+    setEditSourceName(selectedSource?.name ?? "");
+    setEditSourceUrl(selectedSource?.specUrl ?? "");
+  }, [selectedSource]);
+
   const handleCreateSource = async () => {
     if (!selectedProjectId) {
       toast.error(t("errors.selectProject"));
@@ -201,6 +214,10 @@ export function ApiSpecChangesPage() {
   };
 
   const handleCheckSource = async () => {
+    if (!canManageSpecs) {
+      toast.error(t("errors.update"));
+      return;
+    }
     if (!selectedSourceId) {
       toast.error(t("errors.selectSource"));
       return;
@@ -216,6 +233,63 @@ export function ApiSpecChangesPage() {
       toast.error(getApiErrorMessage(err, t("errors.check")));
     } finally {
       setIsChecking(false);
+    }
+  };
+
+  const handleUpdateSource = async () => {
+    if (!selectedSource || !editSourceName.trim() || !editSourceUrl.trim()) {
+      toast.error(t("errors.fillSource"));
+      return;
+    }
+
+    setIsUpdatingSource(true);
+    try {
+      const updated = await specsApi.updateSpecSource(selectedSource.id, {
+        name: editSourceName.trim(),
+        specUrl: editSourceUrl.trim(),
+      });
+      setSources((prev) => prev.map((source) => (source.id === updated.id ? updated : source)));
+      toast.success(t("toasts.updated"));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t("errors.update")));
+    } finally {
+      setIsUpdatingSource(false);
+    }
+  };
+
+  const handleToggleSource = async () => {
+    if (!selectedSource) return;
+
+    setIsTogglingSource(true);
+    try {
+      const updated = await specsApi.toggleSpecSource(selectedSource.id);
+      setSources((prev) => prev.map((source) => (source.id === updated.id ? updated : source)));
+      toast.success(updated.active ? t("toasts.enabled") : t("toasts.disabled"));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t("errors.update")));
+    } finally {
+      setIsTogglingSource(false);
+    }
+  };
+
+  const handleDeleteSource = async () => {
+    if (!selectedSource || !confirm(t("source.confirmDelete"))) return;
+
+    setIsDeletingSource(true);
+    try {
+      await specsApi.deleteSpecSource(selectedSource.id);
+      setSources((prev) => prev.filter((source) => source.id !== selectedSource.id));
+      setSelectedSourceId("");
+      setDiffs([]);
+      setSelectedDiff(null);
+      if (selectedProjectId) {
+        await fetchSources(selectedProjectId);
+      }
+      toast.success(t("toasts.deleted"));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t("errors.delete")));
+    } finally {
+      setIsDeletingSource(false);
     }
   };
 
@@ -266,7 +340,7 @@ export function ApiSpecChangesPage() {
         </div>
         <Button
           className="w-full gap-2 lg:w-auto"
-          disabled={!selectedSourceId || isChecking}
+          disabled={!canManageSpecs || !selectedSourceId || !selectedSource?.active || isChecking}
           onClick={handleCheckSource}
         >
           {isChecking ? (
@@ -324,15 +398,72 @@ export function ApiSpecChangesPage() {
               </div>
 
               {selectedSource && (
-                <div className={`rounded-lg border p-3 text-sm ${isDarkMode ? "border-gray-800 bg-gray-950 text-gray-300" : "border-gray-200 bg-gray-50 text-gray-700"}`}>
+                <div className={`space-y-3 rounded-lg border p-3 text-sm ${isDarkMode ? "border-gray-800 bg-gray-950 text-gray-300" : "border-gray-200 bg-gray-50 text-gray-700"}`}>
                   <div className="mb-2 flex items-center gap-2">
                     <FileJson className="h-4 w-4 text-blue-500" />
                     <span className="font-medium">{selectedSource.name}</span>
+                    <Badge variant={selectedSource.active ? "outline" : "secondary"}>
+                      {selectedSource.active ? t("source.active") : t("source.inactive")}
+                    </Badge>
                   </div>
                   <p className="break-all text-xs">{selectedSource.specUrl}</p>
                   <p className="mt-2 text-xs">
                     {t("source.lastChecked")}: {formatDate(selectedSource.lastCheckedAt)}
                   </p>
+                  {canManageSpecs && (
+                    <div className="space-y-3 border-t pt-3 dark:border-gray-800">
+                      <div className="space-y-2">
+                        <Label className={isDarkMode ? "text-gray-300" : ""}>
+                          {t("create.name")}
+                        </Label>
+                        <Input
+                          value={editSourceName}
+                          onChange={(event) => setEditSourceName(event.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className={isDarkMode ? "text-gray-300" : ""}>
+                          {t("create.url")}
+                        </Label>
+                        <Input
+                          value={editSourceUrl}
+                          onChange={(event) => setEditSourceUrl(event.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2"
+                          disabled={isUpdatingSource}
+                          onClick={handleUpdateSource}
+                        >
+                          {isUpdatingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          {t("source.save")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gap-2"
+                          disabled={isTogglingSource}
+                          onClick={handleToggleSource}
+                        >
+                          {isTogglingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+                          {selectedSource.active ? t("source.disable") : t("source.enable")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          className="gap-2"
+                          disabled={isDeletingSource}
+                          onClick={handleDeleteSource}
+                        >
+                          {isDeletingSource ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          {t("source.delete")}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

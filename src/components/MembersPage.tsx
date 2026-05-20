@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWorkspace } from '@/contexts/workspace-context';
 import { useAuth } from '@/contexts/auth-context';
 import {
@@ -61,6 +61,19 @@ export function MembersPage() {
   const canInvite = canInviteMembers(myRole);
   const canChangeRole = canChangeMemberRole(myRole);
   const canRemove = canRemoveMember(myRole);
+  const assignableInviteRoles = useMemo(
+    () =>
+      myRole === 'OWNER'
+        ? ASSIGNABLE_ROLES
+        : ASSIGNABLE_ROLES.filter((role) => role !== 'ADMIN'),
+    [myRole],
+  );
+
+  useEffect(() => {
+    if (!assignableInviteRoles.includes(inviteRole)) {
+      setInviteRole(assignableInviteRoles[0] ?? 'MEMBER');
+    }
+  }, [assignableInviteRoles, inviteRole]);
 
   const handleInvite = useCallback(async () => {
     if (!inviteEmail.trim()) {
@@ -185,7 +198,7 @@ export function MembersPage() {
               onChange={(e) => setInviteRole(e.target.value as WorkspaceRole)}
               className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             >
-              {ASSIGNABLE_ROLES.map((role) => (
+              {assignableInviteRoles.map((role) => (
                 <option key={role} value={role}>
                   {tp(`roles.${role}`)}
                 </option>

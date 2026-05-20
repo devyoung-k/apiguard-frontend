@@ -30,7 +30,8 @@ export type HttpMethod =
   | 'HEAD'
   | 'OPTIONS';
 export type CheckStatus = 'SUCCESS' | 'FAILURE' | 'TIMEOUT' | 'ERROR';
-export type AlertType = 'EMAIL' | 'SLACK';
+export type AlertType = 'EMAIL' | 'SLACK' | 'WEBHOOK';
+export type AlertDeliveryStatus = 'SUCCESS' | 'FAILED';
 export type IncidentStatus = 'OPEN' | 'RESOLVED';
 export type IncidentType = 'AVAILABILITY' | 'PERFORMANCE' | 'CONTRACT_CHANGE';
 export type IncidentSeverity = 'WARNING' | 'CRITICAL';
@@ -226,6 +227,12 @@ export interface CreateApiSpecSourceRequest {
   specUrl: string;
 }
 
+export interface UpdateApiSpecSourceRequest {
+  name?: string;
+  specUrl?: string;
+  active?: boolean;
+}
+
 export interface ApiSpecDiffResponse {
   id: number;
   specSourceId: number;
@@ -280,6 +287,18 @@ export interface AlertResponse {
   threshold: number;
   isActive: boolean;
   createdAt: string;
+}
+
+export interface AlertDeliveryResponse {
+  id: number;
+  alertId: number;
+  endpointId: number;
+  alertType: AlertType;
+  target: string;
+  status: AlertDeliveryStatus;
+  testDelivery: boolean;
+  errorMessage: string | null;
+  triggeredAt: string;
 }
 
 // ============================================================
@@ -384,7 +403,9 @@ export interface PlanInfo {
 export interface SubscriptionResponse {
   planType: PlanType;
   active: boolean;
+  cancelAtPeriodEnd: boolean;
   expiredAt: string | null;
+  maxProjects: number;
   maxEndpointsPerProject: number;
   minCheckIntervalSeconds: number;
   maxAlertChannels: number;
@@ -403,18 +424,24 @@ export interface StatusPageResponse {
   description: string | null;
   isPublic: boolean;
   createdAt: string;
+  allEndpoints: boolean;
+  endpointIds: number[];
 }
 
 export interface CreateStatusPageRequest {
   title: string;
   description?: string;
   slug: string;
+  allEndpoints?: boolean;
+  endpointIds?: number[];
 }
 
 export interface UpdateStatusPageRequest {
   title?: string;
   description?: string;
   isPublic?: boolean;
+  allEndpoints?: boolean;
+  endpointIds?: number[];
 }
 
 export type OverallStatus = 'OPERATIONAL' | 'DEGRADED' | 'MAJOR_OUTAGE' | 'NO_DATA';

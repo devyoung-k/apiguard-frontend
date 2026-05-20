@@ -13,7 +13,9 @@ import { useWorkspace } from '@/contexts/workspace-context';
 import { canEdit } from '@/lib/permissions';
 import { getApiErrorMessage } from '@/lib/utils';
 import * as statusPageApi from '@/lib/api/status-page';
-import type { StatusPageResponse } from '@/types/api';
+import * as projectsApi from '@/lib/api/projects';
+import * as endpointsApi from '@/lib/api/endpoints';
+import type { EndpointResponse, StatusPageResponse } from '@/types/api';
 
 export function StatusPageManagePage() {
   const isDarkMode = useDarkMode();
@@ -22,6 +24,9 @@ export function StatusPageManagePage() {
   const canWrite = canEdit(myRole);
 
   const [statusPage, setStatusPage] = useState<StatusPageResponse | null>(null);
+  const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
+  const [selectedEndpointIds, setSelectedEndpointIds] = useState<number[]>([]);
+  const [publishAllEndpoints, setPublishAllEndpoints] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -30,6 +35,7 @@ export function StatusPageManagePage() {
   const [description, setDescription] = useState('');
   const [slug, setSlug] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isSavingEndpoints, setIsSavingEndpoints] = useState(false);
 
   const fetchStatusPage = useCallback(async () => {
     if (!currentWorkspace) return;
@@ -37,18 +43,47 @@ export function StatusPageManagePage() {
       setIsLoading(true);
       const data = await statusPageApi.getStatusPage(currentWorkspace.id);
       setStatusPage(data);
+      setPublishAllEndpoints(data.allEndpoints);
+      setSelectedEndpointIds(data.endpointIds ?? []);
       setNotFound(false);
     } catch {
       setStatusPage(null);
+      setPublishAllEndpoints(true);
+      setSelectedEndpointIds([]);
       setNotFound(true);
     } finally {
       setIsLoading(false);
     }
   }, [currentWorkspace]);
 
+  const fetchEndpoints = useCallback(async () => {
+    if (!currentWorkspace) {
+      setEndpoints([]);
+      return;
+    }
+
+    try {
+      const projects = await projectsApi.getProjects(currentWorkspace.id);
+      const endpointResults = await Promise.allSettled(
+        projects.map((project) => endpointsApi.getEndpoints(project.id)),
+      );
+      setEndpoints(
+        endpointResults
+          .filter(
+            (result): result is PromiseFulfilledResult<EndpointResponse[]> =>
+              result.status === 'fulfilled',
+          )
+          .flatMap((result) => result.value),
+      );
+    } catch {
+      setEndpoints([]);
+    }
+  }, [currentWorkspace]);
+
   useEffect(() => {
     fetchStatusPage();
-  }, [fetchStatusPage]);
+    void fetchEndpoints();
+  }, [fetchEndpoints, fetchStatusPage]);
 
   const handleCreate = async () => {
     if (!currentWorkspace || !title.trim() || !slug.trim()) return;
@@ -58,8 +93,12 @@ export function StatusPageManagePage() {
         title: title.trim(),
         description: description.trim() || undefined,
         slug: slug.trim(),
+        allEndpoints: publishAllEndpoints,
+        endpointIds: publishAllEndpoints ? [] : selectedEndpointIds,
       });
       setStatusPage(data);
+      setPublishAllEndpoints(data.allEndpoints);
+      setSelectedEndpointIds(data.endpointIds ?? []);
       setNotFound(false);
       toast.success(t('toasts.created'));
     } catch (error) {
@@ -82,6 +121,39 @@ export function StatusPageManagePage() {
     }
   };
 
+  const handleToggleEndpoint = (endpointId: number) => {
+    if (publishAllEndpoints) {
+      setPublishAllEndpoints(false);
+      setSelectedEndpointIds(endpoints.map((endpoint) => endpoint.id).filter((id) => id !== endpointId));
+      return;
+    }
+
+    setSelectedEndpointIds((prev) =>
+      prev.includes(endpointId)
+        ? prev.filter((id) => id !== endpointId)
+        : [...prev, endpointId],
+    );
+  };
+
+  const handleSaveEndpoints = async () => {
+    if (!currentWorkspace || !statusPage) return;
+    setIsSavingEndpoints(true);
+    try {
+      const data = await statusPageApi.updateStatusPage(currentWorkspace.id, {
+        allEndpoints: publishAllEndpoints,
+        endpointIds: publishAllEndpoints ? [] : selectedEndpointIds,
+      });
+      setStatusPage(data);
+      setPublishAllEndpoints(data.allEndpoints);
+      setSelectedEndpointIds(data.endpointIds ?? []);
+      toast.success(t('toasts.updated'));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, t('errors.updateFailed')));
+    } finally {
+      setIsSavingEndpoints(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!currentWorkspace || !confirm(t('manage.confirmDelete'))) return;
     try {
@@ -91,6 +163,8 @@ export function StatusPageManagePage() {
       setTitle('');
       setDescription('');
       setSlug('');
+      setPublishAllEndpoints(true);
+      setSelectedEndpointIds([]);
       toast.success(t('toasts.deleted'));
     } catch (error) {
       toast.error(getApiErrorMessage(error, t('errors.deleteFailed')));
@@ -176,6 +250,79 @@ export function StatusPageManagePage() {
               </div>
             )}
 
+            {canWrite && (
+              <div className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+                <div>
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {t('manage.endpoints')}
+                  </p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    {publishAllEndpoints
+                      ? t('manage.allEndpoints')
+                      : t('manage.selectedEndpoints', { count: selectedEndpointIds.length })}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant={publishAllEndpoints ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setPublishAllEndpoints(true);
+                      setSelectedEndpointIds([]);
+                    }}
+                  >
+                    {t('manage.allEndpointsOption')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!publishAllEndpoints && selectedEndpointIds.length === 0 ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setPublishAllEndpoints(false);
+                      setSelectedEndpointIds([]);
+                    }}
+                  >
+                    {t('manage.noEndpointsSelected')}
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {endpoints.length === 0 ? (
+                    <p className={isDarkMode ? 'text-sm text-gray-400' : 'text-sm text-gray-600'}>
+                      {t('manage.noEndpoints')}
+                    </p>
+                  ) : (
+                    endpoints.map((endpoint) => (
+                      <label
+                        key={endpoint.id}
+                        className={`flex items-center gap-3 rounded-lg border p-3 text-sm ${
+                          isDarkMode ? 'border-gray-800 bg-gray-950 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={publishAllEndpoints || selectedEndpointIds.includes(endpoint.id)}
+                          onChange={() => handleToggleEndpoint(endpoint.id)}
+                        />
+                        <span className="font-mono text-xs">{endpoint.httpMethod}</span>
+                        <span className="break-all">{endpoint.url}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveEndpoints}
+                  disabled={isSavingEndpoints}
+                  className="gap-2"
+                >
+                  {isSavingEndpoints && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {t('manage.saveEndpoints')}
+                </Button>
+              </div>
+            )}
+
             {/* 삭제 */}
             {canWrite && (
               <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -233,6 +380,51 @@ export function StatusPageManagePage() {
               <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                 {t('create.slugHelp', { slug: slug || 'my-api-status' })}
               </p>
+            </div>
+            <div className="space-y-2 rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+              <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {t('manage.endpoints')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant={publishAllEndpoints ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setPublishAllEndpoints(true);
+                    setSelectedEndpointIds([]);
+                  }}
+                >
+                  {t('manage.allEndpointsOption')}
+                </Button>
+                <Button
+                  type="button"
+                  variant={!publishAllEndpoints && selectedEndpointIds.length === 0 ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setPublishAllEndpoints(false);
+                    setSelectedEndpointIds([]);
+                  }}
+                >
+                  {t('manage.noEndpointsSelected')}
+                </Button>
+              </div>
+              {!publishAllEndpoints && endpoints.map((endpoint) => (
+                <label
+                  key={endpoint.id}
+                  className={`flex items-center gap-3 rounded-lg border p-3 text-sm ${
+                    isDarkMode ? 'border-gray-800 bg-gray-950 text-gray-300' : 'border-gray-200 bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedEndpointIds.includes(endpoint.id)}
+                    onChange={() => handleToggleEndpoint(endpoint.id)}
+                  />
+                  <span className="font-mono text-xs">{endpoint.httpMethod}</span>
+                  <span className="break-all">{endpoint.url}</span>
+                </label>
+              ))}
             </div>
             <Button
               onClick={handleCreate}

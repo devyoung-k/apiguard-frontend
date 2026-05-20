@@ -65,3 +65,11 @@ export function getPaymentHistory(
     `/workspaces/${workspaceId}/payment/history`,
   );
 }
+
+export function cancelSubscription(
+  workspaceId: number,
+): Promise<SubscriptionResponse> {
+  return apiPost<SubscriptionResponse>(
+    `/workspaces/${workspaceId}/subscription/cancel`,
+  );
+}

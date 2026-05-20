@@ -6,14 +6,20 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Plus, Mail, MessageSquare, Trash2, X, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Mail, MessageSquare, Trash2, X, Loader2, AlertCircle, Send, Webhook, Edit } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Switch } from "./ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 import * as alertsApi from "@/lib/api/alerts";
 import * as projectsApi from "@/lib/api/projects";
 import * as endpointsApi from "@/lib/api/endpoints";
-import type { AlertResponse, AlertType, EndpointResponse, ProjectResponse } from "@/types/api";
+import type {
+  AlertDeliveryResponse,
+  AlertResponse,
+  AlertType,
+  EndpointResponse,
+  ProjectResponse,
+} from "@/types/api";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
@@ -31,6 +37,7 @@ export function AlertsPage() {
   const t = useTranslations("alerts");
   const { currentWorkspace, isLoading: isWorkspaceLoading, myRole } = useWorkspace();
   const [alerts, setAlerts] = useState<AlertWithEndpoint[]>([]);
+  const [deliveriesByAlertId, setDeliveriesByAlertId] = useState<Record<number, AlertDeliveryResponse[]>>({});
   const [projects, setProjects] = useState<ProjectResponse[]>([]);
   const [endpoints, setEndpoints] = useState<EndpointResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +50,12 @@ export function AlertsPage() {
   const [newTarget, setNewTarget] = useState("");
   const [newThreshold, setNewThreshold] = useState("3");
   const [isCreating, setIsCreating] = useState(false);
+  const [editingAlertId, setEditingAlertId] = useState<number | null>(null);
+  const [editAlertType, setEditAlertType] = useState<AlertType>("EMAIL");
+  const [editTarget, setEditTarget] = useState("");
+  const [editThreshold, setEditThreshold] = useState("3");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [testingAlertId, setTestingAlertId] = useState<number | null>(null);
   const canManageAlerts = canEdit(myRole);
 
   const fetchData = useCallback(async () => {
@@ -80,8 +93,26 @@ export function AlertsPage() {
         )
         .flatMap((result) => result.value);
 
+      const deliveryResults = await Promise.allSettled(
+        allAlerts.map(async (alert) => ({
+          alertId: alert.id,
+          deliveries: await alertsApi.getAlertDeliveries(alert.id, 3),
+        })),
+      );
+
+      const deliveries = deliveryResults
+        .filter(
+          (result): result is PromiseFulfilledResult<{ alertId: number; deliveries: AlertDeliveryResponse[] }> =>
+            result.status === "fulfilled",
+        )
+        .reduce<Record<number, AlertDeliveryResponse[]>>((acc, result) => {
+          acc[result.value.alertId] = result.value.deliveries;
+          return acc;
+        }, {});
+
       setEndpoints(allEndpoints);
       setAlerts(allAlerts);
+      setDeliveriesByAlertId(deliveries);
       setError(null);
     } catch {
       setError(t('errors.loadSettings'));
@@ -162,6 +193,69 @@ export function AlertsPage() {
     } catch {
       toast.error(t('errors.toggleFailed'));
     }
+  };
+
+  const handleStartEdit = (alert: AlertWithEndpoint) => {
+    setEditingAlertId(alert.id);
+    setEditAlertType(alert.alertType);
+    setEditTarget(alert.target);
+    setEditThreshold(String(alert.threshold));
+  };
+
+  const handleUpdate = async () => {
+    if (!editingAlertId) return;
+    if (!editTarget.trim()) {
+      toast.error(t('errors.enterTarget'));
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const updated = await alertsApi.updateAlert(editingAlertId, {
+        alertType: editAlertType,
+        target: editTarget.trim(),
+        threshold: Number(editThreshold) || 3,
+      });
+      setAlerts((prev) => prev.map((alert) => (alert.id === updated.id ? { ...alert, ...updated } : alert)));
+      setEditingAlertId(null);
+      toast.success(t('toasts.updated'));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t('errors.updateFailed')));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleTestAlert = async (alertId: number) => {
+    setTestingAlertId(alertId);
+    try {
+      const delivery = await alertsApi.sendTestAlert(alertId);
+      setDeliveriesByAlertId((prev) => ({
+        ...prev,
+        [alertId]: [delivery, ...(prev[alertId] ?? [])].slice(0, 3),
+      }));
+      if (delivery.status === 'SUCCESS') {
+        toast.success(t('toasts.testSent'));
+      } else {
+        toast.error(delivery.errorMessage || t('errors.testFailed'));
+      }
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t('errors.testFailed')));
+    } finally {
+      setTestingAlertId(null);
+    }
+  };
+
+  const alertTypeLabel = (type: AlertType) => {
+    if (type === 'EMAIL') return t('form.typeEmail');
+    if (type === 'SLACK') return t('form.typeSlack');
+    return t('form.typeWebhook');
+  };
+
+  const AlertIcon = ({ type }: { type: AlertType }) => {
+    if (type === 'EMAIL') return <Mail className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />;
+    if (type === 'WEBHOOK') return <Webhook className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />;
+    return <MessageSquare className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />;
   };
 
   if (isLoading) {
@@ -265,6 +359,7 @@ export function AlertsPage() {
                       <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
                         <SelectItem value="EMAIL" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>{t('form.typeEmail')}</SelectItem>
                         <SelectItem value="SLACK" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>{t('form.typeSlack')}</SelectItem>
+                        <SelectItem value="WEBHOOK" className={isDarkMode ? 'text-white hover:bg-gray-700' : ''}>{t('form.typeWebhook')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -340,16 +435,12 @@ export function AlertsPage() {
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         isDarkMode ? 'bg-blue-500/10' : 'bg-blue-100'
                       }`}>
-                        {config.alertType === 'EMAIL' ? (
-                          <Mail className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                        ) : (
-                          <MessageSquare className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                        )}
+                        <AlertIcon type={config.alertType} />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className={isDarkMode ? 'text-white' : 'text-gray-900'}>
-                            {t('alertTitle', {type: config.alertType})}
+                            {t('alertTitle', {type: alertTypeLabel(config.alertType)})}
                           </h3>
                           <Badge variant={config.isActive ? 'default' : 'secondary'} className={
                             config.isActive 
@@ -379,6 +470,29 @@ export function AlertsPage() {
                     </div>
                     {canManageAlerts && (
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label={t('testAlert')}
+                          onClick={() => handleTestAlert(config.id)}
+                          disabled={testingAlertId === config.id}
+                          className={isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700' : ''}
+                        >
+                          {testingAlertId === config.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label={t('editAlert')}
+                          onClick={() => handleStartEdit(config)}
+                          className={isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700' : ''}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         <Switch
                           checked={config.isActive}
                           onCheckedChange={() => handleToggle(config.id)}
@@ -391,6 +505,79 @@ export function AlertsPage() {
                       </div>
                     )}
                   </div>
+                  {editingAlertId === config.id && (
+                    <div className={`mt-4 rounded-lg border p-4 ${isDarkMode ? 'border-gray-800 bg-gray-950' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-[160px_1fr_120px_auto]">
+                        <Select value={editAlertType} onValueChange={(value) => setEditAlertType(value as AlertType)}>
+                          <SelectTrigger
+                            aria-label={t('form.alertType')}
+                            className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : ''}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className={isDarkMode ? 'bg-gray-800 border-gray-700' : ''}>
+                            <SelectItem value="EMAIL">{t('form.typeEmail')}</SelectItem>
+                            <SelectItem value="SLACK">{t('form.typeSlack')}</SelectItem>
+                            <SelectItem value="WEBHOOK">{t('form.typeWebhook')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          value={editTarget}
+                          onChange={(event) => setEditTarget(event.target.value)}
+                          placeholder={t('form.targetPlaceholder')}
+                          className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : ''}
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          value={editThreshold}
+                          onChange={(event) => setEditThreshold(event.target.value)}
+                          className={isDarkMode ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : ''}
+                        />
+                        <div className="flex gap-2">
+                          <Button type="button" onClick={handleUpdate} disabled={isUpdating}>
+                            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {t('save')}
+                          </Button>
+                          <Button type="button" variant="outline" onClick={() => setEditingAlertId(null)}>
+                            {t('cancel')}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {(deliveriesByAlertId[config.id]?.length ?? 0) > 0 && (
+                    <div className={`mt-4 rounded-lg border p-3 ${isDarkMode ? 'border-gray-800 bg-gray-950' : 'border-gray-200 bg-gray-50'}`}>
+                      <p className={`mb-2 text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {t('deliveries.title')}
+                      </p>
+                      <div className="space-y-2">
+                        {deliveriesByAlertId[config.id].map((delivery) => (
+                          <div key={delivery.id} className="flex items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={delivery.status === 'SUCCESS' ? 'outline' : 'destructive'}
+                                className={delivery.status === 'SUCCESS' ? 'border-green-500 text-green-600' : ''}
+                              >
+                                {t(`deliveries.status.${delivery.status}`)}
+                              </Badge>
+                              {delivery.testDelivery && (
+                                <Badge variant="secondary">{t('deliveries.test')}</Badge>
+                              )}
+                              {delivery.errorMessage && (
+                                <span className="max-w-[260px] truncate text-red-500" title={delivery.errorMessage}>
+                                  {delivery.errorMessage}
+                                </span>
+                              )}
+                            </div>
+                            <span className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
+                              {new Date(delivery.triggeredAt).toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

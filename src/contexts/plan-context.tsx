@@ -33,13 +33,15 @@ const PlanContext = createContext<PlanContextType | undefined>(undefined);
 
 const MOCK_SUBSCRIPTION: SubscriptionResponse = {
   planType: 'FREE',
-  active: false,
+  active: true,
+  cancelAtPeriodEnd: false,
   expiredAt: null,
+  maxProjects: 3,
   maxEndpointsPerProject: 5,
   minCheckIntervalSeconds: 300,
-  maxAlertChannels: 2,
-  maxMembers: 3,
-  dataRetentionDays: 1,
+  maxAlertChannels: 1,
+  maxMembers: 1,
+  dataRetentionDays: 7,
 };
 
 export function PlanProvider({ children }: { children: ReactNode }) {
@@ -51,7 +53,14 @@ export function PlanProvider({ children }: { children: ReactNode }) {
 
   const currentPlan: PlanType = subscription?.planType ?? 'FREE';
   const isPro = currentPlan === 'PRO';
-  const limits = getPlanLimits(currentPlan);
+  const fallbackLimits = getPlanLimits(currentPlan);
+  const limits: PlanLimits = {
+    maxProjects: subscription?.maxProjects ?? fallbackLimits.maxProjects,
+    maxEndpointsPerProject:
+      subscription?.maxEndpointsPerProject ?? fallbackLimits.maxEndpointsPerProject,
+    minCheckInterval:
+      subscription?.minCheckIntervalSeconds ?? fallbackLimits.minCheckInterval,
+  };
 
   const refreshSubscription = useCallback(async (workspaceId?: number) => {
     if (USE_MOCK_API) {
