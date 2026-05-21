@@ -69,6 +69,18 @@ interface MockSubscription {
   dataRetentionDays: number;
 }
 
+type MockPaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+
+interface MockPayment {
+  id: number;
+  orderId: string;
+  paymentKey: string | null;
+  planType: 'PRO';
+  amount: number;
+  status: MockPaymentStatus;
+  paidAt: string | null;
+}
+
 interface MockAdminUser {
   id: number;
   email: string;
@@ -154,6 +166,7 @@ interface MockState {
   workspaces: MockWorkspace[];
   members: MockWorkspaceMember[];
   subscription: MockSubscription;
+  payments: MockPayment[];
   projects: MockProject[];
   endpointsByProjectId: Record<number, MockEndpoint[]>;
   projectStatsById: Record<number, MockProjectStats>;
@@ -240,6 +253,7 @@ function createState(options: MockApiOptions = {}): MockState {
       maxMembers: 1,
       dataRetentionDays: 7,
     },
+    payments: [],
     projects,
     endpointsByProjectId: { ...(options.endpointsByProjectId ?? {}) },
     alertsByEndpointId: { ...(options.alertsByEndpointId ?? {}) },
@@ -289,6 +303,7 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
   let nextCheckId = 3000;
   let nextAlertDeliveryId = 4000;
   let nextStatusPageId = 5000;
+  let nextPaymentId = 6000;
   let nextMemberId =
     Math.max(10, ...state.members.map((m) => m.id)) + 1;
 
@@ -343,6 +358,25 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
       return json(route, { success: true, data: createdWorkspace });
     }
 
+    const workspaceMatch = pathname.match(/^\/api\/workspaces\/(\d+)$/);
+    if (workspaceMatch && method === 'GET') {
+      const workspaceId = Number(workspaceMatch[1]);
+      const workspace = state.workspaces.find((item) => item.id === workspaceId);
+      if (!workspace) {
+        return json(route, { success: false, message: 'Workspace not found.' }, 404);
+      }
+      return json(route, { success: true, data: workspace });
+    }
+
+    if (workspaceMatch && method === 'DELETE') {
+      const workspaceId = Number(workspaceMatch[1]);
+      state.workspaces = state.workspaces.filter((item) => item.id !== workspaceId);
+      if (state.workspaces.length === 0) {
+        state.members = [];
+      }
+      return json(route, { success: true });
+    }
+
     const membersMatch = pathname.match(/^\/api\/workspaces\/(\d+)\/members$/);
     if (membersMatch && method === 'GET') {
       return json(route, { success: true, data: state.members });
@@ -353,6 +387,87 @@ export async function installMockApi(page: Page, options: MockApiOptions = {}) {
     );
     if (subscriptionMatch && method === 'GET') {
       return json(route, { success: true, data: state.subscription });
+    }
+
+    const preparePaymentMatch = pathname.match(
+      /^\/api\/workspaces\/(\d+)\/payment\/prepare$/,
+    );
+    if (preparePaymentMatch && method === 'POST') {
+      const workspaceId = Number(preparePaymentMatch[1]);
+      state.payments
+        .filter((payment) => payment.status === 'PENDING')
+        .forEach((payment) => {
+          payment.status = 'CANCELLED';
+        });
+      const orderId = `apiguard-${workspaceId}-mock-${nextPaymentId}`;
+      state.payments.unshift({
+        id: nextPaymentId++,
+        orderId,
+        paymentKey: null,
+        planType: 'PRO',
+        amount: 19900,
+        status: 'PENDING',
+        paidAt: null,
+      });
+
+      return json(route, {
+        success: true,
+        data: {
+          orderId,
+          amount: 19900,
+          orderName: 'ApiGuard PRO 플랜 (1개월)',
+          clientKey: 'test-client-key',
+          customerKey: `apiguard_mock_customer_${workspaceId}`,
+          customerEmail: state.user.email,
+          customerName: state.user.nickname,
+        },
+      });
+    }
+
+    const confirmPaymentMatch = pathname.match(
+      /^\/api\/workspaces\/(\d+)\/payment\/confirm$/,
+    );
+    if (confirmPaymentMatch && method === 'POST') {
+      const body = (request.postDataJSON() ?? {}) as {
+        paymentKey?: string;
+        orderId?: string;
+        amount?: number;
+      };
+      const payment = state.payments.find((item) => item.orderId === body.orderId);
+
+      if (!payment) {
+        return json(route, { success: false, message: 'Payment not found.' }, 404);
+      }
+
+      if (payment.amount !== body.amount) {
+        payment.status = 'FAILED';
+        return json(route, { success: false, message: 'Amount mismatch.' }, 400);
+      }
+
+      payment.status = 'SUCCESS';
+      payment.paymentKey = body.paymentKey ?? 'mock-payment-key';
+      payment.paidAt = NOW;
+      state.subscription = {
+        planType: 'PRO',
+        active: true,
+        cancelAtPeriodEnd: false,
+        expiredAt: '2026-04-15T12:00:00.000Z',
+        maxProjects: 50,
+        maxEndpointsPerProject: 50,
+        minCheckIntervalSeconds: 60,
+        maxAlertChannels: 2147483647,
+        maxMembers: 2147483647,
+        dataRetentionDays: 90,
+      };
+
+      return json(route, { success: true, data: payment });
+    }
+
+    const paymentHistoryMatch = pathname.match(
+      /^\/api\/workspaces\/(\d+)\/payment\/history$/,
+    );
+    if (paymentHistoryMatch && method === 'GET') {
+      return json(route, { success: true, data: state.payments });
     }
 
     const cancelSubscriptionMatch = pathname.match(

@@ -131,6 +131,7 @@ export function BillingPage() {
 
       await openTossCheckout({
         clientKey: prepareData.clientKey,
+        customerKey: prepareData.customerKey,
         amount: prepareData.amount,
         orderId: prepareData.orderId,
         orderName: prepareData.orderName,

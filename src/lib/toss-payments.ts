@@ -1,20 +1,28 @@
-type PaymentMethod = '카드';
+type PaymentMethod = 'CARD';
+
+interface TossPaymentAmount {
+  currency: 'KRW';
+  value: number;
+}
 
 interface TossRequestPaymentParams {
-  amount: number;
+  method: PaymentMethod;
+  amount: TossPaymentAmount;
   orderId: string;
   orderName: string;
   customerEmail?: string;
   customerName?: string;
   successUrl: string;
   failUrl: string;
+  windowTarget?: 'self' | 'iframe';
+}
+
+interface TossPaymentInstance {
+  requestPayment(params: TossRequestPaymentParams): Promise<unknown>;
 }
 
 interface TossPaymentsInstance {
-  requestPayment(
-    method: PaymentMethod,
-    params: TossRequestPaymentParams,
-  ): Promise<unknown>;
+  payment(options: { customerKey: string }): TossPaymentInstance;
 }
 
 type TossPaymentsFactory = (clientKey: string) => TossPaymentsInstance;
@@ -56,7 +64,7 @@ function loadTossScript(): Promise<void> {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://js.tosspayments.com/v1/payment';
+    script.src = 'https://js.tosspayments.com/v2/standard';
     script.async = true;
     script.dataset.tossPaymentsSdk = 'true';
     script.onload = () => resolve();
@@ -69,6 +77,7 @@ function loadTossScript(): Promise<void> {
 
 export interface OpenTossCheckoutInput {
   clientKey: string;
+  customerKey?: string;
   amount: number;
   orderId: string;
   orderName: string;
@@ -89,13 +98,22 @@ export async function openTossCheckout(
   }
 
   const tossPayments = tossFactory(input.clientKey);
-  await tossPayments.requestPayment('카드', {
-    amount: input.amount,
+  const payment = tossPayments.payment({
+    customerKey: input.customerKey ?? 'ANONYMOUS',
+  });
+
+  await payment.requestPayment({
+    method: 'CARD',
+    amount: {
+      currency: 'KRW',
+      value: input.amount,
+    },
     orderId: input.orderId,
     orderName: input.orderName,
     customerEmail: input.customerEmail,
     customerName: input.customerName,
     successUrl: input.successUrl,
     failUrl: input.failUrl,
+    windowTarget: 'self',
   });
 }
