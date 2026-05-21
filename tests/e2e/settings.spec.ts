@@ -46,4 +46,23 @@ test.describe('settings flows', () => {
     // Verify success toast
     await expect(page.getByText('비밀번호가 변경되었습니다')).toBeVisible();
   });
+
+  test('deletes current workspace', async ({ page }) => {
+    await installMockApi(page);
+    await loginViaUi(page);
+
+    await page.goto('/ko/settings');
+
+    await page.getByRole('button', { name: '워크스페이스 삭제' }).click();
+    await expect(
+      page.getByRole('heading', { name: '워크스페이스를 삭제하시겠습니까?' }),
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: '삭제' }).click();
+
+    await expect(page.getByText('워크스페이스가 삭제되었습니다.')).toBeVisible();
+    await expect(
+      page.getByText('선택된 워크스페이스가 없습니다.'),
+    ).toBeVisible();
+  });
 });

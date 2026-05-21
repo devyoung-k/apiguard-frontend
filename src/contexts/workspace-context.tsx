@@ -37,6 +37,8 @@ interface WorkspaceContextType {
   addMember: (member: WorkspaceMember) => void;
   /** 워크스페이스 생성 */
   createWorkspace: (name: string) => Promise<WorkspaceResponse>;
+  /** 워크스페이스 삭제 */
+  deleteWorkspace: (id: number) => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
@@ -112,6 +114,30 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return created;
   }, []);
 
+  const deleteWorkspace = useCallback(async (id: number) => {
+    await workspacesApi.deleteWorkspace(id);
+
+    const nextWorkspaces = workspaces.filter((workspace) => workspace.id !== id);
+    const shouldSwitchWorkspace =
+      selectedWorkspaceId === id ||
+      !nextWorkspaces.some((workspace) => workspace.id === selectedWorkspaceId);
+    const nextSelectedWorkspaceId = shouldSwitchWorkspace
+      ? nextWorkspaces[0]?.id ?? null
+      : selectedWorkspaceId;
+
+    setWorkspaces(nextWorkspaces);
+    setSelectedWorkspaceId(nextSelectedWorkspaceId);
+    setMembers([]);
+
+    if (typeof window !== 'undefined') {
+      if (nextSelectedWorkspaceId) {
+        localStorage.setItem('currentWorkspaceId', String(nextSelectedWorkspaceId));
+      } else {
+        localStorage.removeItem('currentWorkspaceId');
+      }
+    }
+  }, [selectedWorkspaceId, workspaces]);
+
   // 인증 완료 시 (또는 Mock 모드) 워크스페이스 목록 로드
   useEffect(() => {
     const initializeWorkspaceState = async () => {
@@ -176,6 +202,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         refreshMembers,
         addMember,
         createWorkspace,
+        deleteWorkspace,
       }}
     >
       {children}

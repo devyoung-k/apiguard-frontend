@@ -18,6 +18,7 @@ export interface PreparePaymentResponse {
   orderName: string;
   amount: number;
   clientKey: string;
+  customerKey?: string;
   customerEmail?: string;
   customerName?: string;
 }

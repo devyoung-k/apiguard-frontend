@@ -55,6 +55,7 @@ export function PricingPage() {
       // 2단계: 토스페이먼츠 결제창 호출
       await openTossCheckout({
         clientKey: prepareData.clientKey,
+        customerKey: prepareData.customerKey,
         amount: prepareData.amount,
         orderId: prepareData.orderId,
         orderName: prepareData.orderName,

@@ -702,7 +702,10 @@ Response
     "orderId": "apiguard-1-abcdef123456",
     "amount": 19900,
     "orderName": "APIGuard PRO 1개월 이용권",
-    "clientKey": "test_ck_xxx"
+    "clientKey": "test_ck_xxx",
+    "customerKey": "apiguard_xxx",
+    "customerEmail": "owner@example.com",
+    "customerName": "Owner"
   }
 }
 ```

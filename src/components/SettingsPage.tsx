@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   AlertDialog,
@@ -26,11 +26,14 @@ import { getApiErrorMessage } from "@/lib/utils";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { canManageWorkspace } from "@/lib/permissions";
 
 type Language = "en" | "ko";
 
 export function SettingsPage() {
   const { user, refreshUser, logout } = useAuth();
+  const { currentWorkspace, myRole, deleteWorkspace } = useWorkspace();
   const isDarkMode = useDarkMode();
   const t = useTranslations("settings");
   const locale = useLocale() as Language;
@@ -49,7 +52,9 @@ export function SettingsPage() {
 
   // Account deletion
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
   const [language, setLanguage] = useState<Language>(locale);
+  const canDeleteWorkspace = canManageWorkspace(myRole);
 
   useEffect(() => {
     setLanguage(locale);
@@ -115,6 +120,20 @@ export function SettingsPage() {
     }
   };
 
+  const handleDeleteWorkspace = async () => {
+    if (!currentWorkspace) return;
+
+    setIsDeletingWorkspace(true);
+    try {
+      await deleteWorkspace(currentWorkspace.id);
+      toast.success(t("toasts.workspaceDeleted"));
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, t("toasts.deleteWorkspaceFailed")));
+    } finally {
+      setIsDeletingWorkspace(false);
+    }
+  };
+
   const handleLanguageChange = (value: Language) => {
     setLanguage(value);
     router.replace(pathname, { locale: value });
@@ -127,6 +146,9 @@ export function SettingsPage() {
   const labelClass = isDarkMode ? "text-gray-300" : "";
   const inputClass = isDarkMode
     ? "bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
+    : "";
+  const disabledInputClass = isDarkMode
+    ? "bg-gray-800 border-gray-700 text-gray-400"
     : "";
 
   return (
@@ -219,11 +241,125 @@ export function SettingsPage() {
         </Card>
       </motion.div>
 
-      {/* Password */}
+      {/* Workspace */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <Card className={cardClass}>
+          <CardHeader>
+            <CardTitle className={isDarkMode ? "text-white" : "text-gray-900"}>
+              {t("workspace.title")}
+            </CardTitle>
+            <CardDescription className={isDarkMode ? "text-gray-400" : ""}>
+              {t("workspace.description")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {currentWorkspace ? (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className={labelClass}>{t("workspace.name")}</Label>
+                    <Input
+                      value={currentWorkspace.name}
+                      disabled
+                      className={disabledInputClass}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className={labelClass}>{t("workspace.role")}</Label>
+                    <Input
+                      value={
+                        myRole
+                          ? t(`workspace.roles.${myRole}`)
+                          : t("workspace.roleUnknown")
+                      }
+                      disabled
+                      className={disabledInputClass}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className={labelClass}>{t("workspace.slug")}</Label>
+                    <Input
+                      value={currentWorkspace.slug}
+                      disabled
+                      className={disabledInputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className={`flex flex-col gap-3 rounded-md border p-4 md:flex-row md:items-center md:justify-between ${
+                  isDarkMode ? "border-red-900/50 bg-red-950/20" : "border-red-200 bg-red-50"
+                }`}>
+                  <div>
+                    <p className={isDarkMode ? "font-medium text-red-300" : "font-medium text-red-700"}>
+                      {t("workspace.deleteTitle")}
+                    </p>
+                    <p className={isDarkMode ? "mt-1 text-sm text-gray-400" : "mt-1 text-sm text-gray-600"}>
+                      {canDeleteWorkspace
+                        ? t("workspace.deleteDescription")
+                        : t("workspace.ownerOnly")}
+                    </p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        disabled={!canDeleteWorkspace || isDeletingWorkspace}
+                        className="gap-2 md:w-auto"
+                      >
+                        {isDeletingWorkspace ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                        {t("workspace.deleteWorkspace")}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className={isDarkMode ? "bg-gray-900 border-gray-800" : ""}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className={isDarkMode ? "text-white" : ""}>
+                          {t("workspace.confirmTitle")}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("workspace.confirmDescription", {
+                            name: currentWorkspace.name,
+                          })}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          className={isDarkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" : ""}
+                        >
+                          {t("danger.cancel")}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteWorkspace}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          {t("danger.delete")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </>
+            ) : (
+              <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
+                {t("workspace.empty")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Password */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.15 }}
       >
         <Card className={cardClass}>
           <CardHeader>

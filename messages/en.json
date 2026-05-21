@@ -91,6 +91,27 @@
       "english": "English",
       "korean": "Korean"
     },
+    "workspace": {
+      "title": "Workspace",
+      "description": "View and manage the currently selected workspace.",
+      "name": "Name",
+      "slug": "Slug",
+      "role": "My Role",
+      "roleUnknown": "Unknown",
+      "empty": "No workspace is selected.",
+      "deleteTitle": "Delete workspace",
+      "deleteDescription": "Projects, endpoints, and alerts linked to this workspace will no longer be shown.",
+      "ownerOnly": "Only workspace OWNER can delete this workspace.",
+      "deleteWorkspace": "Delete Workspace",
+      "confirmTitle": "Delete this workspace?",
+      "confirmDescription": "\"{name}\" will be deleted. This action cannot be undone.",
+      "roles": {
+        "OWNER": "Owner",
+        "ADMIN": "Admin",
+        "MEMBER": "Member",
+        "VIEWER": "Viewer"
+      }
+    },
     "password": {
       "title": "Change Password",
       "description": "Update your password regularly to keep your account secure.",
@@ -121,6 +142,8 @@
       "passwordUpdateFailed": "Failed to update password.",
       "accountDeleted": "Account deleted.",
       "deleteAccountFailed": "Failed to delete account.",
+      "workspaceDeleted": "Workspace deleted.",
+      "deleteWorkspaceFailed": "Failed to delete workspace.",
       "languageSaved": "Language preference saved."
     }
   },
